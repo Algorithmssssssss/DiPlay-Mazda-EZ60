@@ -71,6 +71,7 @@ import com.shilapi.xcertplay.update.UpdateRelease
 import com.shilapi.xcertplay.update.UpdateVersion
 import java.io.File
 import java.io.IOException
+import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -175,6 +176,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     private var readinessCard: LinearLayout? = null
     private var searchIndexSink: MutableList<String>? = null
     private var renderedReadiness: SettingsReadiness? = null
+    private var carUiPanel: MzdCarAppLayout? = null
     private var renderedPage: String? = null
     private var renderedSettingsCategory: SettingsCategory? = null
     private var pendingScrollY: Int? = null
@@ -323,6 +325,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
         }
+        openWindow = WeakReference(this)
         applyWindowAppearance()
         setupError = runCatching { DiPlayBootstrap.ensure(this, AirPlayPersistence.loadMfiTarget(this)) }.exceptionOrNull()?.let {
             android.util.Log.e("DiPlaySetup", "CarPlay authentication could not be loaded", it)
@@ -478,6 +481,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     override fun onDestroy() {
+        if (openWindow?.get() === this) openWindow = null
         appearanceObserverRemoval?.invoke()
         appearanceObserverRemoval = null
         handler.removeCallbacks(appearancePoll)
@@ -518,6 +522,15 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     private fun applyFullscreenMode() {
+        if (MzdCarAppLayout.isCockpitWindow(this)) {
+            MzdCarAppLayout.applyWindowBackground(this)
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            WindowInsetsControllerCompat(window, window.decorView).apply {
+                isAppearanceLightStatusBars = false
+                show(WindowInsetsCompat.Type.statusBars())
+            }
+            return
+        }
         val multiWindow = Build.VERSION.SDK_INT >= 24 && isInMultiWindowMode
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = palette.systemBarIconsAreDark
@@ -597,10 +610,24 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             "settings" -> !SettingsLayoutPreferences.isActive(this)
             else -> true
         }
-        val scroll = ScrollView(this).apply { setBackgroundColor(BG); isFillViewport = true; clipToPadding = false }
+        val scroll = object : ScrollView(this) {
+            override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                val width = View.MeasureSpec.getSize(widthMeasureSpec)
+                val height = View.MeasureSpec.getSize(heightMeasureSpec)
+                // TidePlayer's content/pane proportions, applied to the usable window.
+                val contentWidth = if (MzdCarAppLayout.isCockpitWindow(this@DiPlayActivity) &&
+                    !compact && width >= dp(1400) && height >= dp(450)) {
+                    val expanded = width.toFloat() / height > 2.15f
+                    dp(if (page == "home") { if (expanded) 2080 else 1448 }
+                        else { if (expanded) 1424 else 920 })
+                } else width
+                getChildAt(0)?.layoutParams?.width = minOf(width, contentWidth)
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+            }
+        }.apply { setBackgroundColor(BG); isFillViewport = true; clipToPadding = false }
         rootScroll = scroll
         val content = column()
-        scroll.addView(content)
+        scroll.addView(content, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_HORIZONTAL))
         val header = if (page == "settings") settingsHeader(compact) else standardHeader(compact)
         val root: View = if (page == "settings" && isExpandedSettingsLayout) {
             content.setPadding(0, 0, 0, dp(32))
@@ -634,15 +661,15 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         val baseRight = root.paddingRight
         val baseBottom = root.paddingBottom
         ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
-            val safe = insets.getInsets(
-                WindowInsetsCompat.Type.displayCutout() or
-                    WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
-            )
+            val safe = insets.getInsets(if (MzdCarAppLayout.isCockpitWindow(this)) WindowInsetsCompat.Type.ime()
+                else WindowInsetsCompat.Type.displayCutout() or
+                    WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
             view.setPadding(baseLeft + safe.left, baseTop + safe.top,
                 baseRight + safe.right, baseBottom + safe.bottom)
             insets
         }
-        setContentView(root)
+        val panel = carUiPanel ?: MzdCarAppLayout(this).also { carUiPanel = it; setContentView(it) }
+        panel.setPanelContent(root)
         ViewCompat.requestApplyInsets(root)
         renderedPage = page
         renderedSettingsCategory = settingsCategory.takeIf { page == "settings" }
@@ -704,7 +731,11 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         })
         addView(headerButton(if (page == "home") getString(R.string.car_home) else getString(R.string.back),
             if (page == "home") R.drawable.ic_dp_car else R.drawable.ic_dp_back, compact) {
-            if (page == "home") startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))
+            if (page == "home") {
+                startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                finish()
+            }
             else navigateBack()
         }, LinearLayout.LayoutParams(-2, if (compact) dp(44) else dp(52)))
     }
@@ -851,11 +882,19 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         } else if (!compact && wide) {
             // Both rows share column widths. The USB button starts at the wireless
             // card's top edge, independently of hero wrapping or font scaling.
-            fun columns(first: View, second: View, stretchSecond: Boolean = false) = row().apply {
+            fun columns(first: View, second: View, stretchSecond: Boolean = false) = object : LinearLayout(this) {
+                override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                    val width = View.MeasureSpec.getSize(widthMeasureSpec)
+                    second.layoutParams.width = minOf(dp(480), ((width - dp(40)) / 2.6f).toInt().coerceAtLeast(0))
+                    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+                }
+            }.apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(-1, -2)
                 gravity = Gravity.TOP
                 addView(first, LinearLayout.LayoutParams(0, -2, 1.6f))
                 addView(space(40), LinearLayout.LayoutParams(dp(40), 1))
-                addView(second, LinearLayout.LayoutParams(0, if (stretchSecond) -1 else -2, 1f))
+                addView(second, LinearLayout.LayoutParams(0, if (stretchSecond) -1 else -2))
             }
             body.addView(columns(left, branding, true))
             body.addView(space(26))
@@ -1562,7 +1601,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             card.addView(scheduleControls)
             card.addView(button(getString(R.string.picture_adjustments), false) {
                 startActivity(Intent(this, CarPlayHostActivity::class.java)
-                    .putExtra("picture_controls", true).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+                    .putExtra("picture_controls", true)
+                    .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NO_ANIMATION))
+                overridePendingTransition(0, 0)
             }, matchButton(0, 56).apply { bottomMargin = dp(24) })
             carPlaySizeControl(card)
             resolutionSettingControl(
@@ -4424,7 +4465,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         else open()
     }
     private fun openProjection() {
-        startActivity(Intent(this, CarPlayHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+        startActivity(Intent(this, CarPlayHostActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NO_ANIMATION))
+        overridePendingTransition(0, 0)
     }
     private fun choosePhone() {
         if (Build.VERSION.SDK_INT >= 31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
@@ -5198,6 +5241,11 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         internal fun isLauncherIntent(intent: Intent): Boolean =
             intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER) &&
                 !intent.hasExtra("page")
+        private var openWindow: WeakReference<DiPlayActivity>? = null
+
+        internal fun closeWindowForCarHome() {
+            openWindow?.get()?.finish()
+        }
 
         private const val BYD_VEHICLE_TAG = "DiPlay-BYD13"
         private const val VEHICLE_VALIDATION_RETRY_MILLIS = 500L

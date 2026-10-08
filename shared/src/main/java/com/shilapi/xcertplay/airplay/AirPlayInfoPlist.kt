@@ -204,12 +204,20 @@ object AirPlayInfoPlist {
             "primaryInputDevice" to display.primaryInputDevice,
         )
 
-        // Several areas let the car move CarPlay between them (another dock edge, the head unit's split
-        // screen) with updateViewArea, without reconnecting.
-        val areas = display.viewAreas?.takeIf { it.isNotEmpty() }
-        entry["viewAreas"] = areas?.map { areaDict(display, it) } ?: listOf(areaDict(display))
-        entry["initialViewArea"] = if (areas == null) 0 else display.initialViewArea.coerceIn(0, areas.lastIndex)
-        if (areas != null && areas.size > 1) entry["viewAreaTransitionControl"] = true
+        if (display.additionalViewAreas.isNotEmpty()) {
+            entry["viewAreas"] = listOf(areaDict(display)) + display.additionalViewAreas.map {
+                areaDict(display.copy(viewArea = it.viewArea, safeArea = it.safeArea))
+            }
+            entry["initialViewArea"] = display.initialViewArea
+            entry["adjacentViewAreas"] = (0..display.additionalViewAreas.size).filter { it != display.initialViewArea }
+        } else {
+            // Several areas let the car move CarPlay between them (another dock edge, the head unit's split
+            // screen) with updateViewArea, without reconnecting.
+            val areas = display.viewAreas?.takeIf { it.isNotEmpty() }
+            entry["viewAreas"] = areas?.map { areaDict(display, it) } ?: listOf(areaDict(display))
+            entry["initialViewArea"] = if (areas == null) 0 else display.initialViewArea.coerceIn(0, areas.lastIndex)
+            if (areas != null && areas.size > 1) entry["viewAreaTransitionControl"] = true
+        }
         if (display.initialUrl != null) entry["initialURL"] = display.initialUrl
         return entry
     }

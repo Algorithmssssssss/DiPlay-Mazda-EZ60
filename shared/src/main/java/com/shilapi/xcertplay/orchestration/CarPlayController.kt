@@ -326,6 +326,10 @@ class CarPlayController(
             uiListener?.onSessionEnded(session)
         }
 
+        override fun onMainViewAreaAcknowledged(session: AirPlaySession, index: Int, accepted: Boolean) {
+            if (activeSession === session) uiListener?.onMainViewAreaAcknowledged(session, index, accepted)
+        }
+
         override fun onTransportError(message: String) {
             debugLog("AirPlay transport error: $message")
             uiListener?.onTransportError(message)
@@ -512,6 +516,8 @@ class CarPlayController(
         dashboardMapOutputVisible = next
         dashboardMapEpoch.incrementAndGet()
     }
+
+    fun updateMainViewArea(index: Int): Boolean = !closed && activeSession?.updateMainViewArea(index) == true
 
     /** Immutable stream geometry retained when a new host adopts this background controller. */
     fun configuredClusterSize(): Pair<Int, Int>? = airPlayConfig.cluster?.let { it.widthPixels to it.heightPixels }

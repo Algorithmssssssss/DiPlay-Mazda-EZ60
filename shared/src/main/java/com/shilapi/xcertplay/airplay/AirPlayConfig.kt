@@ -8,6 +8,9 @@ data class AirPlayInsets(
     val right: Int = 0,
 )
 
+/** A predeclared presentation region within the fixed video canvas. */
+data class AirPlayCockpitViewArea(val viewArea: AirPlayInsets, val safeArea: AirPlayInsets)
+
 /** One display advertised to the phone in /info. */
 data class AirPlayDisplayConfig(
     val widthPixels: Int,
@@ -29,6 +32,7 @@ data class AirPlayDisplayConfig(
     val viewAreas: List<AirPlayViewArea>? = null,
     /** The area CarPlay starts in, an index into [viewAreas]. */
     val initialViewArea: Int = 0,
+    val additionalViewAreas: List<AirPlayCockpitViewArea> = emptyList(),
 )
 
 /**

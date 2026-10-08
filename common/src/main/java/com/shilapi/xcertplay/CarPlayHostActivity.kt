@@ -60,6 +60,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.shilapi.xcertplay.airplay.CarPlayMediaButton
 import com.shilapi.xcertplay.airplay.AirPlayConfig
+import com.shilapi.xcertplay.airplay.AirPlayInsets
+import com.shilapi.xcertplay.airplay.AirPlayCockpitViewArea
 import com.shilapi.xcertplay.airplay.AirPlayDisplaySettings
 import com.shilapi.xcertplay.airplay.AirPlayPhysicalSizeBasis
 import com.shilapi.xcertplay.airplay.AirPlayPhysicalSizeMm
@@ -355,6 +357,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var activeDisplaySize: DisplaySize? = null
     private var pendingDisplaySize: DisplaySize? = null
     private var sessionDisplay: CarPlaySessionDisplay? = null
+    private var cockpitTransitionUntil = 0L
     private var touchOutsideContent = false
     private var displayScalePercent = 100
     private var displayScaleTenths = CarPlayDisplayScale.DEFAULT_TENTHS
@@ -523,7 +526,13 @@ class CarPlayHostActivity : ComponentActivity() {
             return true
         }
 
-        override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit
+        override fun onSurfaceTextureUpdated(texture: SurfaceTexture) {
+            if (cockpitTransitionUntil != 0L && android.os.SystemClock.elapsedRealtime() >= cockpitTransitionUntil) {
+                // Reveal the final region on a video frame after the iPhone's 300 ms transition.
+                cockpitTransitionUntil = 0L
+                videoView?.let { updateVideoLayout(it.width, it.height) }
+            }
+        }
     }
 
     private val fallbackSurfaceCallback = object : SurfaceHolder.Callback {
@@ -589,7 +598,7 @@ class CarPlayHostActivity : ComponentActivity() {
         airPlayIdentity = AirPlayPersistence.loadIdentity(this)
         loadPersistedSettings()
         locationPermissionAvailable = hasFineLocationPermission()
-        setContentView(buildContentView())
+        setContentView(MzdCarAppLayout(this, carPlayProjection = true).apply { setPanelContent(buildContentView()) })
         applyFullscreenMode()
         onBackPressedDispatcher.addCallback(
             this,
@@ -1557,7 +1566,8 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         ViewCompat.setOnApplyWindowInsetsListener(viewport) { _, insets ->
             val safe = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-            viewport.setPadding(safe.left, safe.top, safe.right, safe.bottom)
+            if (MzdCarAppLayout.isCockpitWindow(this)) viewport.setPadding(0, 0, 0, 0)
+            else viewport.setPadding(safe.left, safe.top, safe.right, safe.bottom)
             viewport.post { updatePreparationLayout() }
             insets
         }
@@ -3966,6 +3976,33 @@ class CarPlayHostActivity : ComponentActivity() {
                 }
             }
 
+            override fun onHostUiRequested(session: AirPlaySession) {
+                runOnUiThread {
+                    // A reused background session does not emit onSessionActive again.
+                    val active = activeAirPlaySession
+                    if (controllerGeneration != restartGeneration || (active != null && active !== session) ||
+                        isFinishing || isDestroyed || !CarPlayBackgroundSession.isOwner(this@CarPlayHostActivity)) return@runOnUiThread
+                    // The head unit can reveal the separate DiPlay home task after this window closes.
+                    DiPlayActivity.closeWindowForCarHome()
+                    // Closing the UI keeps the controller in CarPlayBackgroundSession.
+                    finish()
+                }
+            }
+
+            override fun onMainViewAreaAcknowledged(session: AirPlaySession, index: Int, accepted: Boolean) {
+                runOnUiThread {
+                    if (controllerGeneration != restartGeneration || shuttingDown.get() || isFinishing || isDestroyed ||
+                        activeDisplaySize?.let(::cockpitViewAreaIndex) != index ||
+                        (activeAirPlaySession != null && activeAirPlaySession !== session)) return@runOnUiThread
+                    if (!accepted) {
+                        restartCarPlay("View area update rejected")
+                        return@runOnUiThread
+                    }
+                    // The write can precede iPhone processing; start the guard after its response.
+                    guardCockpitTransition(300L)
+                }
+            }
+
             override fun onVideoFrameRendered(session: AirPlaySession) {
                 runOnUiThread {
                     if (controllerGeneration != restartGeneration || activeAirPlaySession !== session || shuttingDown.get()) return@runOnUiThread
@@ -4145,19 +4182,75 @@ class CarPlayHostActivity : ComponentActivity() {
         return true
     }
 
+    private fun cockpitViewAreaIndex(size: DisplaySize): Int? {
+        if (!MzdCarAppLayout.isCockpitWindow(this) || size.height != 1080) return null
+        return when (size.width) { 2496 -> 0; 1728 -> 1; else -> null }
+    }
+
+    private fun withCockpitViewAreas(config: AirPlayConfig, size: DisplaySize): AirPlayConfig {
+        val index = cockpitViewAreaIndex(size) ?: return config
+        if (!AirPlayPersistence.loadAdaptPipResolution(this)) return config
+        val main = config.main
+        val narrowWidth = ((main.widthPixels.toDouble() * 1728 / 2496).toInt() / 2 * 2).coerceAtLeast(2)
+        val right = main.widthPixels - narrowWidth
+        val safe = AirPlaySafeArea.toInsets(AirPlayPersistence.loadSafeAreaRect(this, 1728, 1080),
+            1728, 1080, narrowWidth, main.heightPixels)
+        return config.copy(main = main.copy(
+            viewAreas = null,
+            additionalViewAreas = listOf(AirPlayCockpitViewArea(AirPlayInsets(right = right), safe.copy(right = safe.right + right))),
+            initialViewArea = index,
+        ))
+    }
+
+    private fun guardCockpitTransition(durationMillis: Long) {
+        val deadline = android.os.SystemClock.elapsedRealtime() + durationMillis
+        cockpitTransitionUntil = deadline
+        mainHandler.postDelayed({
+            if (cockpitTransitionUntil != deadline) return@postDelayed
+            cockpitTransitionUntil = 0L
+            videoView?.let { updateVideoLayout(it.width, it.height) }
+        }, durationMillis)
+    }
+
+    private fun switchCockpitViewArea(size: DisplaySize, display: CarPlaySessionDisplay, index: Int) {
+        val current = controller ?: return
+        val generation = restartGeneration
+        // A missing event response must not keep the narrow crop after the window has expanded.
+        guardCockpitTransition(1_500L)
+        videoView?.let { updateVideoLayout(it.width, it.height) }
+        airPlayCommandExecutor.execute {
+            val sent = current.updateMainViewArea(index)
+            runOnUiThread {
+                if (controller !== current || generation != restartGeneration || activeDisplaySize != size ||
+                    isFinishing || isDestroyed) return@runOnUiThread
+                if (!sent) {
+                    restartCarPlay("View area update unavailable")
+                    return@runOnUiThread
+                }
+                val updated = display.copy(viewAreaIndex = index)
+                sessionDisplay = updated
+                CarPlayBackgroundSession.updateDisplay(current, size.width, size.height, updated)
+                videoView?.let { updateVideoLayout(it.width, it.height) }
+                appendLog("Display view area switched index=$index panel=${size.width}x${size.height}; keeping CarPlay session")
+            }
+        }
+    }
+
     private fun startCarPlay(size: DisplaySize) {
         if (CarPlayBackgroundSession.hasSession() && !CarPlayBackgroundSession.isOwner(this)) return
         if (shuttingDown.get() || menuOpen || handshakeResetInProgress || controller != null) return
         val controllerGeneration = restartGeneration
         val config = createRuntimeConfig()
-        val effectiveSize = if (isMultiWindowActive() && !AirPlayPersistence.loadAdaptPipResolution(this) &&
+        val effectiveSize = if (cockpitViewAreaIndex(size) != null && AirPlayPersistence.loadAdaptPipResolution(this)) {
+            DisplaySize(2496, 1080)
+        } else if (isMultiWindowActive() && !AirPlayPersistence.loadAdaptPipResolution(this) &&
             maximumDetectedWidthPixels >= size.width && maximumDetectedHeightPixels >= size.height &&
             (maximumDetectedWidthPixels > size.width || maximumDetectedHeightPixels > size.height)) {
             DisplaySize(maximumDetectedWidthPixels, maximumDetectedHeightPixels)
         } else {
             size
         }
-        val airPlayConfig = createAirPlayConfig(effectiveSize)
+        val airPlayConfig = withCockpitViewAreas(createAirPlayConfig(effectiveSize), size)
         val locationProvider: Iap2LocationProvider? =
             when {
                 !config.locationReportingEnabled -> null
@@ -4231,7 +4324,10 @@ class CarPlayHostActivity : ComponentActivity() {
         val display = CarPlaySessionDisplay(
             airPlayConfig.main.widthPixels, airPlayConfig.main.heightPixels,
             displayRotation(), hideTopBar, hideBottomBar, effectiveSize.width, effectiveSize.height,
-            viewAreas = pendingViewAreas,
+            viewAreas = if (airPlayConfig.main.additionalViewAreas.isEmpty()) pendingViewAreas else null,
+            cockpitViewAreas = if (airPlayConfig.main.additionalViewAreas.isEmpty()) emptyList()
+                else listOf(airPlayConfig.main.viewArea ?: AirPlayInsets()) + airPlayConfig.main.additionalViewAreas.map { it.viewArea },
+            viewAreaIndex = airPlayConfig.main.initialViewArea,
         )
         sessionDisplay = display
         videoView?.let { updateVideoLayout(it.width, it.height) }
@@ -4321,9 +4417,12 @@ class CarPlayHostActivity : ComponentActivity() {
             return
         }
         pendingDisplaySize = size
-        // With a turning screen's square canvas nothing reconnects, so the turn need not wait for the size to settle.
-        mainHandler.postDelayed(applyDisplaySize,
-            if (sessionDisplay?.viewAreas?.turnsWithScreen == true) 0L else DISPLAY_CHANGE_DEBOUNCE_MILLIS)
+        val delay = when {
+            sessionDisplay?.cockpitViewAreas?.isNotEmpty() == true && cockpitViewAreaIndex(size) != null -> 16L
+            sessionDisplay?.viewAreas?.turnsWithScreen == true -> 0L
+            else -> DISPLAY_CHANGE_DEBOUNCE_MILLIS
+        }
+        mainHandler.postDelayed(applyDisplaySize, delay)
     }
 
     private fun isMultiWindowActive(): Boolean {
@@ -4359,6 +4458,8 @@ class CarPlayHostActivity : ComponentActivity() {
                     "${previous.width}x${previous.height} -> ${size.width}x${size.height}",
             )
             maybeStartCarPlay()
+        } else if (display != null && !layoutChanged && display.cockpitViewAreas.isNotEmpty() && cockpitViewAreaIndex(size) != null) {
+            switchCockpitViewArea(size, display, cockpitViewAreaIndex(size)!!)
         } else if (display != null && !layoutChanged &&
             size.width <= display.windowWidth && size.height <= display.windowHeight) {
             // Keep camera shrink/restore cycles within the original window connected. If the
@@ -4444,7 +4545,8 @@ class CarPlayHostActivity : ComponentActivity() {
             val baseAspect = display.width.toDouble() / display.height
             val currentAspect = newSize.width.toDouble() / newSize.height
             val aspectDiff = kotlin.math.abs(currentAspect / baseAspect - 1.0)
-            if (aspectDiff > 0.08 && AirPlayPersistence.loadAdaptPipResolution(this)) {
+            if (aspectDiff > 0.08 && AirPlayPersistence.loadAdaptPipResolution(this) &&
+                (display.cockpitViewAreas.isEmpty() || cockpitViewAreaIndex(newSize) == null)) {
                 return true
             }
         }
@@ -4453,8 +4555,32 @@ class CarPlayHostActivity : ComponentActivity() {
 
 
 
+    private fun videoViewArea(viewWidth: Int, viewHeight: Int): AirPlayInsets {
+        val display = sessionDisplay ?: return AirPlayInsets()
+        val area = display.cockpitViewAreas.getOrNull(display.viewAreaIndex) ?: AirPlayInsets()
+        val target = cockpitViewAreaIndex(DisplaySize(viewWidth, viewHeight)) ?: return area
+        if (display.cockpitViewAreas.isEmpty()) return area
+        // Both layouts contain this region, including frames before the view-area command completes.
+        val index = if (cockpitTransitionUntil == 0L && target == display.viewAreaIndex) display.viewAreaIndex else 1
+        val visible = display.cockpitViewAreas[index]
+        if (index != 1) return visible
+        // The narrow CarPlay region includes an 8 px black strip at its right edge at 1080p.
+        // Exclude it from both video scaling and the existing touch-area remapping.
+        val rightBorder = kotlin.math.ceil(8.0 * display.height / 1080).toInt()
+        return visible.copy(right = visible.right + rightBorder)
+    }
+
     private fun contentRect(viewWidth: Int, viewHeight: Int): CarPlayVideoLayout {
         val display = sessionDisplay ?: return CarPlayVideoLayout(0f, 0f, viewWidth.toFloat(), viewHeight.toFloat())
+        val area = videoViewArea(viewWidth, viewHeight)
+        val width = display.width - area.left - area.right
+        val height = display.height - area.top - area.bottom
+        if (display.cockpitViewAreas.isNotEmpty() && cockpitViewAreaIndex(DisplaySize(viewWidth, viewHeight)) != null) {
+            // Cover the animated window; crop temporarily instead of exposing letterbox/unused pixels.
+            val scale = maxOf(viewWidth.toFloat() / width, viewHeight.toFloat() / height)
+            return CarPlayVideoLayout((viewWidth - width * scale) / 2f, (viewHeight - height * scale) / 2f,
+                width * scale, height * scale)
+        }
         // In the head unit's split screen, or on a turning screen's square canvas, CarPlay draws in part of
         // the canvas; that area fills the window and the rest falls outside it. Video and touches both
         // follow this. An area of the whole canvas keeps the usual fit.
@@ -4474,9 +4600,17 @@ class CarPlayHostActivity : ComponentActivity() {
         val view = videoView ?: return
         if (viewWidth <= 0 || viewHeight <= 0) return
         val content = contentRect(viewWidth, viewHeight)
+        val display = sessionDisplay
+        val area = videoViewArea(viewWidth, viewHeight)
+        val canvas = if (display?.cockpitViewAreas?.isNotEmpty() == true) {
+            val scaleX = content.width / (display.width - area.left - area.right)
+            val scaleY = content.height / (display.height - area.top - area.bottom)
+            CarPlayVideoLayout(content.left - area.left * scaleX, content.top - area.top * scaleY,
+                display.width * scaleX, display.height * scaleY)
+        } else content
         val fallback = fallbackVideoView
         if (fallback != null) {
-            val bounds = CarPlaySurfaceBounds.from(content)
+            val bounds = CarPlaySurfaceBounds.from(canvas)
             if (fallbackVideoBounds != bounds) {
                 fallbackVideoBounds = bounds
                 fallback.layoutParams = FrameLayout.LayoutParams(bounds.width, bounds.height,
@@ -4487,8 +4621,8 @@ class CarPlayHostActivity : ComponentActivity() {
             }
         } else {
             (view as? TextureView)?.setTransform(Matrix().apply {
-                setScale(content.width / viewWidth, content.height / viewHeight)
-                postTranslate(content.left, content.top)
+                setScale(canvas.width / viewWidth, canvas.height / viewHeight)
+                postTranslate(canvas.left, canvas.top)
             })
         }
         if (sidePanelShown) placeSidePanel(viewWidth, viewHeight)
@@ -4603,6 +4737,7 @@ class CarPlayHostActivity : ComponentActivity() {
         oldSink?.let(retiringSinks::add)
         sink = null
         sessionDisplay = null
+        cockpitTransitionUntil = 0L
         val diagnosticLog = sessionLog
         teardownExecutor.execute {
             val started = System.nanoTime()
@@ -4629,7 +4764,8 @@ class CarPlayHostActivity : ComponentActivity() {
     private fun showDiPlayHome(page: String = "home") {
         controller?.sendTouch(emptyList())
         startActivity(Intent(this, DiPlayActivity::class.java)
-            .putExtra("page", page).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+            .putExtra("page", page).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NO_ANIMATION))
+        overridePendingTransition(0, 0)
     }
 
     /** Keep a timed-out sink visible to surface teardown until its codecs have actually been released. */
@@ -4765,6 +4901,7 @@ class CarPlayHostActivity : ComponentActivity() {
         oldSink?.let(retiringSinks::add)
         sink = null
         sessionDisplay = null
+        cockpitTransitionUntil = 0L
         Log.i(TAG, "shutdown reason=$reason terminateProcess=$terminateProcess")
         teardownExecutor.execute {
             oldController?.close()
@@ -4918,7 +5055,19 @@ class CarPlayHostActivity : ComponentActivity() {
             }
             return true
         }
-        val contacts = CarPlayTouchMapper.contacts(event, content)
+        var contacts = CarPlayTouchMapper.contacts(event, content)
+        sessionDisplay?.let { display ->
+            val videoArea = videoViewArea(view.width, view.height)
+            val touchArea = display.cockpitViewAreas.getOrNull(display.viewAreaIndex) ?: AirPlayInsets()
+            if (videoArea != touchArea) {
+                contacts = contacts.map { contact -> contact.copy(
+                    x = (videoArea.left - touchArea.left + contact.x * (display.width - videoArea.left - videoArea.right)) /
+                        (display.width - touchArea.left - touchArea.right),
+                    y = (videoArea.top - touchArea.top + contact.y * (display.height - videoArea.top - videoArea.bottom)) /
+                        (display.height - touchArea.top - touchArea.bottom),
+                ) }
+            }
+        }
         val queued = controller?.sendTouch(contacts) ?: false
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN,
@@ -5053,10 +5202,11 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun applyFullscreenMode() {
+        val cockpit = MzdCarAppLayout.applyWindowBackground(this)
         val multiWindow = isMultiWindowActive()
         val hideTop = hideTopBar && !multiWindow
         val hideBottom = hideBottomBar && !multiWindow
-        WindowCompat.setDecorFitsSystemWindows(window, !(hideTop && hideBottom))
+        WindowCompat.setDecorFitsSystemWindows(window, !cockpit && !(hideTop && hideBottom))
         val controller = WindowInsetsControllerCompat(window, window.decorView)
         if (hideTop) {
             controller.hide(WindowInsetsCompat.Type.statusBars())
@@ -5156,6 +5306,8 @@ internal data class CarPlaySessionDisplay(
     val windowHeight: Int,
     /** The view areas this session declared, or null for the whole screen as one area. */
     val viewAreas: CarPlayViewAreas? = null,
+    val cockpitViewAreas: List<AirPlayInsets> = emptyList(),
+    val viewAreaIndex: Int = 0,
 )
 
 /** Process-local hand-off for keeping the CarPlay session alive while no Activity is visible. */
@@ -5214,6 +5366,14 @@ internal object CarPlayBackgroundSession {
         this.owner = owner
         this.controller = controller
         this.sink = sink
+        this.width = width
+        this.height = height
+        this.display = display
+    }
+
+    @Synchronized
+    fun updateDisplay(expected: CarPlayController, width: Int, height: Int, display: CarPlaySessionDisplay) {
+        if (controller !== expected) return
         this.width = width
         this.height = height
         this.display = display

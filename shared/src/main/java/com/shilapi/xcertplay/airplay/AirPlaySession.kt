@@ -29,6 +29,7 @@ interface AirPlaySessionListener {
     fun onSessionActive(session: AirPlaySession) {}
     fun onSessionEnded(session: AirPlaySession) {}
     fun onVideoFrameRendered(session: AirPlaySession) {}
+    fun onMainViewAreaAcknowledged(session: AirPlaySession, index: Int, accepted: Boolean) {}
     fun onTransportError(message: String) {}
     fun onDeviceInfo(session: AirPlaySession, info: AirPlayDeviceInfo) {}
     fun onHostUiRequested(session: AirPlaySession) {}
@@ -94,7 +95,9 @@ class AirPlaySession(
     private var eventSocket: Socket? = null
     private var eventCipher: ControlCipher? = null
     private var eventCseq = 0
+    private var pendingMainViewArea: Pair<Int, Int>? = null
     private var pendingNightMode: Boolean? = null
+    @Volatile private var mainViewAreaIndex = config.main.initialViewArea
     private val firstTouchSendLogged = AtomicBoolean(false)
     private val touchSendFailureLogged = AtomicBoolean(false)
     private val ntp = NtpClock()
@@ -330,9 +333,27 @@ class AirPlaySession(
         }
     }
 
+    fun updateMainViewArea(index: Int): Boolean = synchronized(eventWriteLock) {
+        if (index !in 0..config.main.additionalViewAreas.size || mainScreenToken == null) return false
+        pendingMainViewArea = (eventCseq + 1) to index
+        val sent = sendCommandLocked(mapOf("type" to "updateViewArea", "params" to mapOf(
+            "uuid" to AirPlayInfoPlist.MAIN_UUID,
+            "viewAreaIndex" to index,
+            "animationDurationMillis" to 300,
+            "adjacentViewAreas" to (0..config.main.additionalViewAreas.size).filter { it != index },
+        )))
+        if (sent) mainViewAreaIndex = index else pendingMainViewArea = null
+        debugLog("Main view area index=$index commandWritten=$sent")
+        sent
+    }
+
     fun sendTouch(contacts: List<AirPlayContact>): Boolean {
+        val index = mainViewAreaIndex
+        val area = if (index == 0 || config.main.additionalViewAreas.isEmpty()) AirPlayInsets()
+            else config.main.additionalViewAreas[index - 1].viewArea
         val scaled = contacts.map {
-            it.copy(x = it.x * config.main.widthPixels, y = it.y * config.main.heightPixels)
+            it.copy(x = area.left + it.x * (config.main.widthPixels - area.left - area.right),
+                y = area.top + it.y * (config.main.heightPixels - area.top - area.bottom))
         }
         val report = AirPlayHid.touchReport(scaled)
         val sendStartNs = System.nanoTime()
@@ -877,6 +898,16 @@ class AirPlaySession(
         }
     }
 
+    private fun handleMainViewAreaResponse(message: RtspMessage.Request) {
+        val pending = synchronized(eventWriteLock) {
+            pendingMainViewArea?.takeIf { it.first == message.headers["cseq"]?.toIntOrNull() }
+                ?.also { pendingMainViewArea = null }
+        } ?: return
+        val accepted = message.path == "200"
+        debugLog("Main view area acknowledged index=${pending.second} accepted=$accepted")
+        listener.onMainViewAreaAcknowledged(this, pending.second, accepted)
+    }
+
     private fun runEventRead(socket: Socket) {
         try {
             val input = BufferedInputStream(socket.getInputStream())
@@ -900,7 +931,10 @@ class AirPlaySession(
                 val parsed = RtspMessage.parseMessages(plaintext)
                 plaintext = parsed.rest
                 for (message in parsed.messages) {
-                    if (message.method.startsWith("RTSP/") || message.method.startsWith("HTTP/")) continue
+                    if (message.method.startsWith("RTSP/") || message.method.startsWith("HTTP/")) {
+                        handleMainViewAreaResponse(message)
+                        continue
+                    }
                     debugLog(
                         "airplay event rx ${message.method} ${message.path} cseq=${message.headers["cseq"] ?: "-"} body=${message.body.size}",
                     )
