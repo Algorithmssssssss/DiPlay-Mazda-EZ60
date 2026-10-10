@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">EZ-60 probe</string>
+    <string name="settings_probe_description">Measures this car’s screen halves, video decoder, Wi-Fi, USB, audio and keys so DiPlay can be tuned for the Mazda EZ-60. Nothing is sent automatically.</string>
+    <string name="settings_probe_run">Run EZ-60 probe</string>
+    <string name="settings_probe_running">Running probe…</string>
+    <string name="settings_probe_record_start">Start recording events</string>
+    <string name="settings_probe_record_stop">Stop recording events</string>
+    <string name="settings_probe_recording_hint">Recording. Now swipe DiPlay to the other half of the screen and back, wake the voice assistant, press each steering-wheel button, switch between day and night and plug in the iPhone. Then stop recording and run the probe.</string>
+    <string name="settings_probe_view">View probe report</string>
+    <string name="settings_probe_share">Open on iPhone</string>
+    <string name="settings_probe_share_url">On an iPhone on the same Wi-Fi as the car (the car hotspot or the iPhone’s hotspot), open in Safari:\n%1$s</string>
+    <string name="settings_probe_share_unavailable">The car is not on any Wi-Fi network. Turn on the car hotspot or join the iPhone’s hotspot, then try again.</string>
+</resources>

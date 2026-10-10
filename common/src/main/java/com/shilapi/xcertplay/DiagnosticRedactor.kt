@@ -14,4 +14,8 @@ internal object DiagnosticRedactor {
         return line.replace(mac, "[address]").replace(identifier, "[identifier]")
             .replace(address, "[ip]").replace(ipv6, "[ip]").take(700)
     }
+
+    /** Masks addresses and long identifiers but keeps the line, for EZ-60 probe facts that carry no secrets. */
+    fun mask(line: String): String = line.replace(mac, "[address]").replace(identifier, "[identifier]")
+        .replace(address, "[ip]").replace(ipv6, "[ip]")
 }

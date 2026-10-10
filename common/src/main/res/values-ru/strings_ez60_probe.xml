@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">Проверка EZ-60</string>
+    <string name="settings_probe_description">Измеряет половины экрана, видеодекодер, Wi-Fi, USB, звук и кнопки этого автомобиля, чтобы настроить DiPlay для Mazda EZ-60. Ничего не отправляется автоматически.</string>
+    <string name="settings_probe_run">Запустить проверку EZ-60</string>
+    <string name="settings_probe_running">Идёт проверка…</string>
+    <string name="settings_probe_record_start">Начать запись событий</string>
+    <string name="settings_probe_record_stop">Остановить запись событий</string>
+    <string name="settings_probe_recording_hint">Идёт запись. Перетащите DiPlay на другую половину экрана и обратно, вызовите голосового помощника, нажмите каждую кнопку на руле, переключите день и ночь и подключите iPhone. Затем остановите запись и запустите проверку.</string>
+    <string name="settings_probe_view">Показать отчёт проверки</string>
+    <string name="settings_probe_share">Открыть на iPhone</string>
+    <string name="settings_probe_share_url">На iPhone в той же сети Wi-Fi, что и автомобиль (точка доступа автомобиля или iPhone), откройте в Safari:\n%1$s</string>
+    <string name="settings_probe_share_unavailable">Автомобиль не подключён ни к одной сети Wi-Fi. Включите точку доступа автомобиля или подключитесь к точке доступа iPhone и повторите попытку.</string>
+</resources>

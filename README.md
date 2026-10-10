@@ -44,6 +44,7 @@ If a problem remains, reproduce it on **0.2.15**, then use **Settings → Diagno
 on an external router. See the guide for setup, build requirements and the
 BYD DiLink 4.0 / Android 10 clean-install validation result.
 
+- [Mazda EZ-60 fork: status, build and probe](docs/MAZDA_EZ60.md)
 - [Install and connect](docs/INSTALL.md)
 - [Compatibility and troubleshooting](docs/COMPATIBILITY.md)
 - [Smooth wireless CarPlay](docs/SMOOTH_WIRELESS.md)

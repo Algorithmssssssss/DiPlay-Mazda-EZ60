@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">EZ-60 检测</string>
+    <string name="settings_probe_description">测量本车的左右半屏、视频解码器、Wi-Fi、USB、音频和按键，以便为马自达 EZ-60 调整 DiPlay。不会自动发送任何内容。</string>
+    <string name="settings_probe_run">运行 EZ-60 检测</string>
+    <string name="settings_probe_running">正在检测…</string>
+    <string name="settings_probe_record_start">开始记录事件</string>
+    <string name="settings_probe_record_stop">停止记录事件</string>
+    <string name="settings_probe_recording_hint">正在记录。现在将 DiPlay 滑到屏幕另一半再滑回，唤醒语音助手，按下方向盘上的每个按键，切换白天/夜间模式，并连接 iPhone。然后停止记录并运行检测。</string>
+    <string name="settings_probe_view">查看检测报告</string>
+    <string name="settings_probe_share">在 iPhone 上打开</string>
+    <string name="settings_probe_share_url">在与车辆连接同一 Wi-Fi（车辆热点或 iPhone 热点）的 iPhone 上，用 Safari 打开：\n%1$s</string>
+    <string name="settings_probe_share_unavailable">车辆未连接任何 Wi-Fi 网络。请打开车辆热点或连接 iPhone 热点，然后重试。</string>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">فحص EZ-60</string>
+    <string name="settings_probe_description">يقيس نصفي الشاشة ومفكك ترميز الفيديو وWi-Fi وUSB والصوت والأزرار في هذه السيارة لضبط DiPlay لسيارة Mazda EZ-60. لا يُرسل أي شيء تلقائيًا.</string>
+    <string name="settings_probe_run">تشغيل فحص EZ-60</string>
+    <string name="settings_probe_running">جارٍ الفحص…</string>
+    <string name="settings_probe_record_start">بدء تسجيل الأحداث</string>
+    <string name="settings_probe_record_stop">إيقاف تسجيل الأحداث</string>
+    <string name="settings_probe_recording_hint">التسجيل جارٍ. اسحب DiPlay الآن إلى النصف الآخر من الشاشة ثم أعده، وشغّل المساعد الصوتي، واضغط كل زر في عجلة القيادة، وبدّل بين النهار والليل، ثم صِل iPhone. بعد ذلك أوقف التسجيل وشغّل الفحص.</string>
+    <string name="settings_probe_view">عرض تقرير الفحص</string>
+    <string name="settings_probe_share">فتح على iPhone</string>
+    <string name="settings_probe_share_url">على iPhone متصل بشبكة Wi-Fi نفسها التي تتصل بها السيارة (نقطة اتصال السيارة أو نقطة اتصال iPhone)، افتح في Safari:\n%1$s</string>
+    <string name="settings_probe_share_unavailable">السيارة غير متصلة بأي شبكة Wi-Fi. شغّل نقطة اتصال السيارة أو اتصل بنقطة اتصال iPhone، ثم حاول مرة أخرى.</string>
+</resources>

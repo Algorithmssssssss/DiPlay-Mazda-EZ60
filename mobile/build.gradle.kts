@@ -14,7 +14,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.shihab.diplay"
+        // Separate from upstream DiPlay so both can be installed.
+        applicationId = "com.reachkim.diplay.ez60"
         minSdk = 25
         targetSdk = 37
         versionCode = 34

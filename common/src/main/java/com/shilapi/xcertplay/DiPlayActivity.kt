@@ -161,6 +161,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     private var initialLaunch = true
     private var notificationTransport = true
     private var exportInProgress = false
+    private var probeInProgress = false
     private var usbPermissionOperation: UsbPermissionSetup.Operation? = null
     private var usbPermissionDialog: AlertDialog? = null
     internal var usbPermissionOperationFactory: (Context) -> UsbPermissionSetup.Operation = {
@@ -326,6 +327,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             }
         }
         openWindow = WeakReference(this)
+        MazdaCockpitProbe.attach(this, PROBE_TAG, savedInstanceState != null)
         applyWindowAppearance()
         setupError = runCatching { DiPlayBootstrap.ensure(this, AirPlayPersistence.loadMfiTarget(this)) }.exceptionOrNull()?.let {
             android.util.Log.e("DiPlaySetup", "CarPlay authentication could not be loaded", it)
@@ -363,6 +365,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent); setIntent(intent)
+        MazdaCockpitProbe.note(this, PROBE_TAG, "new intent launcher=${isLauncherIntent(intent)}")
         connectionSettingsReturnCategory = null
         // CarPlay runs in its own task, so the launcher icon resumes this one. Settings opened from
         // CarPlay carry a "page" extra, which isLauncherIntent rejects.
@@ -400,6 +403,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        MazdaCockpitProbe.configuration(this, PROBE_TAG, newConfig)
         if (updateInterfaceSize(newConfig)) return
         refreshAppearance()
         render()
@@ -447,6 +451,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     override fun onResume() {
         super.onResume()
+        MazdaCockpitProbe.note(this, PROBE_TAG, "resumed")
         applyFullscreenMode()
         // Returning from another activity can bring the head unit's own density back.
         if (enforceInterfaceSize()) render()
@@ -470,6 +475,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         }
     }
     override fun onPause() {
+        MazdaCockpitProbe.note(this, PROBE_TAG, "paused")
         appearanceUpdatesResumed = false
         appearanceObserverRemoval?.invoke()
         appearanceObserverRemoval = null
@@ -481,6 +487,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     override fun onDestroy() {
+        MazdaCockpitProbe.detach(this)
         if (openWindow?.get() === this) openWindow = null
         appearanceObserverRemoval?.invoke()
         appearanceObserverRemoval = null
@@ -503,6 +510,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     override fun onMultiWindowModeChanged(isInMultiWindowMode: Boolean, newConfig: Configuration) {
         super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
+        MazdaCockpitProbe.note(this, PROBE_TAG, "multiWindow=$isInMultiWindowMode")
         applyFullscreenMode()
         if (updateInterfaceSize(newConfig)) return
         render()
@@ -1480,6 +1488,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             card.addView(button(getString(R.string.choose_save_location), false) { chooseReportDestination() }, matchButton(10, 60))
             val destination = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) getString(R.string.reports_save_to_downloads_diplay) else getString(R.string.choose_where_to_save_your_report)
             card.addView(label(destination + getString(R.string.nothing_is_sent_automatically_protocol_payloads_and_creden), 14, MUTED).apply { setPadding(0, dp(12), 0, 0) })
+            probeControls(card)
         }
         filteredSection(content, SettingsSection.AUTOMATIC_CONNECTION,
             getString(R.string.automatic_connection), R.drawable.ic_dp_automation) { card ->
@@ -1995,7 +2004,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         content.addView(label(getString(R.string.carplay_at_home_in_your_car), 20, MUTED).apply { setPadding(0, dp(8), 0, dp(24)) })
         section(content, getString(R.string.about_public_preview_prefix, version())) { card ->
             card.addView(label(getString(R.string.an_independent_carplay_receiver_for_android_head_units_wir), 17, TEXT))
-            card.addView(updateRow())
+            if (UpdateClient.ENABLED) card.addView(updateRow())
         }
         section(content, getString(R.string.made_possible_by_open_source)) { card ->
             card.addView(label(getString(R.string.receiver_based_on_xcertplay_licensed_under_gpl_3_0_diplay), 16, MUTED))
@@ -3237,6 +3246,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        MazdaCockpitProbe.key(this, PROBE_TAG, event)
         if (event.action != KeyEvent.ACTION_DOWN && event.action != KeyEvent.ACTION_UP) return super.dispatchKeyEvent(event)
         val action = windowLearningPresses.filter(
             Triple(event.deviceId, event.keyCode, event.scanCode),
@@ -4669,6 +4679,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                     appendLine("Startup settings: openAfterBoot=${AirPlayPersistence.loadAutoStartOnBoot(appContext)} " +
                         "connectWhenOpened=${DiPlayPreferences.autoConnect(appContext)}")
                     appendLine()
+                    appendLine("--- EZ-60 probe ---")
+                    appendLine(MazdaCockpitProbe.report(appContext))
+                    appendLine()
                     appendLine("--- Recent own-app process exits (Android 11+) ---")
                     appendLine(ProcessExitDiagnostics.report(appContext))
                     appendLine()
@@ -4730,6 +4743,76 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         appDialogBuilder().setTitle(getString(R.string.view_diagnostic_report))
             .setView(ScrollView(appDialogContext()).apply { addView(body) })
             .setPositiveButton(getString(R.string.close), null).show()
+    }
+
+    // EZ-60 probe: measurements from this car for the Mazda port, kept in the diagnostic report.
+    private fun probeControls(card: LinearLayout) {
+        card.addView(label(getString(R.string.settings_probe_title), 18, TEXT, true).apply { setPadding(0, dp(24), 0, 0) })
+        card.addView(label(getString(R.string.settings_probe_description), 14, MUTED).apply { setPadding(0, dp(6), 0, 0) })
+        card.addView(button(getString(if (probeInProgress) R.string.settings_probe_running else R.string.settings_probe_run), false) {
+            runProbe()
+        }.apply { isEnabled = !probeInProgress }, matchButton(10, 60))
+        val recording = MazdaCockpitProbe.isRecording(this)
+        card.addView(button(getString(if (recording) R.string.settings_probe_record_stop else R.string.settings_probe_record_start), false) {
+            MazdaCockpitProbe.setRecording(this, !recording)
+            render()
+        }, matchButton(10, 60))
+        if (recording) card.addView(label(getString(R.string.settings_probe_recording_hint), 14, MUTED).apply { setPadding(0, dp(8), 0, 0) })
+        card.addView(button(getString(R.string.settings_probe_view), false) { showProbeReport() }, matchButton(10, 60))
+    }
+
+    private fun runProbe() {
+        if (probeInProgress) return
+        probeInProgress = true
+        render()
+        MazdaCockpitProbe.snapshot(this) {
+            probeInProgress = false
+            if (isFinishing || isDestroyed) return@snapshot
+            render()
+            showProbeReport()
+        }
+    }
+
+    private fun showProbeReport() {
+        var share: MazdaProbeShare? = null
+        val status = label("", 16, ACCENT, true).apply { visibility = View.GONE; setTextIsSelectable(true) }
+        val body = column().apply { setPadding(dp(24), dp(12), dp(24), dp(12)) }
+        body.addView(status)
+        body.addView(label(MazdaCockpitProbe.report(this), 16, TEXT).apply {
+            typeface = Typeface.MONOSPACE
+            setTextIsSelectable(true)
+        })
+        val dialog = appDialogBuilder().setTitle(getString(R.string.settings_probe_title))
+            .setView(ScrollView(appDialogContext()).apply { addView(body) })
+            .setNeutralButton(getString(R.string.settings_probe_share), null)
+            .setPositiveButton(getString(R.string.close), null)
+            .setOnDismissListener { share?.close(); share = null }
+            .create()
+        dialog.setOnShowListener {
+            val shareButton = dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+            shareButton.setOnClickListener {
+                if (share != null) return@setOnClickListener
+                shareButton.isEnabled = false
+                val next = MazdaProbeShare { MazdaCockpitProbe.report(applicationContext) }
+                share = next
+                Thread({
+                    val urls = next.start()
+                    runOnUiThread {
+                        if (share !== next) { next.close(); return@runOnUiThread }
+                        status.visibility = View.VISIBLE
+                        if (urls.isEmpty()) {
+                            next.close()
+                            share = null
+                            shareButton.isEnabled = true
+                            status.text = getString(R.string.settings_probe_share_unavailable)
+                        } else {
+                            status.text = getString(R.string.settings_probe_share_url, urls.joinToString("\n"))
+                        }
+                    }
+                }, "diplay-ez60-share-start").start()
+            }
+        }
+        dialog.show()
     }
     private fun permissionHelp(title: String, body: String) {
         appDialogBuilder().setTitle(title).setMessage(body).setPositiveButton(getString(R.string.app_settings)) { _, _ ->
@@ -5248,6 +5331,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         }
 
         private const val BYD_VEHICLE_TAG = "DiPlay-BYD13"
+        private const val PROBE_TAG = "diplay"
         private const val VEHICLE_VALIDATION_RETRY_MILLIS = 500L
         private const val ADB_KEY_SAVE_WAIT_MILLIS = 500L
         private const val APPEARANCE_POLL_MILLIS = 2_000L

@@ -8,6 +8,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 internal object UpdateClient {
+    /** Off in the EZ-60 fork: upstream releases are a different app, and this fork has no release feed yet. */
+    internal const val ENABLED = false
     internal const val RELEASES_URL =
         "https://api.github.com/repos/shihabal3amri/DiPlay/releases?per_page=3"
     private const val CONNECT_TIMEOUT_MILLIS = 10_000

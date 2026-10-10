@@ -58,7 +58,7 @@ internal class MzdCarAppLayout(context: Context, private val carPlayProjection: 
         super.onAttachedToWindow()
         vehiclePanel = readVehiclePanel()
         try {
-            for (key in listOf("key_screen_show", "key_vpa_cui_show_left")) {
+            for (key in listOf(MazdaPlatform.KEY_SCREEN_SHOW, MazdaPlatform.KEY_VPA_LEFT)) {
                 context.contentResolver.registerContentObserver(Settings.Global.getUriFor(key), false, observer)
             }
             observing = true
@@ -124,8 +124,8 @@ internal class MzdCarAppLayout(context: Context, private val carPlayProjection: 
     }
 
     private fun readVehiclePanel(): Boolean = try {
-        Settings.Global.getInt(context.contentResolver, "key_screen_show", 0) != 0 ||
-            Settings.Global.getInt(context.contentResolver, "key_vpa_cui_show_left", 0) == 1
+        Settings.Global.getInt(context.contentResolver, MazdaPlatform.KEY_SCREEN_SHOW, 0) != 0 ||
+            Settings.Global.getInt(context.contentResolver, MazdaPlatform.KEY_VPA_LEFT, 0) == 1
     } catch (_: SecurityException) { false }
 
     companion object {

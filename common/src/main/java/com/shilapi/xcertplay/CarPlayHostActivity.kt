@@ -599,6 +599,7 @@ class CarPlayHostActivity : ComponentActivity() {
         loadPersistedSettings()
         locationPermissionAvailable = hasFineLocationPermission()
         setContentView(MzdCarAppLayout(this, carPlayProjection = true).apply { setPanelContent(buildContentView()) })
+        MazdaCockpitProbe.attach(this, PROBE_TAG, savedInstanceState != null)
         applyFullscreenMode()
         onBackPressedDispatcher.addCallback(
             this,
@@ -817,6 +818,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        MazdaCockpitProbe.note(this, PROBE_TAG, "resumed")
         hostAppearanceResumed = true
         val savedNightMode = AirPlayPersistence.loadCarPlayNightMode(this)
         val savedThreshold = AirPlayPersistence.loadAmbientLightThreshold(this)
@@ -1203,6 +1205,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     // Hardware navigation belongs to the iPhone-rendered CarPlay UI, not Android View focus.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        MazdaCockpitProbe.key(this, PROBE_TAG, event)
         val physicalKey = Triple(event.deviceId, event.keyCode, event.scanCode)
         val downOrUp = event.action == KeyEvent.ACTION_DOWN || event.action == KeyEvent.ACTION_UP
         if (downOrUp && physicalKey in legacySiriPresses) {
@@ -1279,6 +1282,7 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        MazdaCockpitProbe.note(this, PROBE_TAG, "paused")
         hostAppearanceResumed = false
         AppAppearanceRuntime.clearHost(this)
         nightModeController.pause()
@@ -1356,6 +1360,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        MazdaCockpitProbe.configuration(this, PROBE_TAG, newConfig)
         refreshConfiguration(newConfig, ThemeModeDiagnostics.Source.CALLBACK)
         applyFullscreenMode()
         stageStatusView?.maxWidth = (resources.displayMetrics.widthPixels * 0.78f).toInt()
@@ -1368,6 +1373,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     override fun onMultiWindowModeChanged(isInMultiWindowMode: Boolean, newConfig: Configuration) {
         super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
+        MazdaCockpitProbe.note(this, PROBE_TAG, "multiWindow=$isInMultiWindowMode")
         applyFullscreenMode()
         videoView?.post {
             val view = videoView ?: return@post
@@ -1376,6 +1382,7 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        MazdaCockpitProbe.detach(this)
         resetSidePanel()
         hostAppearanceResumed = false
         AppAppearanceRuntime.clearHost(this)
@@ -5259,6 +5266,7 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private companion object {
+        const val PROBE_TAG = "carplay"
         const val CLUSTER_SMALL_WINDOW_ON = 1
         const val CLUSTER_SMALL_WINDOW_AUTO = 2
         const val SIDE_PANEL_REFRESH_MILLIS = 5_000L

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">Sonda EZ-60</string>
+    <string name="settings_probe_description">Mide las dos mitades de la pantalla, el decodificador de vídeo, el Wi-Fi, el USB, el audio y los botones de este coche para ajustar DiPlay al Mazda EZ-60. No se envía nada automáticamente.</string>
+    <string name="settings_probe_run">Ejecutar sonda EZ-60</string>
+    <string name="settings_probe_running">Ejecutando sonda…</string>
+    <string name="settings_probe_record_start">Empezar a grabar eventos</string>
+    <string name="settings_probe_record_stop">Detener la grabación de eventos</string>
+    <string name="settings_probe_recording_hint">Grabando. Ahora desliza DiPlay a la otra mitad de la pantalla y vuelve, activa el asistente de voz, pulsa cada botón del volante, cambia entre día y noche y conecta el iPhone. Después detén la grabación y ejecuta la sonda.</string>
+    <string name="settings_probe_view">Ver informe de la sonda</string>
+    <string name="settings_probe_share">Abrir en el iPhone</string>
+    <string name="settings_probe_share_url">En un iPhone conectado a la misma red Wi-Fi que el coche (el punto de acceso del coche o el del iPhone), abre en Safari:\n%1$s</string>
+    <string name="settings_probe_share_unavailable">El coche no está conectado a ninguna red Wi-Fi. Activa el punto de acceso del coche o conéctate al del iPhone e inténtalo de nuevo.</string>
+</resources>
