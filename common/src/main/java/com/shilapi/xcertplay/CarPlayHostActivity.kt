@@ -2097,7 +2097,8 @@ class CarPlayHostActivity : ComponentActivity() {
             )
             updateResolutionMenu()
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        // The EZ-60 ignores the software HEVC decoder (see AirPlayPersistence.loadHevcSoftwareDecoderEnabled).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !MazdaPlatform.isEz60) {
             content.addView(
                 softwareHevcRow.rowView,
                 LinearLayout.LayoutParams(

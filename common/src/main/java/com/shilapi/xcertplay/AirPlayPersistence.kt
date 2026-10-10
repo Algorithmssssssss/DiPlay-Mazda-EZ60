@@ -173,7 +173,9 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadHevcSoftwareDecoderEnabled(context: Context): Boolean =
+    // Not on the EZ-60: Android's software HEVC decoder is rated to 1920 wide, and at 2496x1080 it took
+    // 19-67 ms a frame (p90 up to 143 ms) where the hardware H.264 decoder takes 6-13 ms.
+    fun loadHevcSoftwareDecoderEnabled(context: Context): Boolean = !MazdaPlatform.isEz60 &&
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_HEVC_SOFTWARE_DECODER, false)
 
@@ -322,9 +324,14 @@ object AirPlayPersistence {
 
     fun loadWifiP2pPreferredChannel(context: Context): Int = runCatching {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_WIFI_P2P_PREFERRED_CHANNEL, WifiP2pChannels.AUTO)
-            .takeIf(WifiP2pChannels::isValid) ?: WifiP2pChannels.AUTO
-    }.getOrDefault(WifiP2pChannels.AUTO)
+            .getInt(KEY_WIFI_P2P_PREFERRED_CHANNEL, defaultWifiP2pChannel)
+            .takeIf(WifiP2pChannels::isValid) ?: defaultWifiP2pChannel
+    }.getOrDefault(defaultWifiP2pChannel)
+
+    // The EZ-60 answers 5 GHz group requests with a passing "busy"; Auto then walked on to 2.4 GHz, where
+    // the picture dropped to 5-9 fps, and remembered it. Auto 5 GHz retries inside the band instead.
+    private val defaultWifiP2pChannel: Int
+        get() = if (MazdaPlatform.isEz60) WifiP2pChannels.AUTO_5_GHZ else WifiP2pChannels.AUTO
 
     fun saveWifiP2pPreferredChannel(context: Context, channel: Int) {
         require(WifiP2pChannels.isValid(channel))

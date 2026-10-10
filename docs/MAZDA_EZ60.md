@@ -60,6 +60,12 @@ car hotspot's name and password: without them **Connect** returns to Connection 
 
 - **Frame rate:** **Settings → Display** sets it; the EZ-60 starts at 60 fps. A build that saved 30 keeps 30
   until it is changed there.
+- **Video format:** keep HEVC off. The hardware H.264 decoder takes 6–13 ms a frame at 2496×1080; the
+  hardware HEVC decoder manages only 31–70 fps there, and Android's software HEVC decoder took 19–67 ms a
+  frame (it is ignored on the EZ-60).
+- **Wi-Fi Direct band:** the EZ-60 starts on **Auto 5 GHz**. With plain Auto, a passing "Wi-Fi P2P is busy"
+  answer to the 5 GHz requests sent the group to 2.4 GHz channel 6, where the picture fell to 5–9 fps,
+  and Auto then remembered that channel. A channel chosen in Connection setup still takes priority.
 - **Wi-Fi pauses:** if the car is joined to another Wi-Fi network on a different channel, its radio
   switches between that channel and CarPlay's, and the picture stops for up to a second at a time. The
   iPhone's own Personal Hotspot is the usual case: then the iPhone switches channels too. Turn the hotspot
