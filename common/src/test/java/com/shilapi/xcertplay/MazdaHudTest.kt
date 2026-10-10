@@ -6,17 +6,17 @@ import org.junit.Test
 
 class MazdaHudTest {
     @Test fun turnsUseTheCarsHudIcons() {
-        // AMap icon codes from DiPlay's guidance -> the turnIds the car's navigation apps send.
-        assertEquals(7, MazdaHud.turnId(2, 0))
-        assertEquals(8, MazdaHud.turnId(3, 0))
-        assertEquals(9, MazdaHud.turnId(4, 0))
-        assertEquals(10, MazdaHud.turnId(5, 0))
-        assertEquals(11, MazdaHud.turnId(6, 0))
-        assertEquals(12, MazdaHud.turnId(7, 0))
-        assertEquals(13, MazdaHud.turnId(8, 0))
-        assertEquals(13, MazdaHud.turnId(19, 0))
-        assertEquals(14, MazdaHud.turnId(9, 0))
-        assertEquals(26, MazdaHud.turnId(15, 0))
+        // AMap icon codes from DiPlay's guidance -> the turnIds EZNav's frame builder sends to the car.
+        assertEquals(19, MazdaHud.turnId(2, 0))
+        assertEquals(20, MazdaHud.turnId(3, 0))
+        assertEquals(18, MazdaHud.turnId(4, 0))
+        assertEquals(17, MazdaHud.turnId(5, 0))
+        assertEquals(21, MazdaHud.turnId(6, 0))
+        assertEquals(22, MazdaHud.turnId(7, 0))
+        assertEquals(23, MazdaHud.turnId(8, 0))
+        assertEquals(23, MazdaHud.turnId(19, 0))
+        assertEquals(16, MazdaHud.turnId(9, 0))
+        assertEquals(3, MazdaHud.turnId(15, 0))
         assertEquals(0, MazdaHud.turnId(0, 0))
     }
 
@@ -25,14 +25,14 @@ class MazdaHudTest {
         assertEquals(83, MazdaHud.turnId(17, 10))
         assertEquals(53, MazdaHud.turnId(11, 0))
         assertEquals(53, MazdaHud.turnId(11, 12))
-        assertEquals(20, MazdaHud.turnId(12, 2))
+        assertEquals(53, MazdaHud.turnId(12, 2))
     }
 
     @Test fun aFrameCarriesDistanceRoadAndWhatIsLeft() {
         val guidance = ClusterTurnGuidance(icon = 2, roundaboutExit = 0, distanceMeters = 350, road = "Street 214",
             remainingSeconds = 960, remainingMeters = 12_400)
-        assertEquals(MazdaHud.Frame(7, 350, "", "Street 214", 12_400, 960), MazdaHud.frame(guidance))
-        assertEquals(MazdaHud.Frame(14, 0, "", "", 0, 0),
+        assertEquals(MazdaHud.Frame(19, 350, "", "Street 214", 12_400, 960), MazdaHud.frame(guidance))
+        assertEquals(MazdaHud.Frame(16, 0, "", "", 0, 0),
             MazdaHud.frame(ClusterTurnGuidance(icon = 9, roundaboutExit = 0, distanceMeters = -5, road = "")))
     }
 

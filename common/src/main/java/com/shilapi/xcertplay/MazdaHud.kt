@@ -196,19 +196,23 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             remainingSeconds = guidance.remainingSeconds?.coerceIn(0, Int.MAX_VALUE.toLong())?.toInt() ?: 0,
         )
 
-        /** AMap icon (BydClusterFrame) -> the car's HUD turn icon, as the car's navigation apps number them. */
+        /**
+         * AMap icon (BydClusterFrame) -> the car's HUD turn icon, numbered as EZNav's frame builder sends them
+         * (c2.B4.c and D2.p.b; EZNav's ↖ at 18 confirmed on the car's HUD, 2026-10-11). The HUD draws no arrow
+         * for an unknown number.
+         */
         fun turnId(amapIcon: Int, roundaboutExit: Int): Int = when (amapIcon) {
-            2 -> 7 // left
-            3 -> 8 // right
-            4 -> 9 // slight left
-            5 -> 10 // slight right
-            6 -> 11 // sharp left
-            7 -> 12 // sharp right
-            8, 19 -> 13 // U-turn
-            9 -> 14 // straight
+            2 -> 19 // left
+            3 -> 20 // right
+            4 -> 18 // slight left, keep left, ramp left
+            5 -> 17 // slight right, keep right, ramp right
+            6 -> 21 // sharp left
+            7 -> 22 // sharp right
+            8, 19 -> 23 // U-turn
+            9 -> 16 // straight
             11, 17 -> if (roundaboutExit in 1..10) 73 + roundaboutExit else 53 // enter roundabout (take exit n)
-            12, 18 -> if (roundaboutExit in 1..5) 18 + roundaboutExit else 53 // leave roundabout
-            15 -> 26 // destination
+            12, 18 -> 53 // leave roundabout
+            15 -> 3 // destination
             else -> 0 // no maneuver: no arrow
         }
 

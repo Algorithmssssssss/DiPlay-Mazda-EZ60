@@ -6,7 +6,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Point
-import android.graphics.RectF
 import android.graphics.SurfaceTexture
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
@@ -26,7 +25,7 @@ import com.shilapi.xcertplay.hud.ClusterTurnGuidance
  * DiPlay's window on the EZ-60 HUD's 800x480 display ("MeterDisplay#0"). The HUD projects only the
  * [MazdaHud.VISIBLE_LEFT]..[MazdaHud.VISIBLE_BOTTOM] part of it, and only while DiPlay holds navigation focus
  * ([MazdaHud]); black is not projected. In that part: CarPlay's instrument-cluster map while the iPhone streams
- * it, with a small turn chip in its corner, or a full turn card when there is no map.
+ * it, or a turn card when there is no map. The HUD draws the arrow and distance next to it itself.
  */
 internal class MazdaHudScreen(
     context: Context,
@@ -63,7 +62,7 @@ internal class MazdaHudScreen(
         }
         val turnCard = MazdaHudCardView(context).apply {
             guidance = this@MazdaHudScreen.guidance
-            compact = mapActive
+            visibility = if (mapActive) View.INVISIBLE else View.VISIBLE
         }
         card = turnCard
         val area = FrameLayout(context).apply {
@@ -79,10 +78,10 @@ internal class MazdaHudScreen(
         })
     }
 
-    /** The cluster map stream started or stopped: the turn card fills the area only without it. */
+    /** The cluster map stream started or stopped: the turn card shows only without it. */
     fun setMapActive(active: Boolean) {
         mapActive = active
-        card?.compact = active
+        card?.visibility = if (active) View.INVISIBLE else View.VISIBLE
     }
 
     internal companion object {
@@ -98,18 +97,9 @@ internal class MazdaHudScreen(
     }
 }
 
-/**
- * Arrow, distance and road for the HUD area, bright on black (black is not projected). [compact] draws only a
- * small arrow-and-distance chip in the top-left corner, over CarPlay's map.
- */
+/** Arrow, distance and road for the HUD area, bright on black (black is not projected). */
 internal class MazdaHudCardView(context: Context) : View(context) {
     var guidance: ClusterTurnGuidance? = null
-        set(value) {
-            if (field == value) return
-            field = value
-            invalidate()
-        }
-    var compact = false
         set(value) {
             if (field == value) return
             field = value
@@ -126,18 +116,12 @@ internal class MazdaHudCardView(context: Context) : View(context) {
         color = Color.rgb(220, 220, 220)
         textAlign = Paint.Align.CENTER
     }
-    private val chipPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(200, 0, 0, 0) }
-    private val chip = RectF()
     private var glyph: Drawable? = null
     private var glyphRes = 0
 
     override fun onDraw(canvas: Canvas) {
         val next = guidance ?: return
         if (next.icon == 0) return
-        if (compact) drawChip(canvas, next) else drawCard(canvas, next)
-    }
-
-    private fun drawCard(canvas: Canvas, next: ClusterTurnGuidance) {
         val w = width.toFloat()
         val h = height.toFloat()
         val side = minOf(w, h * 0.52f)
@@ -149,16 +133,6 @@ internal class MazdaHudCardView(context: Context) : View(context) {
         val road = TextUtils.ellipsize(ClusterTurnCardView.roadLabel(context, next), roadPaint, w - 8f,
             TextUtils.TruncateAt.END).toString()
         canvas.drawText(road, w / 2f, minOf(h - 4f, distanceY + roadPaint.textSize * 1.3f), roadPaint)
-    }
-
-    private fun drawChip(canvas: Canvas, next: ClusterTurnGuidance) {
-        val side = height * 0.30f
-        distancePaint.textSize = height * 0.11f
-        chip.set(4f, 4f, 4f + side * 1.5f, 4f + side + distancePaint.textSize * 1.4f)
-        canvas.drawRoundRect(chip, 10f, 10f, chipPaint)
-        drawGlyph(canvas, next, chip.centerX() - side / 2f, chip.top + 2f, side)
-        canvas.drawText(ClusterTurnCardView.distanceLabel(context, next.distanceMeters), chip.centerX(),
-            chip.bottom - distancePaint.textSize * 0.35f, distancePaint)
     }
 
     private fun drawGlyph(canvas: Canvas, next: ClusterTurnGuidance, left: Float, top: Float, side: Float) {
