@@ -14,10 +14,11 @@ update check in About is off, because upstream releases are a different app.
 | Driver panel | CarPlay fills the 2496×1080 panel at `[64,192]–[2560,1272]` and narrows to 1728×1080 when the car shows its left vehicle panel or voice assistant, without reconnecting. Geometry from the car's own apps, via [TidePlayer's measurements](https://github.com/JulyStar-Lv/TidePlayer/blob/main/docs/automotive/CAR_WINDOW_PROFILES.md). Not yet seen with CarPlay running. |
 | Passenger half | The panel mirrors the driver's: `[0,192]–[2496,1272]` in the window, 1728 wide while the right voice assistant shows. This mirroring is assumed, not measured. |
 | Two-finger swipe | Moves the window between halves without resizing or relaunching it, so CarPlay keeps its session; the panel follows the new half. |
-| Opening on the launch half | Unknown for the CarPlay screen, which opens in its own task. **Test CarPlay window** in the probe answers it. |
+| Opening on the launch half | Works without changes: a window opened the way the CarPlay screen is opens on DiPlay's half (tested on both halves). Opening DiPlay from the other half's app list moves it there. |
 | Video | H.264 at 2496×1080. DiPlay now tries the car's separate low-latency decoder first. |
 | Wheel keys | Previous, next and play/pause arrive as standard media keys. |
-| Wi-Fi, USB, audio | Upstream behaviour so far. |
+| USB | An iPhone on the USB port appears as a USB data device (Apple `05ac:12a8`, 12 interfaces), so wired CarPlay has a data path. |
+| Wi-Fi, audio | Upstream behaviour so far. |
 
 ## Measured on the car
 
@@ -25,7 +26,8 @@ From the EZ-60 probe on 2026-10-10 (CAMZD OS build 20250930150736):
 
 - **Platform:** Wutong/Tinnove J90K, Android 14 (Android Automotive), MediaTek MT8676.
 - **Screen:** one 5120×1440 display with one touch panel. DiPlay's window is 2560×1440 on either half: the left half belongs to the car's left task group, the right half to the "copilot" group. A 160 px status bar is at the top and a 136 px dock at the bottom of each half. The system reports 160 dpi, which is nominal; the panel is about 0.126 mm per pixel.
-- **Swipe:** `global.fly_to_right_status` goes 1 (to the passenger half) or 2 (back), the window moves within about 0.2 s, and `copilot_display_status` / `main_display_status` name the app on each half.
+- **Swipe:** `global.fly_to_right_status` goes 1 (to the passenger half) or 2 (back), the window moves within about 0.2 s, and `copilot_display_status` / `main_display_status` name the app on each half. The app is not relaunched; it gets a configuration change with the new bounds.
+- **New tasks:** a separate task started from DiPlay opens on DiPlay's half. Launching DiPlay from the other half's app list moves its task to that half.
 - **Video decoders:** `c2.mtk.avc.decoder` (no low-latency mode) and `c2.mtk.avc.decoder.lowlatency`. H.264 at 2496×1080 is good for 87–191 fps, HEVC for 31–70 fps. No decoder accepts 5120 wide (the limit is 4096).
 - **Wi-Fi:** 5 GHz and 6 GHz, Wi-Fi Direct, hotspot and client at the same time. The hotspot interface is `ap0`.
 - **Audio:** Android Automotive buses for media, navigation, calls, ringtone and voice per seat; the car sets the volume.
