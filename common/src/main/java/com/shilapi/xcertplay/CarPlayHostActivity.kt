@@ -349,6 +349,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private val clusterLayers = mutableMapOf<Boolean, ClusterMapPresentation>()
     private var clusterTurnGuidance: com.shilapi.xcertplay.hud.ClusterTurnGuidance? = null
     private var mazdaHud: MazdaHud? = null
+    private var mazdaHudScreen: MazdaHudScreen? = null
     private val clusterTurnOverlayListener: (com.shilapi.xcertplay.hud.ClusterTurnGuidance?) -> Unit = { guidance ->
         runOnUiThread {
             clusterTurnGuidance = guidance
@@ -1079,6 +1080,11 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun ensureClusterPresentation() {
+        // The EZ-60 has no instrument cluster: the cluster stream goes to the HUD window instead.
+        if (MazdaPlatform.isEz60) {
+            if (MazdaHudSettings.enabled(this)) ensureMazdaHudScreen() else dismissMazdaHudScreen()
+            return
+        }
         if (!AirPlayPersistence.loadClusterMapEnabled(this)) {
             dismissClusterPresentation()
             return
@@ -1255,6 +1261,17 @@ class CarPlayHostActivity : ComponentActivity() {
         adbClusterConfigured = false
         clusterStreamOnDisplay = false
         requestedSmallWindowForStream = null
+        // EZ-60: CarPlay's cluster map at about the HUD area's own size, so text stays legible there.
+        if (MazdaPlatform.isEz60) {
+            if (!MazdaHudSettings.enabled(this)) return null
+            clusterStreamOnDisplay = true
+            return CarPlayClusterDisplay.config(MazdaHudScreen.AREA_WIDTH, MazdaHudScreen.AREA_HEIGHT,
+                scalePercent = 100, content = CarPlayClusterDisplay.Content.MAP,
+                baseSafeArea = CarPlayClusterDisplay.VIRTUAL_SAFE_AREA_PERCENT).also {
+                MapMirrors.streamAspect = it.widthPixels.toDouble() / it.heightPixels
+                appendLog("HUD: requesting the CarPlay cluster map at ${it.widthPixels}x${it.heightPixels}")
+            }
+        }
         if (!AirPlayPersistence.loadClusterMapEnabled(this)) return null
         if (AdbClusterRouter.enabled(this) && ClusterActivityOutput.hasConfirmedRoute()) {
             adbClusterConfigured = true
@@ -1494,7 +1511,8 @@ class CarPlayHostActivity : ComponentActivity() {
         val presented = surface != null && presentation?.isShowing == true && presentation.mapVisible &&
             presentation.outputSurface === surface
         val direct = surface != null && adbClusterConfigured && ClusterActivityOutput.hasConfirmedRoute()
-        controller?.setDashboardMapOutputVisible(presented || direct)
+        val hud = surface != null && mazdaHudScreen?.isShowing == true && mazdaHudScreen?.outputSurface === surface
+        controller?.setDashboardMapOutputVisible(presented || direct || hud)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -1524,6 +1542,7 @@ class CarPlayHostActivity : ComponentActivity() {
         MazdaCockpitProbe.detach(this)
         mazdaHud?.close()
         mazdaHud = null
+        dismissMazdaHudScreen()
         resetSidePanel()
         releaseSidePanelEffects()
         hostAppearanceResumed = false
@@ -5511,10 +5530,48 @@ class CarPlayHostActivity : ComponentActivity() {
         if (isDestroyed || !MazdaHudSettings.enabled(this)) {
             mazdaHud?.close()
             mazdaHud = null
+            dismissMazdaHudScreen()
             return
         }
         val hud = mazdaHud ?: MazdaHud(applicationContext, ::appendLog).also { mazdaHud = it }
         hud.update(guidance)
+        mazdaHudScreen?.guidance = guidance
+    }
+
+    // EZ-60: the cluster map stream and the turn card go to DiPlay's window on the HUD display.
+    private fun ensureMazdaHudScreen() {
+        if (mazdaHudScreen?.isShowing == true) return
+        val display = MazdaHudScreen.findDisplay(this) ?: run {
+            appendLog("HUD: map window: no 800x480 HUD display")
+            return
+        }
+        val screen = MazdaHudScreen(this, display) { surface -> runOnUiThread { onClusterSurface(surface) } }
+        screen.setOnDismissListener {
+            if (mazdaHudScreen === screen) {
+                mazdaHudScreen = null
+                updateClusterMapShown()
+            }
+        }
+        try {
+            screen.show()
+            mazdaHudScreen = screen
+            screen.setMapActive(SCREEN_TYPE_ALT in activeScreenStreamTypes)
+            screen.guidance = clusterTurnGuidance
+            screen.outputSurface?.let(::onClusterSurface)
+            updateClusterMapShown()
+            appendLog("HUD: map window shown display=${display.displayId}")
+        } catch (error: RuntimeException) {
+            appendLog("HUD: map window failed ${error.javaClass.simpleName}: ${error.message}")
+        }
+    }
+
+    private fun dismissMazdaHudScreen() {
+        val screen = mazdaHudScreen ?: return
+        mazdaHudScreen = null
+        clusterSurface?.let { sink?.clearSurface(SCREEN_TYPE_ALT, it) }
+        clusterSurface = null
+        runCatching { screen.dismiss() }
+        updateClusterMapShown()
     }
 
     private fun showDiPlayHome(page: String = "home") {
@@ -5895,6 +5952,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 Log.i(ClusterMapPresentation.TAG, "cluster stream active=$active")
                 appendLog("Cluster map: stream active=$active")
                 clusterPresentation?.setStreamActive(active)
+                mazdaHudScreen?.setMapActive(active)
                 ClusterActivityOutput.setStreamActive(active)
                 MapMirrors.setStreamActive(active)
                 if (active) {

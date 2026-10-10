@@ -103,6 +103,13 @@ default) feeds it with CarPlay's route guidance, which Google Maps and Apple Map
 | Each update | `sendNavigateRoadInfo(current, next)` when the roads change, `sendNavigateTurnInfo(turnId, metres)`, `sendNavigateRemainInfo(metres, seconds)`: a new turn or road at once, other changes at most once a second |
 | Guidance ends | remaining 0/0, empty roads, turn 0/0, `sendNavigateStatus(0)`, `abandonNaviFocus` |
 
+While DiPlay holds navigation focus, the HUD also projects the (573,167)–(800,355) area, 227×188 pixels, of
+its 800×480 display (`MeterDisplay#0`); confirmed with the probe's test card on 2026-10-11. The HUD draws the
+distance and remaining route itself; DiPlay's window fills that area with CarPlay's instrument-cluster map
+(requested at 232×192 with the car marker centred) and a small turn chip in its corner, or with a full turn
+card while the iPhone sends no map. The HUD switch also turns the map off; the change applies at the next
+connection.
+
 Only these navigation calls are made, from a background thread, and the session log records each step
 (`HUD: ...`). Turn icons follow the car's numbering: 7 left, 8 right, 9/10 slight, 11/12 sharp, 13 U-turn,
 14 straight, 26 destination, 53 roundabout, 74–83 roundabout exit 1–10. No vehicle properties are written.
