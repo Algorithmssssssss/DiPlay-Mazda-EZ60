@@ -65,9 +65,10 @@
         <service android:name="com.shilapi.xcertplay.DiPlaySessionService"
             android:exported="false" android:foregroundServiceType="connectedDevice|microphone|location" />
 
+        <!-- One task with the DiPlay screens: the EZ-60's two-finger swipe moves a whole task to the other
+             half, and a separate CarPlay task left the DiPlay menu behind. -->
         <activity
             android:name="com.shilapi.xcertplay.CarPlayHostActivity"
-            android:taskAffinity="${applicationId}.carplay"
             android:configChanges="density|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
             android:exported="true"
             android:launchMode="singleTask"

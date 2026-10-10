@@ -9,8 +9,8 @@ import android.widget.TextView
 import com.shilapi.xcertplay.host.R
 
 /**
- * EZ-60 probe: opens the way the CarPlay screen does (its own task, one instance, same flags) without
- * needing CarPlay, so the recorder shows which half of the cockpit the car puts it on. Tap to close.
+ * EZ-60 probe: opens in its own task (one instance, the flags DiPlay opens CarPlay with) without needing
+ * CarPlay, so the recorder shows which half of the cockpit the car puts a new task on. Tap to close.
  */
 class MazdaProbeWindowActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {

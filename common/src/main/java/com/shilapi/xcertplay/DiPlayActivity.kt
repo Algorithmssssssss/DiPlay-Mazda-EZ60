@@ -368,7 +368,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         super.onNewIntent(intent); setIntent(intent)
         MazdaCockpitProbe.note(this, PROBE_TAG, "new intent launcher=${isLauncherIntent(intent)}")
         connectionSettingsReturnCategory = null
-        // CarPlay runs in its own task, so the launcher icon resumes this one. Settings opened from
+        // The launcher icon can resume this screen above a live CarPlay screen. Settings opened from
         // CarPlay carry a "page" extra, which isLauncherIntent rejects.
         if (isLauncherIntent(intent) && CarPlayBackgroundSession.hasSession()) {
             page = "home"; render(); openProjection(); return
@@ -4477,13 +4477,15 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         val open = {
             AirPlayPersistence.saveWirelessEnabled(this, wireless)
             step("open CarPlay screen")
-            openProjection()
+            openProjection(connect = true)
         }
         if (CarPlayBackgroundSession.hasSession()) CarPlayBackgroundSession.stop { runOnUiThread { open() } }
         else open()
     }
-    private fun openProjection() {
+    /** [connect]: a Connect tap, which makes an idle CarPlay screen start over with the chosen transport. */
+    private fun openProjection(connect: Boolean = false) {
         startActivity(Intent(this, CarPlayHostActivity::class.java)
+            .putExtra(EXTRA_CONNECT, connect)
             .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NO_ANIMATION))
         overridePendingTransition(0, 0)
     }
@@ -5344,6 +5346,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER) &&
                 !intent.hasExtra("page")
         private var openWindow: WeakReference<DiPlayActivity>? = null
+        internal const val EXTRA_CONNECT = "connect"
 
         internal fun closeWindowForCarHome() {
             openWindow?.get()?.finish()

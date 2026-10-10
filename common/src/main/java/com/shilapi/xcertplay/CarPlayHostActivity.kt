@@ -734,6 +734,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     private fun requestVpnConsent() {
         if (awaitingVpnConsent) return
+        vpnConsentScreenMissing = false
         // Wired CarPlay needs a VPN. On the Mazda EZ-60 (Android 14 Automotive) asking for it crashed the app.
         val consent = try {
             CarPlayVpnService.prepare(this)
@@ -803,6 +804,10 @@ class CarPlayHostActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        if (intent.getBooleanExtra(DiPlayActivity.EXTRA_CONNECT, false)) {
+            intent.removeExtra(DiPlayActivity.EXTRA_CONNECT)
+            restartIdleStartup()
+        }
         if (isIphoneUsbAttachment(intent)) {
             if (wirelessEnabled) {
                 if (menuOpen) cancelSettingsEdits()
@@ -817,6 +822,21 @@ class CarPlayHostActivity : ComponentActivity() {
                 requestStartupPrerequisites()
             }
         }
+    }
+
+    /**
+     * A Connect tap that finds this screen already open but idle (a failed VPN, permissions never asked
+     * because it was opened for the other transport) starts over with the current settings. Only taps do
+     * this, so a refused permission is not asked again on every resume.
+     */
+    private fun restartIdleStartup() {
+        if (controller != null || CarPlayBackgroundSession.hasSession() || menuOpen || shuttingDown.get()) return
+        loadConnectionSettings()
+        wirelessPermissionsReady = !wirelessEnabled || hasRequiredWirelessPermissions()
+        awaitingVpnConsent = false
+        appendLog("Connect requested again; transport=${if (wirelessEnabled) "wireless" else "wired"}")
+        if (microphonePermissionResolved) requestStartupPrerequisites()
+        else microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
     }
 
     private fun isIphoneUsbAttachment(intent: Intent): Boolean {
