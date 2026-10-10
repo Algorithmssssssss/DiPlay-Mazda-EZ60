@@ -350,6 +350,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var clusterTurnGuidance: com.shilapi.xcertplay.hud.ClusterTurnGuidance? = null
     private var mazdaHud: MazdaHud? = null
     private var mazdaHudScreen: MazdaHudScreen? = null
+    private val mazdaHudMediaLog: (String) -> Unit = { appendLog(it) }
     private val clusterTurnOverlayListener: (com.shilapi.xcertplay.hud.ClusterTurnGuidance?) -> Unit = { guidance ->
         runOnUiThread {
             clusterTurnGuidance = guidance
@@ -648,6 +649,7 @@ class CarPlayHostActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         NavigationWidgetUpdater.attach(applicationContext)
         CarPlayCallKeys.install(applicationContext)
+        MazdaHudMedia.log = mazdaHudMediaLog
         CenterMapOverlay.requestShow = ::showCenterMap
         MapMirrors.sink = mirrorSink
         MapMirrors.onChanged = mirrorsChanged
@@ -1543,6 +1545,7 @@ class CarPlayHostActivity : ComponentActivity() {
         mazdaHud?.close()
         mazdaHud = null
         dismissMazdaHudScreen()
+        if (MazdaHudMedia.log === mazdaHudMediaLog) MazdaHudMedia.log = null
         resetSidePanel()
         releaseSidePanelEffects()
         hostAppearanceResumed = false

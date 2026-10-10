@@ -2,4 +2,6 @@
 <resources>
     <string name="settings_mazda_hud">Turn-by-turn on the HUD (experimental)</string>
     <string name="settings_mazda_hud_description">Shows CarPlay’s next turn, distance and road on the windshield head-up display while CarPlay navigation is guiding. Applies at the next turn update.</string>
+    <string name="settings_mazda_hud_song">Song on the HUD (experimental)</string>
+    <string name="settings_mazda_hud_song_description">Shows the song and artist playing in CarPlay on the windshield head-up display, in the line where the car shows lyrics.</string>
 </resources>

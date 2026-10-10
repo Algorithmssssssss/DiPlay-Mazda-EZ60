@@ -1909,10 +1909,15 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 getString(R.string.sends_precise_android_location_as_carplay_gps_data_when_th),
                 AirPlayPersistence.loadLocationReportingEnabled(this), save = ::onLocationReportingChanged)
             card.addView(label(getString(R.string.location_reporting_reconnects), 14, MUTED))
-            // Only the EZ-60 has this head-up display; the switch is shown there alone.
+            // Only the EZ-60 has this head-up display; its switches are shown there alone.
             if (MazdaPlatform.isEz60) {
                 toggle(card, getString(R.string.settings_mazda_hud), getString(R.string.settings_mazda_hud_description),
                     MazdaHudSettings.enabled(this)) { MazdaHudSettings.save(this, it) }
+                toggle(card, getString(R.string.settings_mazda_hud_song),
+                    getString(R.string.settings_mazda_hud_song_description), MazdaHudSettings.song(this)) {
+                    MazdaHudSettings.saveSong(this, it)
+                    MazdaHudMedia.settingChanged(this)
+                }
             }
         }
         // Cluster video does not require a BYD navigation broadcast receiver.

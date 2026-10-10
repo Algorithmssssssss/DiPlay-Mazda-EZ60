@@ -2,4 +2,6 @@
 <resources>
     <string name="settings_mazda_hud">Підказки поворотів на HUD (експериментально)</string>
     <string name="settings_mazda_hud_description">Показує наступний поворот, відстань і дорогу з CarPlay на проєкційному дисплеї на лобовому склі під час навігації CarPlay. Застосовується під час наступного оновлення повороту.</string>
+    <string name="settings_mazda_hud_song">Пісня на HUD (експериментально)</string>
+    <string name="settings_mazda_hud_song_description">Показує пісню й виконавця з CarPlay на проєкційному дисплеї, у рядку, де автомобіль показує текст пісні.</string>
 </resources>

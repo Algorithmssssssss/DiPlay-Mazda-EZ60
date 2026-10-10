@@ -2,4 +2,6 @@
 <resources>
     <string name="settings_mazda_hud">Indicaciones en el HUD (experimental)</string>
     <string name="settings_mazda_hud_description">Muestra el próximo giro, la distancia y la calle de CarPlay en el HUD del parabrisas mientras la navegación de CarPlay te guía. Se aplica en la siguiente actualización del giro.</string>
+    <string name="settings_mazda_hud_song">Canción en el HUD (experimental)</string>
+    <string name="settings_mazda_hud_song_description">Muestra la canción y el artista que suenan en CarPlay en el HUD del parabrisas, en la línea donde el coche muestra la letra.</string>
 </resources>

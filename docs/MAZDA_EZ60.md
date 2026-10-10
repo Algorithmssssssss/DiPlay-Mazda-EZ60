@@ -116,6 +116,15 @@ right/left, 19 left, 20 right, 21/22 sharp left/right, 23 U-turn, 53 roundabout,
 With these the HUD draws its own arrow beside the distance and its 3D guidance chevrons (16, 19 and 3 confirmed
 with Google Maps on 2026-10-11). No vehicle properties are written.
 
+**Song on the HUD (experimental)** (same card, on by default) fills the HUD's music line the way the car's media
+center (`com.tinnove.mediacenter`) does: `requestMediaFocus(package, callback)`, then
+`sendMediaSource(json)` with the media center's song record (song, singer, album, play state and the current
+lyric line). CarPlay sends no lyrics, so the lyric line carries "song - artist". DiPlay sends it only while it
+holds Android audio focus for CarPlay music, as the media center does, so the two never take the HUD from each
+other; when CarPlay music stops or another source plays, it sends the media center's empty record and calls
+`abandonMediaFocus`. The cover is not sent yet: the media center hands the HUD a world-readable image file in
+its own shared folder.
+
 ## Build
 
 ```sh

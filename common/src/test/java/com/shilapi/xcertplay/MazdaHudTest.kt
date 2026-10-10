@@ -36,8 +36,8 @@ class MazdaHudTest {
             MazdaHud.frame(ClusterTurnGuidance(icon = 9, roundaboutExit = 0, distanceMeters = -5, road = "")))
     }
 
-    @Test fun onlyNavigationCallsAreAllowed() {
-        // Status, turn, road, remaining route, and taking and giving back navigation focus.
-        assertEquals(setOf(22, 24, 26, 27, 63, 64), MazdaHud.ALLOWED)
+    @Test fun onlyNavigationAndSongCallsAreAllowed() {
+        // Status, turn, road, remaining route, the song, and taking and giving back media or navigation focus.
+        assertEquals(setOf(22, 24, 26, 27, 37, 61, 62, 63, 64), MazdaInteractiveService.ALLOWED)
     }
 }

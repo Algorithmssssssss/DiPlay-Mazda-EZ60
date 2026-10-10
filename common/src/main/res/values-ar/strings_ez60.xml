@@ -2,4 +2,6 @@
 <resources>
     <string name="settings_mazda_hud">الإرشاد خطوة بخطوة على شاشة العرض الأمامية (تجريبي)</string>
     <string name="settings_mazda_hud_description">يعرض المنعطف التالي والمسافة والطريق من CarPlay على شاشة العرض الأمامية على الزجاج أثناء إرشاد CarPlay. يُطبَّق عند تحديث المنعطف التالي.</string>
+    <string name="settings_mazda_hud_song">الأغنية على شاشة العرض الأمامية (تجريبي)</string>
+    <string name="settings_mazda_hud_song_description">يعرض الأغنية والفنان من CarPlay على شاشة العرض الأمامية للزجاج، في السطر الذي تعرض فيه السيارة كلمات الأغاني.</string>
 </resources>

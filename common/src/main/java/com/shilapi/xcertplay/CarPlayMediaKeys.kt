@@ -147,6 +147,7 @@ internal object CarPlayMediaKeys {
                 // minutes. The position goes in the playback state.
                 if (metadataChanged) session?.setMetadata(androidMetadata(update, shownArtworkLocked()))
                 publishPlaybackStateLocked()
+                publishHudSongLocked()
             }
         }
     }
@@ -258,6 +259,7 @@ internal object CarPlayMediaKeys {
         focusHeld = request.request(audio) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         if (focusHeld) forwardGrantedFocusLocked()
         Log.i(TAG, "audio focus regained=$focusHeld")
+        publishHudSongLocked()
     }
 
     private fun updateLocked(active: Boolean) {
@@ -292,6 +294,7 @@ internal object CarPlayMediaKeys {
             isActive = true
         }
         Log.i(TAG, "media keys active focusGranted=$granted")
+        publishHudSongLocked()
     }
 
     private fun forwardGrantedFocusLocked() {
@@ -314,6 +317,7 @@ internal object CarPlayMediaKeys {
                 // Only permanent loss moves media keys elsewhere; transient losses come back.
                 if (change == AudioManager.AUDIOFOCUS_LOSS) focusHeld = false
                 else if (change == AudioManager.AUDIOFOCUS_GAIN) focusHeld = true
+                publishHudSongLocked()
                 true
             }
         }
@@ -346,6 +350,13 @@ internal object CarPlayMediaKeys {
         focusRequest?.let { request -> appContext?.getSystemService(AudioManager::class.java)?.let(request::abandon) }
         focusRequest = null
         focusHeld = false
+        publishHudSongLocked()
+    }
+
+    // EZ-60: the song on the windshield HUD while CarPlay music holds audio focus, as the car's own player does.
+    private fun publishHudSongLocked() {
+        val context = appContext ?: return
+        MazdaHudMedia.update(context, if (session != null && focusHeld) MazdaHudMedia.Song.of(nowPlaying) else null)
     }
 
     private fun publishPlaybackStateLocked() {
