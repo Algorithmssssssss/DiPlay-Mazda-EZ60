@@ -40,8 +40,11 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".hudtest"
+            // -Pez60.variant=next builds a test app that installs next to the working one instead of over it.
+            val next = providers.gradleProperty("ez60.variant").orNull == "next"
+            applicationIdSuffix = if (next) ".next" else ".hudtest"
             versionNameSuffix = "-hud-test"
+            manifestPlaceholders["ez60DebugLabel"] = if (next) "DiPlay EZ-60 Next" else "DiPlay EZ-60 Test"
         }
         release {
             optimization {

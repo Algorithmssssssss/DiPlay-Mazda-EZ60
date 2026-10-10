@@ -100,6 +100,10 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew :mobile:assembleDebug
 ```
 
+Add `-Pez60.variant=next` to build "DiPlay EZ-60 Next" (`com.reachkim.diplay.ez60.next`), which installs
+next to the working "DiPlay EZ-60 Test" app instead of over it, for trying a branch. Its settings, paired
+iPhone and VPN permission are its own.
+
 The APK is `mobile/build/outputs/apk/debug/mobile-debug.apk`. It has no CarPlay accessory identity, so
 it cannot connect an iPhone; it is enough for the probe. To build one that connects, see
 [Build a standalone car-test APK](BUILD.md#build-a-standalone-car-test-apk).
