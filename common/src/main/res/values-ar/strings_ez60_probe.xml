@@ -13,4 +13,9 @@
     <string name="settings_probe_share_unavailable">السيارة غير متصلة بأي شبكة Wi-Fi. شغّل نقطة اتصال السيارة أو اتصل بنقطة اتصال iPhone، ثم حاول مرة أخرى.</string>
     <string name="settings_probe_window_test">اختبار نافذة CarPlay</string>
     <string name="settings_probe_window_test_body">اختبار نافذة CarPlay\n\nسيفتح CarPlay هنا. انقر للإغلاق.</string>
+    <string name="settings_probe_meter_test">اختبار شاشة العدادات</string>
+    <string name="settings_probe_meter_card">اختبار DiPlay\n%1$s</string>
+    <string name="settings_probe_meter_shown">تظهر بطاقة الاختبار على الشاشة %1$s لمدة 20 ثانية. انظر إلى لوحة العدادات وشاشة العرض الأمامية.</string>
+    <string name="settings_probe_meter_failed">تعذّر عرض بطاقة الاختبار على الشاشة %1$s.</string>
+    <string name="settings_probe_meter_none">لا تحتوي هذه السيارة على شاشة ثانية للتطبيقات.</string>
 </resources>

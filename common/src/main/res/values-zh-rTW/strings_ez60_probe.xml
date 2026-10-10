@@ -13,4 +13,9 @@
     <string name="settings_probe_share_unavailable">車輛未連上任何 Wi-Fi 網路。請開啟車輛熱點或連上 iPhone 熱點，然後再試一次。</string>
     <string name="settings_probe_window_test">測試 CarPlay 視窗</string>
     <string name="settings_probe_window_test_body">CarPlay 視窗測試\n\nCarPlay 會在這裡開啟。輕觸即可關閉。</string>
+    <string name="settings_probe_meter_test">測試儀表顯示器</string>
+    <string name="settings_probe_meter_card">DiPlay 測試\n%1$s</string>
+    <string name="settings_probe_meter_shown">測試卡片會在顯示器 %1$s 上顯示 20 秒。請查看儀表板和 HUD。</string>
+    <string name="settings_probe_meter_failed">無法在顯示器 %1$s 上顯示測試卡片。</string>
+    <string name="settings_probe_meter_none">這輛車沒有供應用程式使用的第二個顯示器。</string>
 </resources>

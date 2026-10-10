@@ -5,7 +5,8 @@ MediaTek MT8676). The car has one 26.45-inch 5K screen (5120×1440, 32:9) with a
 passenger half; a two-finger swipe moves an app between them.
 
 It installs next to upstream DiPlay as `com.reachkim.diplay.ez60` (debug builds add `.hudtest`). The
-update check in About is off, because upstream releases are a different app.
+update check in About and upstream's background update checks are off, because upstream releases are a
+different app. This fork includes upstream DiPlay through 0.2.17.
 
 ## Status
 
@@ -60,6 +61,13 @@ car hotspot's name and password: without them **Connect** returns to Connection 
 
 - **Frame rate:** **Settings → Display** sets it; the EZ-60 starts at 60 fps. A build that saved 30 keeps 30
   until it is changed there.
+- **Measure it:** **Settings → Diagnostics → FPS counter** (from upstream 0.2.17) shows the frame rate over
+  the CarPlay picture.
+- **Video path:** **Low-latency decoding** starts on for the EZ-60: frames leave the decoder from their own
+  thread, and the main screen tries `c2.mtk.avc.decoder.lowlatency` first. **Direct video output**
+  (Advanced, off by default) draws CarPlay through a SurfaceView instead of the app's TextureView, which
+  saves a GPU copy on a 5120×1440 screen the car's 3D desktop also draws on; the panel's rounded corners
+  may not clip it. Compare both with the FPS counter.
 - **Video format:** keep HEVC off. The hardware H.264 decoder takes 6–13 ms a frame at 2496×1080; the
   hardware HEVC decoder manages only 31–70 fps there, and Android's software HEVC decoder took 19–67 ms a
   frame (it is ignored on the EZ-60).
@@ -72,6 +80,18 @@ car hotspot's name and password: without them **Connect** returns to Connection 
   off (or disconnect the car from other Wi-Fi) while using wireless CarPlay; CarPlay does not need it.
   Otherwise set **Connection setup → Wi-Fi Direct → Preferred channel** to the other network's channel.
   See [Smooth wireless CarPlay](SMOOTH_WIRELESS.md).
+- **Wi-Fi scanning:** with Wi-Fi Direct and no network joined, the car's Wi-Fi client keeps scanning, which
+  takes the radio off the CarPlay channel (upstream measured a 10 s period on BYD cars). Upstream 0.2.17
+  pauses that during Wi-Fi Direct, but only with the car's ADB over network approved. The **Built-in car
+  hotspot** mode runs with the client off and avoids it; upstream now recommends it.
+
+## Instrument cluster and HUD
+
+The car exposes an 800×480 presentation display, `MeterDisplay#0`, besides the 5K screen. **Settings →
+Diagnostics → Test instrument display** shows a blue test card on it for 20 seconds. If the card appears in
+the cluster or the HUD, DiPlay's dashboard-map path can show CarPlay's map there. Turn-by-turn arrows in
+the AR-HUD need the car's own navigation interface, which is not public: it can be found by analysing the
+car's navigation and HUD apps (for example `com.baidu.naviauto`, `com.tinnove.wecarnavi`).
 
 ## Build
 

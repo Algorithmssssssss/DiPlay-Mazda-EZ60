@@ -18,8 +18,8 @@ android {
         applicationId = "com.reachkim.diplay.ez60"
         minSdk = 25
         targetSdk = 37
-        versionCode = 34
-        versionName = "0.2.15"
+        versionCode = 36
+        versionName = "0.2.17"
 
     }
 

@@ -13,4 +13,9 @@
     <string name="settings_probe_share_unavailable">The car is not on any Wi-Fi network. Turn on the car hotspot or join the iPhone’s hotspot, then try again.</string>
     <string name="settings_probe_window_test">Test CarPlay window</string>
     <string name="settings_probe_window_test_body">CarPlay window test\n\nCarPlay would open here. Tap to close.</string>
+    <string name="settings_probe_meter_test">Test instrument display</string>
+    <string name="settings_probe_meter_card">DiPlay test\n%1$s</string>
+    <string name="settings_probe_meter_shown">Test card shown on display %1$s for 20 seconds. Look at the instrument cluster and the HUD.</string>
+    <string name="settings_probe_meter_failed">Could not show the test card on display %1$s.</string>
+    <string name="settings_probe_meter_none">This car has no second display for apps.</string>
 </resources>

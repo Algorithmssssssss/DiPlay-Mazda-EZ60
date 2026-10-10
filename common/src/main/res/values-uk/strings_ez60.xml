@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="wired_vpn_unavailable">Головний пристрій не зміг відкрити дозвіл VPN Android, потрібний для дротового CarPlay. Спробуйте бездротове підключення; подробиці — у діагностичному звіті.</string>
-</resources>

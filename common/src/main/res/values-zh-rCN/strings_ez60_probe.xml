@@ -13,4 +13,9 @@
     <string name="settings_probe_share_unavailable">车辆未连接任何 Wi-Fi 网络。请打开车辆热点或连接 iPhone 热点，然后重试。</string>
     <string name="settings_probe_window_test">测试 CarPlay 窗口</string>
     <string name="settings_probe_window_test_body">CarPlay 窗口测试\n\nCarPlay 将在此处打开。轻触关闭。</string>
+    <string name="settings_probe_meter_test">测试仪表显示屏</string>
+    <string name="settings_probe_meter_card">DiPlay 测试\n%1$s</string>
+    <string name="settings_probe_meter_shown">测试卡片将在显示屏 %1$s 上显示 20 秒。请查看仪表盘和 HUD。</string>
+    <string name="settings_probe_meter_failed">无法在显示屏 %1$s 上显示测试卡片。</string>
+    <string name="settings_probe_meter_none">这辆车没有供应用使用的第二块显示屏。</string>
 </resources>

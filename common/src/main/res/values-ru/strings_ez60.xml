@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="wired_vpn_unavailable">Головное устройство не смогло открыть разрешение VPN Android, которое нужно для проводного CarPlay. Попробуйте беспроводное подключение; подробности — в диагностическом отчёте.</string>
-</resources>

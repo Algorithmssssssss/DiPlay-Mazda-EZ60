@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="wired_vpn_unavailable">This head unit could not open Android’s VPN permission, which wired CarPlay needs. Try wireless; the diagnostic report has the details.</string>
-</resources>

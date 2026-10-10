@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="wired_vpn_unavailable">Esta unidad no pudo abrir el permiso de VPN de Android, que CarPlay con cable necesita. Prueba la conexión inalámbrica; el informe de diagnóstico tiene los detalles.</string>
-</resources>

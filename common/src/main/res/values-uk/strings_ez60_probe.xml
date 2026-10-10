@@ -13,4 +13,9 @@
     <string name="settings_probe_share_unavailable">Автомобіль не під’єднано до жодної мережі Wi-Fi. Увімкніть точку доступу автомобіля або під’єднайтеся до точки доступу iPhone і спробуйте ще раз.</string>
     <string name="settings_probe_window_test">Перевірити вікно CarPlay</string>
     <string name="settings_probe_window_test_body">Перевірка вікна CarPlay\n\nCarPlay відкриється тут. Торкніться, щоб закрити.</string>
+    <string name="settings_probe_meter_test">Перевірити екран приладів</string>
+    <string name="settings_probe_meter_card">Перевірка DiPlay\n%1$s</string>
+    <string name="settings_probe_meter_shown">Тестова картка на екрані %1$s на 20 секунд. Подивіться на панель приладів і HUD.</string>
+    <string name="settings_probe_meter_failed">Не вдалося показати тестову картку на екрані %1$s.</string>
+    <string name="settings_probe_meter_none">У цьому автомобілі немає другого екрана для застосунків.</string>
 </resources>
