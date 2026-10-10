@@ -17,7 +17,7 @@ update check in About is off, because upstream releases are a different app.
 | Opening on the launch half | Works without changes: a window opened the way the CarPlay screen is opens on DiPlay's half (tested on both halves). Opening DiPlay from the other half's app list moves it there. |
 | Video | H.264 at 2496×1080. DiPlay now tries the car's separate low-latency decoder first. |
 | Wheel keys | Previous, next and play/pause arrive as standard media keys. |
-| USB | An iPhone on the USB port appears as a USB data device (Apple `05ac:12a8`, 12 interfaces), so wired CarPlay has a data path. |
+| USB | An iPhone on the USB port appears as a USB data device (Apple `05ac:12a8`, 12 interfaces). Wired CarPlay runs through an Android VPN, and CAMZD OS has no VPN consent screen (`com.android.vpndialogs` is missing), so the VPN must be allowed once over ADB; see below. |
 | Wi-Fi, audio | Upstream behaviour so far. |
 
 ## Measured on the car
@@ -34,6 +34,27 @@ From the EZ-60 probe on 2026-10-10 (CAMZD OS build 20250930150736):
 - **Bluetooth:** hands-free and music receiver only.
 - **Instrument cluster:** an 800×480 presentation display, `MeterDisplay#0`.
 - **Also installed:** `com.autochips.carplayapp`, a CarPlay app from the head unit's maker.
+
+## Connect
+
+### Wired: allow the VPN once
+
+DiPlay's wired CarPlay needs Android's VPN permission. The car cannot show the screen that grants it,
+so allow it once from a computer with ADB access to the car:
+
+```sh
+adb shell appops set com.reachkim.diplay.ez60.hudtest ACTIVATE_VPN allow
+```
+
+Use `com.reachkim.diplay.ez60` for a release build. The permission lasts until the app is uninstalled;
+installing a new build over it keeps it.
+
+### Wireless: choose how the iPhone joins
+
+Wireless needs a Wi-Fi link besides Bluetooth. The default is **Built-in car hotspot**, which needs the
+car hotspot's name and password: without them **Connect** returns to Connection setup. In DiPlay, open
+**Settings → Connection → Connection setup** and either enter the car hotspot's details or choose
+**Wi-Fi Direct**, which needs no hotspot. Pair the iPhone with the car over Bluetooth first.
 
 ## Build
 

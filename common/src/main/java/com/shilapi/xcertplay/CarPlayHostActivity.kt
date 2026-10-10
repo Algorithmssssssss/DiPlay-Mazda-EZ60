@@ -195,7 +195,8 @@ class CarPlayHostActivity : ComponentActivity() {
             if (result.resultCode == RESULT_OK) {
                 vpnReady = true
                 maybeStartCarPlay()
-            } else {
+            } else if (!vpnConsentScreenMissing) {
+                // Without a consent screen the result is a cancel the driver never chose; keep that status.
                 setStatus(getString(R.string.vpn_consent_was_denied))
             }
         }
@@ -409,6 +410,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var awaitingWirelessPermissions = false
     private var awaitingLocationPermission = false
     private var vpnReady = false
+    private var vpnConsentScreenMissing = false
     private var hotspotStatus = HotspotStatus(state = "off")
     private var menuOpen = false
     private var latestStage = "Preparing CarPlay"
@@ -755,6 +757,7 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun vpnUnavailable(step: String, error: RuntimeException) {
+        vpnConsentScreenMissing = true
         appendLog("Wired VPN unavailable at $step: ${error.javaClass.simpleName}: ${error.message}")
         Log.w(TAG, "Wired VPN unavailable at $step", error)
         setStatus(getString(R.string.wired_vpn_unavailable))

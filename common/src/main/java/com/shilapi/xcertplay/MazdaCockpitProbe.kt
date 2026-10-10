@@ -81,6 +81,8 @@ internal object MazdaCockpitProbe {
     )
     private val CONFIGURE_SIZES = listOf(2496 to 1080, 5120 to 1440)
     private val settingName = Regex("(?i)screen|vpa|cui|split|dual|passenger|copilot|driver|left|right|day|night|theme|hud|carplay|projection")
+    // OEM telemetry and device lists carry phone names and addresses: record that they changed, not the value.
+    private val privateSetting = Regex("(?i)buried|bluetooth_devices|address|account|password|passphrase|ssid|token")
     private val projectionPackage = Regex("(?i)carplay|carlife|carlink|hicar|ucar|projection|mirror|easyconn|cast")
     private val propertyPrefixes = listOf(
         "ro.product.", "ro.build.", "ro.board.", "ro.hardware", "ro.soc.", "ro.sf.", "ro.surface_flinger.",
@@ -208,7 +210,8 @@ internal object MazdaCockpitProbe {
             override fun onChange(selfChange: Boolean, uri: Uri?) {
                 val segments = uri?.pathSegments ?: return
                 if (segments.size < 2) return
-                note(app, "settings", "${segments[0]}.${segments[1]}=${readSetting(resolver, segments[0], segments[1])}")
+                val value = if (privateSetting.containsMatchIn(segments[1])) "(changed)" else readSetting(resolver, segments[0], segments[1])
+                note(app, "settings", "${segments[0]}.${segments[1]}=$value")
             }
         }
         for (uri in listOf(Settings.Global.CONTENT_URI, Settings.System.CONTENT_URI, Settings.Secure.CONTENT_URI)) {
@@ -464,7 +467,9 @@ internal object MazdaCockpitProbe {
                     while (cursor.moveToNext()) {
                         total++
                         val name = cursor.getString(0) ?: continue
-                        if (settingName.containsMatchIn(name)) matches += "$table.$name=${cursor.getString(1)}"
+                        if (settingName.containsMatchIn(name)) {
+                            matches += "$table.$name=${if (privateSetting.containsMatchIn(name)) "(set)" else cursor.getString(1)}"
+                        }
                     }
                     total to matches
                 }
