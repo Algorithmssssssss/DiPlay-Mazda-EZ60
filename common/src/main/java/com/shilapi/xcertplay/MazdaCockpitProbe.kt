@@ -579,6 +579,16 @@ internal object MazdaCockpitProbe {
         out.appendLine("bluetooth present=${bluetooth != null} enabled=${runCatching { bluetooth?.isEnabled }.getOrNull()} " +
             "classic=${packages.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)} " +
             "le=${packages.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)}")
+        // Wired CarPlay runs through a VPN: whether Android already allows it, asks, or refuses.
+        val vpn = runCatching { android.net.VpnService.prepare(context) }
+        val noConfigVpn = runCatching {
+            context.getSystemService(android.os.UserManager::class.java)
+                ?.hasUserRestriction(android.os.UserManager.DISALLOW_CONFIG_VPN)
+        }.getOrNull()
+        out.appendLine("vpn consent=" + vpn.fold(
+            { it?.component?.flattenToShortString()?.let { screen -> "asks via $screen" } ?: "already allowed" },
+            { "error ${it.javaClass.simpleName}: ${it.message}" },
+        ) + " noConfigVpn=$noConfigVpn")
         out.appendLine("usb host=${packages.hasSystemFeature(PackageManager.FEATURE_USB_HOST)} " +
             "accessory=${packages.hasSystemFeature(PackageManager.FEATURE_USB_ACCESSORY)}")
         context.getSystemService(UsbManager::class.java)?.deviceList?.values?.forEach { device ->

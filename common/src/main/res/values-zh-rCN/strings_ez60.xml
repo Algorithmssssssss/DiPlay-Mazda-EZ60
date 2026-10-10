@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wired_vpn_unavailable">车机无法打开 Android 的 VPN 授权，而有线 CarPlay 需要它。请尝试无线连接；详细信息见诊断报告。</string>
+</resources>

@@ -732,15 +732,32 @@ class CarPlayHostActivity : ComponentActivity() {
 
     private fun requestVpnConsent() {
         if (awaitingVpnConsent) return
-        val consent = CarPlayVpnService.prepare(this)
+        // Wired CarPlay needs a VPN. On the Mazda EZ-60 (Android 14 Automotive) asking for it crashed the app.
+        val consent = try {
+            CarPlayVpnService.prepare(this)
+        } catch (error: RuntimeException) {
+            vpnUnavailable("check", error)
+            return
+        }
         if (consent == null) {
             vpnReady = true
             maybeStartCarPlay()
         } else {
             vpnReady = false
             awaitingVpnConsent = true
-            vpnConsent.launch(consent)
+            try {
+                vpnConsent.launch(consent)
+            } catch (error: RuntimeException) {
+                awaitingVpnConsent = false
+                vpnUnavailable("consent screen ${consent.component?.flattenToShortString()}", error)
+            }
         }
+    }
+
+    private fun vpnUnavailable(step: String, error: RuntimeException) {
+        appendLog("Wired VPN unavailable at $step: ${error.javaClass.simpleName}: ${error.message}")
+        Log.w(TAG, "Wired VPN unavailable at $step", error)
+        setStatus(getString(R.string.wired_vpn_unavailable))
     }
 
     private fun requestWirelessPermissions() {

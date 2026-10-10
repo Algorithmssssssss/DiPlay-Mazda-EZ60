@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wired_vpn_unavailable">تعذّر على وحدة الرأس فتح إذن VPN في Android، وهو مطلوب لـ CarPlay السلكي. جرّب الاتصال اللاسلكي؛ التفاصيل في تقرير التشخيص.</string>
+</resources>
