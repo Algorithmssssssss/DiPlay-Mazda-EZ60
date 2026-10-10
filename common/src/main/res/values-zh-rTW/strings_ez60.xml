@@ -2,6 +2,4 @@
 <resources>
     <string name="settings_mazda_hud">HUD 逐向導航（實驗性）</string>
     <string name="settings_mazda_hud_description">CarPlay 導航時，在擋風玻璃抬頭顯示器上顯示下一個轉彎、距離和道路。在下一次轉彎更新時生效。</string>
-    <string name="settings_mazda_hud_song">HUD 顯示歌曲（實驗性）</string>
-    <string name="settings_mazda_hud_song_description">在擋風玻璃抬頭顯示器上顯示 CarPlay 正在播放的歌曲和歌手，位於車輛顯示歌詞的那一行。</string>
 </resources>
