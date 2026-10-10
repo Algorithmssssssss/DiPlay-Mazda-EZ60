@@ -65,6 +65,10 @@ internal object MazdaCockpitProbe {
     private const val DIRECTORY = "ez60-probe"
     private const val SNAPSHOT_FILE = "snapshot.txt"
     private const val EVENTS_FILE = "events.txt"
+    private const val CRASH_FILE = "crashes.txt"
+    private const val MAX_CRASH_BYTES = 64 * 1024
+    private const val MAX_CRASH_LINES = 120
+    private const val SESSION_LOG_LINES = 300
     private const val MAX_EVENT_LINES = 1500
     private const val MAX_SETTINGS_PER_TABLE = 200
     private const val MAX_PROPERTIES = 500
@@ -98,6 +102,7 @@ internal object MazdaCockpitProbe {
     private var settingsObserver: ContentObserver? = null
     private var usbReceiver: BroadcastReceiver? = null
     @Volatile private var pendingLines = 0
+    @Volatile private var crashRecorderInstalled = false
 
     private class WindowWatch(val tag: String) {
         var last: String? = null
@@ -134,6 +139,7 @@ internal object MazdaCockpitProbe {
 
     /** Follows [activity]'s window position, size and display while recording. Call from onCreate. */
     fun attach(activity: Activity, tag: String, restored: Boolean) {
+        installCrashRecorder(activity)
         if (windows.containsKey(activity)) return
         val watch = WindowWatch(tag)
         val listener = ViewTreeObserver.OnGlobalLayoutListener {
@@ -230,6 +236,29 @@ internal object MazdaCockpitProbe {
             "product=0x${"%04x".format(Locale.US, device.productId)} class=${device.deviceClass} " +
             "interfaces=${device.interfaceCount}" + if (device.vendorId == 0x05ac) " (Apple)" else ""
 
+    /**
+     * Keeps the stack trace of an uncaught exception for the probe report, recording or not, then lets
+     * the app crash as before. Without ADB this is the only way a crash on the car reaches the report.
+     */
+    @Synchronized
+    private fun installCrashRecorder(context: Context) {
+        if (crashRecorderInstalled) return
+        crashRecorderInstalled = true
+        val app = context.applicationContext
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            runCatching {
+                val file = File(directory(app), CRASH_FILE)
+                if (file.length() > MAX_CRASH_BYTES) file.delete()
+                val trace = android.util.Log.getStackTraceString(error).lineSequence().take(MAX_CRASH_LINES)
+                    .joinToString("\n") { DiagnosticRedactor.mask(it) }
+                file.appendText("${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date())} " +
+                    "thread=${thread.name}\n$trace\n\n")
+            }
+            previous?.uncaughtException(thread, error)
+        }
+    }
+
     // ---- Snapshot ----
 
     /** Window facts are read on the calling (main) thread, the rest in the background; [done] runs on main. */
@@ -265,6 +294,26 @@ internal object MazdaCockpitProbe {
         appendLine("--- EZ-60 probe events (recording=${isRecording(context)}) ---")
         val events = File(directory, EVENTS_FILE)
         append(if (events.isFile) events.readText() else "No recorded events.\n")
+        appendLine()
+        appendLine("--- EZ-60 probe crashes (most recent last) ---")
+        val crashes = File(directory, CRASH_FILE)
+        append(if (crashes.isFile) crashes.readText() else "No crash recorded.\n")
+    }
+
+    /**
+     * [report] plus what the full diagnostic export adds on its own: recent process exits and the end of
+     * the session log. For the probe viewer and the phone page, which are the only way out without ADB.
+     */
+    fun relayReport(context: Context): String = buildString {
+        append(report(context))
+        appendLine()
+        appendLine("--- Recent process exits ---")
+        appendLine(ProcessExitDiagnostics.report(context))
+        appendLine()
+        appendLine("--- Session log (last $SESSION_LOG_LINES lines) ---")
+        val log = File(context.filesDir, "logs/diplay.log")
+        if (!log.isFile) appendLine("No session log.")
+        else log.readLines().takeLast(SESSION_LOG_LINES).forEach { line -> DiagnosticRedactor.redact(line)?.let(::appendLine) }
     }
 
     private fun StringBuilder.section(title: String, build: StringBuilder.() -> Unit) {

@@ -252,6 +252,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         }
     }
     private val bluetoothPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        MazdaCockpitProbe.note(this, PROBE_TAG, "Bluetooth permission granted=$granted")
         if (granted) choosePhone() else permissionHelp(getString(R.string.nearby_devices), getString(R.string.allow_nearby_devices_so_diplay_can_connect_to_your_paired))
     }
     private val bluetoothAutoConnectPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -4445,30 +4446,37 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     private fun connect(wireless: Boolean) {
+        // EZ-60 probe: which step Connect stops at, while recording.
+        fun step(name: String) = MazdaCockpitProbe.note(this, PROBE_TAG, "connect wireless=$wireless $name")
+        step("start")
         startupHotspotCancelled = true
-        if (wireless && pendingCarHotspotSetup) { toast(getString(R.string.save_your_hotspot_details_in_connection_setup_first)); page = "connection"; render(); return }
-        if (setupError != null) { toast(setupError!!); return }
+        if (wireless && pendingCarHotspotSetup) { step("stop: hotspot details pending"); toast(getString(R.string.save_your_hotspot_details_in_connection_setup_first)); page = "connection"; render(); return }
+        if (setupError != null) { step("stop: setup error"); toast(setupError!!); return }
         if (wireless && AirPlayPersistence.loadWirelessHotspotMode(this) == WirelessHotspotMode.MANUAL &&
             hotspotError(storedSsid(), storedPassword()) != null) {
+            step("stop: manual hotspot details missing")
             pendingCarHotspotSetup = true
             page = "connection"
             render()
             toast(getString(R.string.save_the_name_and_password_from_the_car_s_hotspot_settings))
             return
         }
-        if (wireless && carHotspotOff()) { carHotspotOffDialog(); return }
+        if (wireless && carHotspotOff()) { step("stop: car hotspot off dialog"); carHotspotOffDialog(); return }
         if (wireless && DiPlayPreferences.phoneAddress(this) == null) {
+            step("stop: choose iPhone")
             pendingWireless = true; choosePhone(); return
         }
         val preferences = getSharedPreferences("diplay", MODE_PRIVATE)
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED && !preferences.getBoolean("notification_asked", false)) {
             preferences.edit().putBoolean("notification_asked", true).apply()
             notificationTransport = wireless
+            step("stop: notification permission request")
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
             return
         }
         val open = {
             AirPlayPersistence.saveWirelessEnabled(this, wireless)
+            step("open CarPlay screen")
             openProjection()
         }
         if (CarPlayBackgroundSession.hasSession()) CarPlayBackgroundSession.stop { runOnUiThread { open() } }
@@ -4480,17 +4488,21 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         overridePendingTransition(0, 0)
     }
     private fun choosePhone() {
+        fun step(name: String) = MazdaCockpitProbe.note(this, PROBE_TAG, "choose iPhone $name")
         if (Build.VERSION.SDK_INT >= 31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            step("stop: Bluetooth permission request")
             bluetoothPermission.launch(Manifest.permission.BLUETOOTH_CONNECT); return
         }
         val adapter = getSystemService(BluetoothManager::class.java)?.adapter
         if (adapter == null || !adapter.isEnabled) {
+            step("stop: Bluetooth off or missing adapter=${adapter != null}")
             appDialogBuilder().setTitle(getString(R.string.turn_on_bluetooth))
                 .setMessage(getString(R.string.enable_the_car_s_bluetooth_and_pair_your_iphone_first))
                 .setPositiveButton(getString(R.string.open_bluetooth)) { _, _ -> openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }
                 .setNegativeButton(getString(R.string.later), null).show(); return
         }
         val devices = runCatching { adapter.bondedDevices.sortedBy { it.name ?: "" } }.getOrDefault(emptyList())
+        step("paired devices=${devices.size}")
         if (devices.isEmpty()) {
             appDialogBuilder().setTitle(getString(R.string.pair_your_iphone))
                 .setMessage(getString(R.string.on_your_iphone_open_settings_bluetooth_and_pair_with_the_c))
@@ -4785,7 +4797,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         val status = label("", 16, ACCENT, true).apply { visibility = View.GONE; setTextIsSelectable(true) }
         val body = column().apply { setPadding(dp(24), dp(12), dp(24), dp(12)) }
         body.addView(status)
-        body.addView(label(MazdaCockpitProbe.report(this), 16, TEXT).apply {
+        body.addView(label(MazdaCockpitProbe.relayReport(this), 16, TEXT).apply {
             typeface = Typeface.MONOSPACE
             setTextIsSelectable(true)
         })
@@ -4800,7 +4812,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             shareButton.setOnClickListener {
                 if (share != null) return@setOnClickListener
                 shareButton.isEnabled = false
-                val next = MazdaProbeShare { MazdaCockpitProbe.report(applicationContext) }
+                val next = MazdaProbeShare { MazdaCockpitProbe.relayReport(applicationContext) }
                 share = next
                 Thread({
                     val urls = next.start()
