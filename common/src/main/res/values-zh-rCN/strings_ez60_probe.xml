@@ -11,4 +11,6 @@
     <string name="settings_probe_share">在 iPhone 上打开</string>
     <string name="settings_probe_share_url">在与车辆连接同一 Wi-Fi（车辆热点或 iPhone 热点）的 iPhone 上，用 Safari 打开：\n%1$s</string>
     <string name="settings_probe_share_unavailable">车辆未连接任何 Wi-Fi 网络。请打开车辆热点或连接 iPhone 热点，然后重试。</string>
+    <string name="settings_probe_window_test">测试 CarPlay 窗口</string>
+    <string name="settings_probe_window_test_body">CarPlay 窗口测试\n\nCarPlay 将在此处打开。轻触关闭。</string>
 </resources>

@@ -4758,6 +4758,13 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             render()
         }, matchButton(10, 60))
         if (recording) card.addView(label(getString(R.string.settings_probe_recording_hint), 14, MUTED).apply { setPadding(0, dp(8), 0, 0) })
+        card.addView(button(getString(R.string.settings_probe_window_test), false) {
+            // Opened exactly as openProjection opens CarPlay; recording shows where the car puts it.
+            MazdaCockpitProbe.setRecording(this, true)
+            startActivity(Intent(this, MazdaProbeWindowActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NO_ANIMATION))
+            overridePendingTransition(0, 0)
+        }, matchButton(10, 60))
         card.addView(button(getString(R.string.settings_probe_view), false) { showProbeReport() }, matchButton(10, 60))
     }
 

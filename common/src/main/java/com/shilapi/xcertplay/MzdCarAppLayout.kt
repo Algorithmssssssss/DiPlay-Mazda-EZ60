@@ -4,9 +4,11 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.res.Configuration
 import android.database.ContentObserver
 import android.graphics.Outline
 import android.graphics.Color
+import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
@@ -15,16 +17,18 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.View
 import android.view.ViewOutlineProvider
+import android.view.ViewTreeObserver
 import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import androidx.core.graphics.drawable.toDrawable
 
-/** TidePlayer's driver panel coordinates, in physical host pixels. */
+/** The EZ-60 cockpit panel ([MazdaCockpitGeometry]) on the half of the screen this window is on. */
 internal class MzdCarAppLayout(context: Context, private val carPlayProjection: Boolean = false) : FrameLayout(context) {
     private val handler = Handler(Looper.getMainLooper())
     private var vehiclePanel = readVehiclePanel()
+    private var side = MazdaCockpitGeometry.Side.DRIVER
     private var targetBounds: Rect? = null
     private val frameBounds = Rect()
     private var embedded = false
@@ -33,6 +37,10 @@ internal class MzdCarAppLayout(context: Context, private val carPlayProjection: 
     private val refresh = Runnable {
         vehiclePanel = readVehiclePanel()
         requestLayout()
+    }
+    // The two-finger swipe moves the window to the other half without resizing it, so no measure follows.
+    private val sideWatcher = ViewTreeObserver.OnGlobalLayoutListener {
+        if (embedded && readSide(width) != side) requestLayout()
     }
     private val observer = object : ContentObserver(handler) {
         override fun onChange(selfChange: Boolean) {
@@ -58,17 +66,24 @@ internal class MzdCarAppLayout(context: Context, private val carPlayProjection: 
         super.onAttachedToWindow()
         vehiclePanel = readVehiclePanel()
         try {
-            for (key in listOf(MazdaPlatform.KEY_SCREEN_SHOW, MazdaPlatform.KEY_VPA_LEFT)) {
+            for (key in listOf(MazdaPlatform.KEY_SCREEN_SHOW, MazdaPlatform.KEY_VPA_LEFT, MazdaPlatform.KEY_VPA_RIGHT)) {
                 context.contentResolver.registerContentObserver(Settings.Global.getUriFor(key), false, observer)
             }
             observing = true
         } catch (_: SecurityException) {
             context.contentResolver.unregisterContentObserver(observer)
         }
+        viewTreeObserver.addOnGlobalLayoutListener(sideWatcher)
+        requestLayout()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
         requestLayout()
     }
 
     override fun onDetachedFromWindow() {
+        viewTreeObserver.removeOnGlobalLayoutListener(sideWatcher)
         handler.removeCallbacks(refresh)
         if (observing) context.contentResolver.unregisterContentObserver(observer)
         observing = false
@@ -83,11 +98,17 @@ internal class MzdCarAppLayout(context: Context, private val carPlayProjection: 
         val height = MeasureSpec.getSize(heightMeasureSpec)
         setMeasuredDimension(width, height)
         val cockpit = isCockpitSize(width, height)
-        val bounds = if (cockpit) Rect(if (vehiclePanel) 832 else 64, 192, 2560, 1272)
-            else Rect(0, 0, width, height)
+        val nextSide = if (cockpit) readSide(width) else MazdaCockpitGeometry.Side.DRIVER
+        val moved = nextSide != side
+        side = nextSide
+        val bounds = if (cockpit) {
+            val panel = MazdaCockpitGeometry.panel(side, vehiclePanel[side] == true)
+            Rect(panel.left, panel.top, panel.right, panel.bottom)
+        } else Rect(0, 0, width, height)
         if (bounds != targetBounds) {
             val previous = Rect(frameBounds)
-            val animate = targetBounds != null && embedded && cockpit
+            // The car's panel slides in on the same half; a move to the other half lands at once.
+            val animate = targetBounds != null && embedded && cockpit && !moved
             animator?.cancel()
             targetBounds = bounds
             embedded = cockpit
@@ -123,10 +144,22 @@ internal class MzdCarAppLayout(context: Context, private val carPlayProjection: 
         }
     }
 
-    private fun readVehiclePanel(): Boolean = try {
-        Settings.Global.getInt(context.contentResolver, MazdaPlatform.KEY_SCREEN_SHOW, 0) != 0 ||
-            Settings.Global.getInt(context.contentResolver, MazdaPlatform.KEY_VPA_LEFT, 0) == 1
-    } catch (_: SecurityException) { false }
+    /** Whether the car's panel or voice assistant narrows each half. */
+    private fun readVehiclePanel(): Map<MazdaCockpitGeometry.Side, Boolean> = try {
+        val resolver = context.contentResolver
+        val screenShow = Settings.Global.getInt(resolver, MazdaPlatform.KEY_SCREEN_SHOW, 0)
+        val vpaLeft = Settings.Global.getInt(resolver, MazdaPlatform.KEY_VPA_LEFT, 0)
+        val vpaRight = Settings.Global.getInt(resolver, MazdaPlatform.KEY_VPA_RIGHT, 0)
+        MazdaCockpitGeometry.Side.entries.associateWith { MazdaCockpitGeometry.narrow(it, screenShow, vpaLeft, vpaRight) }
+    } catch (_: SecurityException) { emptyMap() }
+
+    @Suppress("DEPRECATION")
+    private fun readSide(windowWidth: Int): MazdaCockpitGeometry.Side {
+        val screen = display ?: return MazdaCockpitGeometry.Side.DRIVER
+        val real = Point().also(screen::getRealSize)
+        val location = IntArray(2).also(::getLocationOnScreen)
+        return MazdaCockpitGeometry.side(location[0], windowWidth, real.x)
+    }
 
     companion object {
         fun applyWindowBackground(activity: Activity): Boolean {

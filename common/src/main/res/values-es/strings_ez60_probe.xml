@@ -11,4 +11,6 @@
     <string name="settings_probe_share">Abrir en el iPhone</string>
     <string name="settings_probe_share_url">En un iPhone conectado a la misma red Wi-Fi que el coche (el punto de acceso del coche o el del iPhone), abre en Safari:\n%1$s</string>
     <string name="settings_probe_share_unavailable">El coche no está conectado a ninguna red Wi-Fi. Activa el punto de acceso del coche o conéctate al del iPhone e inténtalo de nuevo.</string>
+    <string name="settings_probe_window_test">Probar la ventana de CarPlay</string>
+    <string name="settings_probe_window_test_body">Prueba de la ventana de CarPlay\n\nCarPlay se abriría aquí. Toca para cerrar.</string>
 </resources>

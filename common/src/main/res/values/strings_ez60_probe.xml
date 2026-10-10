@@ -11,4 +11,6 @@
     <string name="settings_probe_share">Open on iPhone</string>
     <string name="settings_probe_share_url">On an iPhone on the same Wi-Fi as the car (the car hotspot or the iPhone’s hotspot), open in Safari:\n%1$s</string>
     <string name="settings_probe_share_unavailable">The car is not on any Wi-Fi network. Turn on the car hotspot or join the iPhone’s hotspot, then try again.</string>
+    <string name="settings_probe_window_test">Test CarPlay window</string>
+    <string name="settings_probe_window_test_body">CarPlay window test\n\nCarPlay would open here. Tap to close.</string>
 </resources>

@@ -6,12 +6,13 @@ import android.provider.Settings
 
 /**
  * Whether this head unit is the Mazda EZ-60 cockpit (Changan Mazda J90K, CAMZD OS), with the evidence.
- * The car's own apps read [KEY_SCREEN_SHOW] and [KEY_VPA_LEFT] to place their panel. Cockpit layout
+ * The car's own apps read [KEY_SCREEN_SHOW], [KEY_VPA_LEFT] and [KEY_VPA_RIGHT] to place their panel. Cockpit layout
  * still follows the window size alone until the EZ-60 probe confirms the build values on the car.
  */
 internal object MazdaPlatform {
     const val KEY_SCREEN_SHOW = "key_screen_show"
     const val KEY_VPA_LEFT = "key_vpa_cui_show_left"
+    const val KEY_VPA_RIGHT = "key_vpa_cui_show_right"
     private val buildPattern = Regex("(?i)mazda|changan|camzd|j90k|wtcl")
 
     data class Detection(val buildMatch: String?, val oemKeysPresent: Boolean) {

@@ -11,4 +11,6 @@
     <string name="settings_probe_share">Відкрити на iPhone</string>
     <string name="settings_probe_share_url">На iPhone у тій самій мережі Wi-Fi, що й автомобіль (точка доступу автомобіля або iPhone), відкрийте в Safari:\n%1$s</string>
     <string name="settings_probe_share_unavailable">Автомобіль не під’єднано до жодної мережі Wi-Fi. Увімкніть точку доступу автомобіля або під’єднайтеся до точки доступу iPhone і спробуйте ще раз.</string>
+    <string name="settings_probe_window_test">Перевірити вікно CarPlay</string>
+    <string name="settings_probe_window_test_body">Перевірка вікна CarPlay\n\nCarPlay відкриється тут. Торкніться, щоб закрити.</string>
 </resources>

@@ -4,9 +4,11 @@ import android.app.Activity
 import android.app.ActivityManager
 import android.app.UiModeManager
 import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.ContentObserver
@@ -15,6 +17,7 @@ import android.graphics.Point
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.display.DisplayManager
+import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.location.LocationManager
 import android.media.AudioDeviceInfo
@@ -37,6 +40,8 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.ViewTreeObserver
 import android.view.WindowInsets
+import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
 import androidx.core.view.WindowInsetsCompat
 import java.io.File
 import java.net.Inet4Address
@@ -91,6 +96,7 @@ internal object MazdaCockpitProbe {
     private val windows = WeakHashMap<Activity, WindowWatch>()
     @Volatile private var recording: Boolean? = null
     private var settingsObserver: ContentObserver? = null
+    private var usbReceiver: BroadcastReceiver? = null
     @Volatile private var pendingLines = 0
 
     private class WindowWatch(val tag: String) {
@@ -111,7 +117,7 @@ internal object MazdaCockpitProbe {
             writer.execute { File(directory(app), EVENTS_FILE).delete() }
             recording = true
             append(app, "probe", "recording started")
-            observeSettings(app)
+            startWatching(app)
             for ((activity, watch) in windows.entries.toList()) {
                 watch.last = windowLine(activity)
                 append(app, watch.tag, "window ${watch.last}")
@@ -121,6 +127,8 @@ internal object MazdaCockpitProbe {
             recording = false
             settingsObserver?.let { app.contentResolver.unregisterContentObserver(it) }
             settingsObserver = null
+            usbReceiver?.let { runCatching { app.unregisterReceiver(it) } }
+            usbReceiver = null
         }
     }
 
@@ -140,7 +148,7 @@ internal object MazdaCockpitProbe {
         windows[activity] = watch
         activity.window.decorView.viewTreeObserver.addOnGlobalLayoutListener(listener)
         if (isRecording(activity)) {
-            observeSettings(activity.applicationContext)
+            startWatching(activity.applicationContext)
             note(activity, tag, "created restored=$restored")
         }
     }
@@ -186,8 +194,8 @@ internal object MazdaCockpitProbe {
         }
     }
 
-    // OEM screen state and anything else the head unit changes while the driver tries things.
-    private fun observeSettings(app: Context) {
+    // OEM screen state, anything else the head unit changes while the driver tries things, and USB devices.
+    private fun startWatching(app: Context) {
         if (settingsObserver != null) return
         val resolver = app.contentResolver
         val observer = object : ContentObserver(main) {
@@ -201,7 +209,26 @@ internal object MazdaCockpitProbe {
             runCatching { resolver.registerContentObserver(uri, true, observer) }
         }
         settingsObserver = observer
+        // An iPhone on the USB port, or nothing when the port is charge-only.
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val device = IntentCompat.getParcelableExtra(intent, UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+                val what = if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) "attached" else "detached"
+                note(context, "usb", "$what ${device?.let(::usbLine) ?: "unknown device"}")
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
+            addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
+        }
+        runCatching { ContextCompat.registerReceiver(app, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED) }
+            .onSuccess { usbReceiver = receiver }
     }
+
+    private fun usbLine(device: UsbDevice): String =
+        "${device.deviceName} vendor=0x${"%04x".format(Locale.US, device.vendorId)} " +
+            "product=0x${"%04x".format(Locale.US, device.productId)} class=${device.deviceClass} " +
+            "interfaces=${device.interfaceCount}" + if (device.vendorId == 0x05ac) " (Apple)" else ""
 
     // ---- Snapshot ----
 
@@ -298,9 +325,24 @@ internal object MazdaCockpitProbe {
         activity.getSystemService(ActivityManager::class.java)?.appTasks?.forEachIndexed { index, task ->
             out.appendLine("task[$index] ${runCatching { task.taskInfo.toString() }.getOrElse { "unavailable" }}")
         }
-        for (key in listOf(MazdaPlatform.KEY_SCREEN_SHOW, MazdaPlatform.KEY_VPA_LEFT)) {
-            out.appendLine("global.$key=${readSetting(activity.contentResolver, "global", key)}")
-        }
+        val keys = listOf(MazdaPlatform.KEY_SCREEN_SHOW, MazdaPlatform.KEY_VPA_LEFT, MazdaPlatform.KEY_VPA_RIGHT)
+            .associateWith { readSetting(activity.contentResolver, "global", it) }
+        keys.forEach { (key, value) -> out.appendLine("global.$key=$value") }
+        out.appendLine("cockpitPanel ${cockpitPanelLine(activity, keys)}")
+    }
+
+    @Suppress("DEPRECATION")
+    private fun cockpitPanelLine(activity: Activity, keys: Map<String, String>): String {
+        val decor = activity.window.decorView
+        val location = IntArray(2).also(decor::getLocationOnScreen)
+        val real = Point().also(activity.windowManager.defaultDisplay::getRealSize)
+        val side = MazdaCockpitGeometry.side(location[0], decor.width, real.x)
+        fun key(name: String) = keys[name]?.toIntOrNull() ?: 0
+        val narrow = MazdaCockpitGeometry.narrow(side, key(MazdaPlatform.KEY_SCREEN_SHOW), key(MazdaPlatform.KEY_VPA_LEFT),
+            key(MazdaPlatform.KEY_VPA_RIGHT))
+        val panel = MazdaCockpitGeometry.panel(side, narrow)
+        return "side=$side narrow=$narrow panel=[${panel.left},${panel.top}][${panel.right},${panel.bottom}] " +
+            "${panel.width}x${panel.height} (window coordinates)"
     }
 
     @Suppress("DEPRECATION")
@@ -491,9 +533,7 @@ internal object MazdaCockpitProbe {
         out.appendLine("usb host=${packages.hasSystemFeature(PackageManager.FEATURE_USB_HOST)} " +
             "accessory=${packages.hasSystemFeature(PackageManager.FEATURE_USB_ACCESSORY)}")
         context.getSystemService(UsbManager::class.java)?.deviceList?.values?.forEach { device ->
-            out.appendLine("usb device ${device.deviceName} vendor=0x${"%04x".format(Locale.US, device.vendorId)} " +
-                "product=0x${"%04x".format(Locale.US, device.productId)} class=${device.deviceClass} interfaces=${device.interfaceCount}" +
-                if (device.vendorId == 0x05ac) " (Apple)" else "")
+            out.appendLine("usb device ${usbLine(device)}")
         }
     }
 

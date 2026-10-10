@@ -11,4 +11,6 @@
     <string name="settings_probe_share">在 iPhone 上開啟</string>
     <string name="settings_probe_share_url">在與車輛連上同一個 Wi-Fi（車輛熱點或 iPhone 熱點）的 iPhone 上，用 Safari 開啟：\n%1$s</string>
     <string name="settings_probe_share_unavailable">車輛未連上任何 Wi-Fi 網路。請開啟車輛熱點或連上 iPhone 熱點，然後再試一次。</string>
+    <string name="settings_probe_window_test">測試 CarPlay 視窗</string>
+    <string name="settings_probe_window_test_body">CarPlay 視窗測試\n\nCarPlay 會在這裡開啟。輕觸即可關閉。</string>
 </resources>

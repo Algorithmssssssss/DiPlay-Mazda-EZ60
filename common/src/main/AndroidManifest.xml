@@ -83,6 +83,15 @@
                 android:resource="@xml/usb_device_filter" />
         </activity>
 
+        <!-- EZ-60 probe: opens like the CarPlay screen to show which half of the cockpit the car puts it on. -->
+        <activity
+            android:name="com.shilapi.xcertplay.MazdaProbeWindowActivity"
+            android:taskAffinity="${applicationId}.carplayprobe"
+            android:configChanges="density|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:theme="@style/Theme.Xcertplay" />
         <activity
             android:name="com.shilapi.xcertplay.AdbClusterActivity"
             android:label="@string/adb_cluster_activity_label"

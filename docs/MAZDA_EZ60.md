@@ -11,9 +11,27 @@ update check in About is off, because upstream releases are a different app.
 
 | Area | State |
 | --- | --- |
-| Driver panel | CarPlay fills the 2496×1080 panel at `[64,192]–[2560,1272]` and narrows to 1728×1080 when the car shows its left vehicle panel or voice assistant, without reconnecting. Geometry from the car's own apps, via [TidePlayer's measurements](https://github.com/JulyStar-Lv/TidePlayer/blob/main/docs/automotive/CAR_WINDOW_PROFILES.md). Not yet confirmed on this car. |
-| Passenger half, swipe | Not handled yet. Needs the probe results below. |
-| Video, Wi-Fi, USB, audio, wheel keys | Upstream behaviour. Mazda defaults follow the probe results. |
+| Driver panel | CarPlay fills the 2496×1080 panel at `[64,192]–[2560,1272]` and narrows to 1728×1080 when the car shows its left vehicle panel or voice assistant, without reconnecting. Geometry from the car's own apps, via [TidePlayer's measurements](https://github.com/JulyStar-Lv/TidePlayer/blob/main/docs/automotive/CAR_WINDOW_PROFILES.md). Not yet seen with CarPlay running. |
+| Passenger half | The panel mirrors the driver's: `[0,192]–[2496,1272]` in the window, 1728 wide while the right voice assistant shows. This mirroring is assumed, not measured. |
+| Two-finger swipe | Moves the window between halves without resizing or relaunching it, so CarPlay keeps its session; the panel follows the new half. |
+| Opening on the launch half | Unknown for the CarPlay screen, which opens in its own task. **Test CarPlay window** in the probe answers it. |
+| Video | H.264 at 2496×1080. DiPlay now tries the car's separate low-latency decoder first. |
+| Wheel keys | Previous, next and play/pause arrive as standard media keys. |
+| Wi-Fi, USB, audio | Upstream behaviour so far. |
+
+## Measured on the car
+
+From the EZ-60 probe on 2026-10-10 (CAMZD OS build 20250930150736):
+
+- **Platform:** Wutong/Tinnove J90K, Android 14 (Android Automotive), MediaTek MT8676.
+- **Screen:** one 5120×1440 display with one touch panel. DiPlay's window is 2560×1440 on either half: the left half belongs to the car's left task group, the right half to the "copilot" group. A 160 px status bar is at the top and a 136 px dock at the bottom of each half. The system reports 160 dpi, which is nominal; the panel is about 0.126 mm per pixel.
+- **Swipe:** `global.fly_to_right_status` goes 1 (to the passenger half) or 2 (back), the window moves within about 0.2 s, and `copilot_display_status` / `main_display_status` name the app on each half.
+- **Video decoders:** `c2.mtk.avc.decoder` (no low-latency mode) and `c2.mtk.avc.decoder.lowlatency`. H.264 at 2496×1080 is good for 87–191 fps, HEVC for 31–70 fps. No decoder accepts 5120 wide (the limit is 4096).
+- **Wi-Fi:** 5 GHz and 6 GHz, Wi-Fi Direct, hotspot and client at the same time. The hotspot interface is `ap0`.
+- **Audio:** Android Automotive buses for media, navigation, calls, ringtone and voice per seat; the car sets the volume.
+- **Bluetooth:** hands-free and music receiver only.
+- **Instrument cluster:** an 800×480 presentation display, `MeterDisplay#0`.
+- **Also installed:** `com.autochips.carplayapp`, a CarPlay app from the head unit's maker.
 
 ## Build
 
@@ -42,6 +60,8 @@ Serial numbers and addresses are left out or masked. Nothing is sent automatical
    - plug the iPhone into each USB port.
 3. Go back to **Settings → Diagnostics** and tap **Stop recording events**.
 4. Open DiPlay from the **passenger-side** app list and tap **Run EZ-60 probe** again.
+   Then tap **Test CarPlay window**: it opens the way the CarPlay screen does and starts recording.
+   Note which half it appears on, tap it to close, and repeat from the driver side.
 5. Send the report:
    - **Open on iPhone**: with the iPhone and the car on the same Wi-Fi (the car hotspot, or the car
      joined to the iPhone's Personal Hotspot), open the address shown in Safari, then Select All and
