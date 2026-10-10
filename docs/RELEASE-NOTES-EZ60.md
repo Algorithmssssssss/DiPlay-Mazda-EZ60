@@ -16,7 +16,7 @@ BYD-only settings are hidden. Upstream's update check is off, because upstream r
 
 ## Known issues
 
-- **Music pauses and plays by itself** when the iPhone is also connected to the car's own Bluetooth music and the car plays it automatically: the car's Bluetooth player and CarPlay take audio focus from each other. Turning the car's Bluetooth off and on again stopped it on the test car.
+- **Music pausing and playing by itself** when the iPhone is also connected to the car's own Bluetooth music. The car's Bluetooth player pauses the iPhone over Bluetooth whenever it loses audio focus, and DiPlay used to take focus back on each play or new track. DiPlay now leaves focus to that player while it holds it. Not yet confirmed on the car; if it still happens, turning the car's Bluetooth off and on again stops it.
 - **The HUD's music line** shows "暂无歌词" (no lyrics). It belongs to the car's media center, which shows only lyrics; CarPlay sends none.
 - **Wired CarPlay needs one ADB command**, because CAMZD OS has no VPN approval screen:
   `adb shell appops set com.reachkim.diplay.ez60 ACTIVATE_VPN allow`

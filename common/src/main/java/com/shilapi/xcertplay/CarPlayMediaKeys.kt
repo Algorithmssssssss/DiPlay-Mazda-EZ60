@@ -38,6 +38,7 @@ import kotlin.math.roundToInt
  */
 internal object CarPlayMediaKeys {
     private const val TAG = "DiPlay-MediaKeys"
+    private const val PROBE_TAG = "media-keys"
     private const val ACTIONS = PlaybackState.ACTION_PLAY or PlaybackState.ACTION_PAUSE or
         PlaybackState.ACTION_PLAY_PAUSE or PlaybackState.ACTION_SKIP_TO_NEXT or PlaybackState.ACTION_SKIP_TO_PREVIOUS
 
@@ -254,10 +255,23 @@ internal object CarPlayMediaKeys {
     private fun regainFocusLocked() {
         val request = focusRequest ?: return
         if (focusHeld) return
-        val audio = appContext?.getSystemService(AudioManager::class.java) ?: return
+        val context = appContext ?: return
+        if (leaveFocusToCarBluetooth(context)) return
+        val audio = context.getSystemService(AudioManager::class.java) ?: return
         focusHeld = request.request(audio) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         if (focusHeld) forwardGrantedFocusLocked()
         Log.i(TAG, "audio focus regained=$focusHeld")
+    }
+
+    // EZ-60: the car's Bluetooth music player takes audio focus when the iPhone plays over Bluetooth, and pauses
+    // the iPhone over Bluetooth when it loses focus. Taking focus back on each play or new track paused CarPlay
+    // music every few seconds (EZ-60 report 16). CarPlay audio plays without focus, and the wheel keys reach the
+    // iPhone through that player, so leave it the focus.
+    private fun leaveFocusToCarBluetooth(context: Context): Boolean {
+        if (!MazdaPlatform.carBluetoothMusicHasFocus(context)) return false
+        Log.i(TAG, "audio focus left to the car's Bluetooth music player")
+        MazdaCockpitProbe.note(context, PROBE_TAG, "audio focus left to the car's Bluetooth music player")
+        return true
     }
 
     private fun updateLocked(active: Boolean) {
@@ -282,7 +296,8 @@ internal object CarPlayMediaKeys {
             { change -> onFocusChanged(expectedController, owner, change) },
             mainHandler,
         )
-        val granted = audio?.let(request::request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        val granted = !leaveFocusToCarBluetooth(context) &&
+            audio?.let(request::request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         focusRequest = request
         focusHeld = granted
         if (granted) forwardGrantedFocusLocked()
@@ -319,6 +334,7 @@ internal object CarPlayMediaKeys {
         }
         if (!current) return
         Log.i(TAG, "audio focus change=$change")
+        appContext?.let { MazdaCockpitProbe.note(it, PROBE_TAG, "audio focus change=$change") }
         // Resolve the matching sink and invoke it outside the media-key monitor. An abandoned
         // request must never mute a newer controller, and these owners must not nest locks.
         val background = CarPlayBackgroundSession.snapshot()

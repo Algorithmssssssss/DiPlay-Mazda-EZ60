@@ -18,7 +18,7 @@
 
 ## Known issues
 
-- **Music pauses and plays by itself** when the iPhone is also connected to the car's own Bluetooth music and the car plays it automatically. Turning the car's Bluetooth off and on again stopped it on the test car.
+- **Music pausing and playing by itself** when the iPhone is also connected to the car's own Bluetooth music: DiPlay now leaves audio focus to the car's Bluetooth player instead of taking it back, which caused the pauses. Not yet confirmed on the car; if it still happens, turn the car's Bluetooth off and on again.
 - **The HUD's music line** shows "暂无歌词" (no lyrics). It is the car's lyrics line, and CarPlay sends no lyrics.
 - The passenger half's CarPlay panel is assumed to mirror the driver's; it has not been measured.
 

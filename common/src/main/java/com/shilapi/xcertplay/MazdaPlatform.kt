@@ -18,6 +18,18 @@ internal object MazdaPlatform {
     /** The EZ-60 head unit by its build model (WUTONG/TINNOVE J90K, measured by the probe), for defaults. */
     val isEz60: Boolean by lazy { Build.MODEL.equals("J90K", ignoreCase = true) }
 
+    /**
+     * The car's Bluetooth music player (in the media center) holds Android audio focus. It sets this when it takes
+     * focus and clears it when it loses focus, and on losing focus it pauses the phone over Bluetooth.
+     */
+    fun carBluetoothMusicHasFocus(context: Context): Boolean = isEz60 && try {
+        Settings.Global.getInt(context.contentResolver, KEY_BT_SOURCE_FOCUS, 0) == 1
+    } catch (_: SecurityException) {
+        false
+    }
+
+    private const val KEY_BT_SOURCE_FOCUS = "bt_source_focus_key"
+
     data class Detection(val buildMatch: String?, val oemKeysPresent: Boolean) {
         val likely: Boolean get() = buildMatch != null || oemKeysPresent
     }

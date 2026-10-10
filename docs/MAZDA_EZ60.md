@@ -124,11 +124,13 @@ shows only lyrics, which CarPlay does not send, so DiPlay leaves it alone in thi
 
 ## Known issues
 
-- **Music pauses and plays by itself.** If the iPhone is also connected to the car's own Bluetooth music and
-  the car's Bluetooth player is set to play the phone's music automatically, that player and CarPlay take
-  audio focus from each other, and the car pauses and resumes the iPhone over Bluetooth. Turning the car's
-  Bluetooth off and on again stopped it on the test car. Turning off the car's automatic Bluetooth music
-  playback for the iPhone, in the car's Bluetooth settings, should prevent it.
+- **Music pausing and playing by itself.** When the iPhone is also connected to the car's own Bluetooth music,
+  the car's Bluetooth player takes audio focus as the iPhone plays (`bt_source_focus_key` = 1), and it pauses
+  the iPhone over Bluetooth whenever it loses focus. DiPlay used to take focus back on each play or new track,
+  so CarPlay music paused and resumed every few seconds (report 16: a new track at 04:37:15.98, the iPhone's
+  music stopped at 04:37:16.47). DiPlay now leaves focus to that player while it holds it; CarPlay audio plays
+  without focus, and the wheel keys reach the iPhone through it. Not yet confirmed on the car: if it still
+  happens, turning the car's Bluetooth off and on again stops it.
 - **Wired CarPlay needs one ADB command** (see Connect above).
 - **Passenger half:** CarPlay's panel there is assumed to mirror the driver's; it has not been measured.
 
