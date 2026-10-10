@@ -255,7 +255,7 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
         return if (end == 0) ellipsis else text.take(end) + ellipsis
     }
 
-    /** Shared with the EZ-60 HUD card ([MazdaHudCardView]), which draws the same guidance. */
+    /** The glyph, distance and road wording for a turn, shared with other DiPlay views. */
     internal companion object {
         fun glyphRes(icon: Int): Int = when (icon) {
             2 -> R.drawable.ic_turn_card_turn_left

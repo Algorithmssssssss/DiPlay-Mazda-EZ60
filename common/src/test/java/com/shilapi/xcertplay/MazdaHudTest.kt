@@ -1,0 +1,43 @@
+package com.shilapi.xcertplay
+
+import com.shilapi.xcertplay.hud.ClusterTurnGuidance
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+class MazdaHudTest {
+    @Test fun turnsUseTheCarsHudIcons() {
+        // AMap icon codes from DiPlay's guidance -> the turnIds the car's navigation apps send.
+        assertEquals(7, MazdaHud.turnId(2, 0))
+        assertEquals(8, MazdaHud.turnId(3, 0))
+        assertEquals(9, MazdaHud.turnId(4, 0))
+        assertEquals(10, MazdaHud.turnId(5, 0))
+        assertEquals(11, MazdaHud.turnId(6, 0))
+        assertEquals(12, MazdaHud.turnId(7, 0))
+        assertEquals(13, MazdaHud.turnId(8, 0))
+        assertEquals(13, MazdaHud.turnId(19, 0))
+        assertEquals(14, MazdaHud.turnId(9, 0))
+        assertEquals(26, MazdaHud.turnId(15, 0))
+        assertEquals(0, MazdaHud.turnId(0, 0))
+    }
+
+    @Test fun roundaboutsCarryTheExitNumber() {
+        assertEquals(75, MazdaHud.turnId(11, 2))
+        assertEquals(83, MazdaHud.turnId(17, 10))
+        assertEquals(53, MazdaHud.turnId(11, 0))
+        assertEquals(53, MazdaHud.turnId(11, 12))
+        assertEquals(20, MazdaHud.turnId(12, 2))
+    }
+
+    @Test fun aFrameCarriesDistanceRoadAndWhatIsLeft() {
+        val guidance = ClusterTurnGuidance(icon = 2, roundaboutExit = 0, distanceMeters = 350, road = "Street 214",
+            remainingSeconds = 960, remainingMeters = 12_400)
+        assertEquals(MazdaHud.Frame(7, 350, "", "Street 214", 12_400, 960), MazdaHud.frame(guidance))
+        assertEquals(MazdaHud.Frame(14, 0, "", "", 0, 0),
+            MazdaHud.frame(ClusterTurnGuidance(icon = 9, roundaboutExit = 0, distanceMeters = -5, road = "")))
+    }
+
+    @Test fun onlyNavigationCallsAreAllowed() {
+        // Status, turn, road, remaining route, and taking and giving back navigation focus.
+        assertEquals(setOf(22, 24, 26, 27, 63, 64), MazdaHud.ALLOWED)
+    }
+}

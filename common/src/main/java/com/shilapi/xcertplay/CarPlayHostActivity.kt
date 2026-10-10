@@ -349,7 +349,6 @@ class CarPlayHostActivity : ComponentActivity() {
     private val clusterLayers = mutableMapOf<Boolean, ClusterMapPresentation>()
     private var clusterTurnGuidance: com.shilapi.xcertplay.hud.ClusterTurnGuidance? = null
     private var mazdaHud: MazdaHud? = null
-    private var mazdaHudState = "cleared"
     private val clusterTurnOverlayListener: (com.shilapi.xcertplay.hud.ClusterTurnGuidance?) -> Unit = { guidance ->
         runOnUiThread {
             clusterTurnGuidance = guidance
@@ -5514,22 +5513,8 @@ class CarPlayHostActivity : ComponentActivity() {
             mazdaHud = null
             return
         }
-        val hud = mazdaHud ?: MazdaHud(this).also { mazdaHud = it }
-        val shown = hud.update(guidance)
-        // Once per change, not per distance update.
-        val state = when {
-            guidance == null -> "cleared"
-            !shown -> "unavailable"
-            else -> "showing"
-        }
-        if (state != mazdaHudState) {
-            mazdaHudState = state
-            appendLog(when (state) {
-                "showing" -> "HUD: showing turn guidance icon=${guidance?.icon} distanceM=${guidance?.distanceMeters}"
-                "unavailable" -> "HUD: guidance received but the 800x480 HUD display was not found or refused the window"
-                else -> "HUD: guidance ended; HUD cleared"
-            })
-        }
+        val hud = mazdaHud ?: MazdaHud(applicationContext, ::appendLog).also { mazdaHud = it }
+        hud.update(guidance)
     }
 
     private fun showDiPlayHome(page: String = "home") {

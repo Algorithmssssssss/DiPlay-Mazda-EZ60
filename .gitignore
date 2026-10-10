@@ -42,3 +42,4 @@ release-signing.properties
 
 # dont commit findings
 EZNAV-FINDINGS.md
+eznav_extracted

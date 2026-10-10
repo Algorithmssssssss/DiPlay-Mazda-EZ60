@@ -86,18 +86,26 @@ car hotspot's name and password: without them **Connect** returns to Connection 
   hotspot** mode runs with the client off and avoids it; upstream now recommends it, and on the EZ-60 it
   gave the smoothest sessions so far (see Video above).
 
-## Instrument cluster and HUD
+## Windshield HUD
 
-The windshield HUD is an 800×480 presentation display, `MeterDisplay#0`, of which only the rectangle
-(573,167)–(800,355), 227×188 pixels, is projected. The car's own navigation apps draw their HUD view into
-that rectangle from an ordinary window on the display; black is not projected.
+The EZ-60 has no instrument cluster; the windshield HUD is the driver's only other display. It does not
+project apps' windows: a test card on its 800×480 presentation display (`MeterDisplay#0`) never appeared.
+Its navigation comes from the head unit's navigation service, `com.incall.double.INTERACTIVE_SERVICE`
+(`IDouInteractiveManager`, reached through `com.incall.SVR_MNG_SERVICE`), which the car's navigation apps
+feed.
 
-- **Turn-by-turn on the HUD (experimental)** (**Settings → Navigation → Location**, EZ-60 only, on by
-  default) shows CarPlay's next turn arrow, distance and road there while CarPlay navigation guides. It
-  uses the route guidance the iPhone already sends, and only that public display.
-- **Settings → Diagnostics → Test instrument display** shows a blue test card in the same rectangle for 20
-  seconds.
-- Not used: writing guidance into the car's own HUD controller through its private car-property service.
+**Turn-by-turn on the HUD (experimental)** (**Settings → Navigation → Location**, EZ-60 only, on by
+default) feeds it with CarPlay's route guidance, which Google Maps and Apple Maps both send:
+
+| Step | Call |
+|---|---|
+| Guidance starts | `requestNaviFocus(package, callback)`, then `sendNavigateStatus(2)` |
+| Each update | `sendNavigateRoadInfo(current, next)` when the roads change, `sendNavigateTurnInfo(turnId, metres)`, `sendNavigateRemainInfo(metres, seconds)`: a new turn or road at once, other changes at most once a second |
+| Guidance ends | remaining 0/0, empty roads, turn 0/0, `sendNavigateStatus(0)`, `abandonNaviFocus` |
+
+Only these navigation calls are made, from a background thread, and the session log records each step
+(`HUD: ...`). Turn icons follow the car's numbering: 7 left, 8 right, 9/10 slight, 11/12 sharp, 13 U-turn,
+14 straight, 26 destination, 53 roundabout, 74–83 roundabout exit 1–10. No vehicle properties are written.
 
 ## Build
 
