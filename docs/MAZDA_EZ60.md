@@ -15,7 +15,7 @@ update check in About is off, because upstream releases are a different app.
 | Passenger half | The panel mirrors the driver's: `[0,192]–[2496,1272]` in the window, 1728 wide while the right voice assistant shows. This mirroring is assumed, not measured. |
 | Two-finger swipe | Moves the window between halves without resizing or relaunching it, so CarPlay keeps its session; the panel follows the new half. The CarPlay screen shares the DiPlay menu's task, so both move together. |
 | Opening on the launch half | A new task started from DiPlay opens on DiPlay's half (tested on both halves), and the CarPlay screen now opens inside DiPlay's own task. Opening DiPlay from the other half's app list moves it there. |
-| Video | H.264 at 2496×1080. DiPlay now tries the car's separate low-latency decoder first. |
+| Video | H.264 at 2496×1080, 60 fps by default on the EZ-60. DiPlay tries the car's separate low-latency decoder first. First wireless session (Wi-Fi Direct, 5 GHz, 30 fps): decoding took 6–13 ms per frame with no late frames, but the stream paused for 0.4–1 s every few seconds. |
 | Wheel keys | Previous, next and play/pause arrive as standard media keys. |
 | USB | An iPhone on the USB port appears as a USB data device (Apple `05ac:12a8`, 12 interfaces). Wired CarPlay runs through an Android VPN, and CAMZD OS has no VPN consent screen (`com.android.vpndialogs` is missing), so the VPN must be allowed once over ADB; see below. |
 | Wi-Fi, audio | Upstream behaviour so far. |
@@ -55,6 +55,17 @@ Wireless needs a Wi-Fi link besides Bluetooth. The default is **Built-in car hot
 car hotspot's name and password: without them **Connect** returns to Connection setup. In DiPlay, open
 **Settings → Connection → Connection setup** and either enter the car hotspot's details or choose
 **Wi-Fi Direct**, which needs no hotspot. Pair the iPhone with the car over Bluetooth first.
+
+### Smooth wireless
+
+- **Frame rate:** **Settings → Display** sets it; the EZ-60 starts at 60 fps. A build that saved 30 keeps 30
+  until it is changed there.
+- **Wi-Fi pauses:** if the car is joined to another Wi-Fi network on a different channel, its radio
+  switches between that channel and CarPlay's, and the picture stops for up to a second at a time. The
+  iPhone's own Personal Hotspot is the usual case: then the iPhone switches channels too. Turn the hotspot
+  off (or disconnect the car from other Wi-Fi) while using wireless CarPlay; CarPlay does not need it.
+  Otherwise set **Connection setup → Wi-Fi Direct → Preferred channel** to the other network's channel.
+  See [Smooth wireless CarPlay](SMOOTH_WIRELESS.md).
 
 ## Build
 

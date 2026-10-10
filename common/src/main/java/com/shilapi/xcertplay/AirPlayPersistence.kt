@@ -521,9 +521,10 @@ object AirPlayPersistence {
             .apply()
     }
 
+    // The EZ-60's MT8676 decodes 2496x1080 H.264 at 87-191 fps (EZ-60 probe), so it starts at 60.
     fun loadFps(context: Context): Int = AirPlayDisplaySettings.sanitizeFps(
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_FPS, 30),
+            .getInt(KEY_FPS, if (MazdaPlatform.isEz60) 60 else 30),
     )
 
     fun loadMediaBufferMillis(context: Context): Int = com.shilapi.xcertplay.media.MediaAudioBuffer.sanitize(

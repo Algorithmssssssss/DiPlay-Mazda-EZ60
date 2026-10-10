@@ -69,6 +69,9 @@ internal object MazdaCockpitProbe {
     private const val MAX_CRASH_BYTES = 64 * 1024
     private const val MAX_CRASH_LINES = 120
     private const val SESSION_LOG_LINES = 300
+    private const val SETUP_LINES = 150
+    private val setupLine = Regex("(?i)MHz|GHz|frequency|channel|P2P|Wi-Fi|hotspot|station|Starting CarPlay|decoder|fps|Display|transport|session")
+    private val periodicLine = Regex("iAP tunnel|video stats|audio stats|decoder stats|Receive:|THEME_DIAGNOSTIC")
     private const val MAX_EVENT_LINES = 1500
     private const val MAX_SETTINGS_PER_TABLE = 200
     private const val MAX_PROPERTIES = 500
@@ -313,10 +316,19 @@ internal object MazdaCockpitProbe {
         appendLine("--- Recent process exits ---")
         appendLine(ProcessExitDiagnostics.report(context))
         appendLine()
-        appendLine("--- Session log (last $SESSION_LOG_LINES lines) ---")
+        appendLine("--- Last display negotiation ---")
+        appendLine(DisplayDiagnosticSnapshot.report(context))
         val log = File(context.filesDir, "logs/diplay.log")
-        if (!log.isFile) appendLine("No session log.")
-        else log.readLines().takeLast(SESSION_LOG_LINES).forEach { line -> DiagnosticRedactor.redact(line)?.let(::appendLine) }
+        val lines = if (log.isFile) log.readLines() else emptyList()
+        appendLine()
+        // The tail is mostly periodic stats; how the session started (picture, decoder, Wi-Fi channel) is earlier.
+        appendLine("--- Session log: setup and Wi-Fi lines ---")
+        lines.filter { setupLine.containsMatchIn(it) && !periodicLine.containsMatchIn(it) }.take(SETUP_LINES)
+            .forEach { line -> DiagnosticRedactor.redact(line)?.let(::appendLine) }
+        appendLine()
+        appendLine("--- Session log (last $SESSION_LOG_LINES lines) ---")
+        if (lines.isEmpty()) appendLine("No session log.")
+        else lines.takeLast(SESSION_LOG_LINES).forEach { line -> DiagnosticRedactor.redact(line)?.let(::appendLine) }
     }
 
     private fun StringBuilder.section(title: String, build: StringBuilder.() -> Unit) {
