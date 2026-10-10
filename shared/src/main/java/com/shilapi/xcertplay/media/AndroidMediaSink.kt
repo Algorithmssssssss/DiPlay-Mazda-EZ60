@@ -6,6 +6,7 @@ import android.media.AudioFormat as AndroidAudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.media.MediaCodec
+import android.media.MediaCodecInfo
 import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.os.Build
@@ -701,11 +702,18 @@ internal fun videoOperatingRate(type: Int, statsLabel: String?, frameRate: Int):
 internal data class DecoderAttempt(val codecName: String?, val tuned: Boolean, val operatingRate: Int = 0)
 
 /**
- * Configure attempts in order. Some vendor decoders (e.g. MediaTek c2.mtk.avc.decoder) reject the tuned
+ * Configure attempts in order. A separate [lowLatencyDecoder] (MediaTek's c2.mtk.avc.decoder.lowlatency on
+ * the Mazda EZ-60) comes first. Some vendor decoders (e.g. MediaTek c2.mtk.avc.decoder) reject the tuned
  * parameters with BAD_VALUE, so a minimal format and then software follow. An [operatingRate] is tried
  * first on its own, so a decoder that refuses it keeps the tuned format it gets without one.
  */
-internal fun videoDecoderAttempts(operatingRate: Int, softwareDecoder: String?): List<DecoderAttempt> = listOfNotNull(
+internal fun videoDecoderAttempts(
+    operatingRate: Int,
+    softwareDecoder: String?,
+    lowLatencyDecoder: String? = null,
+): List<DecoderAttempt> = listOfNotNull(
+    lowLatencyDecoder?.let { DecoderAttempt(it, tuned = true, operatingRate = operatingRate) }?.takeIf { operatingRate > 0 },
+    lowLatencyDecoder?.let { DecoderAttempt(it, tuned = true) },
     DecoderAttempt(codecName = null, tuned = true, operatingRate = operatingRate).takeIf { operatingRate > 0 },
     DecoderAttempt(codecName = null, tuned = true),
     DecoderAttempt(codecName = null, tuned = false),
@@ -734,6 +742,7 @@ private class VideoDecoder(
     private val onExit: (VideoDecoder) -> Unit = {},
     operatingRate: Int = 0,
 ) : Closeable {
+    private val mainScreen = streamType == MAIN_SCREEN_TYPE && statsLabel == null
     private val pacer = FramePacer()
     private val pacingDelay = if (pacingDelayNanos > 0) PacingDelay(pacingDelayNanos) else null
     // Per queued presentation time (decode thread only): when it was queued, and whether it is a paced
@@ -917,7 +926,7 @@ private class VideoDecoder(
         val requestedRate = operatingRate
         var next: MediaCodec? = null
         var used: DecoderAttempt? = null
-        for (attempt in videoDecoderAttempts(requestedRate, softwareDecoderName(mime))) {
+        for (attempt in videoDecoderAttempts(requestedRate, softwareDecoderName(mime), lowLatencyDecoderName(mime))) {
             next = tryConfigure(mime, csd, surface, attempt)
             if (next != null) { used = attempt; break }
         }
@@ -983,6 +992,26 @@ private class VideoDecoder(
             )
             null
         }
+    }
+
+    /**
+     * A separate hardware decoder with low-latency output, for the main screen only, when the default
+     * decoder for [mime] lacks that feature (and so would not get KEY_LOW_LATENCY).
+     */
+    private fun lowLatencyDecoderName(mime: String): String? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !mainScreen) return null
+        if (mime == MediaFormat.MIMETYPE_VIDEO_HEVC && preferSoftwareHevcDecoder) return null
+        return runCatching {
+            val codecs = MediaCodecList(MediaCodecList.REGULAR_CODECS)
+            val candidates = codecs.codecInfos.filter { !it.isEncoder && mime in it.supportedTypes }
+            fun lowLatency(info: MediaCodecInfo) = info.getCapabilitiesForType(mime).isFeatureSupported("low-latency")
+            val default = codecs.findDecoderForFormat(MediaFormat.createVideoFormat(mime, width, height))
+            if (candidates.firstOrNull { it.name == default }?.let(::lowLatency) != false) return@runCatching null
+            candidates.firstOrNull {
+                it.isHardwareAccelerated && !it.isAlias && lowLatency(it) &&
+                    it.getCapabilitiesForType(mime).videoCapabilities?.isSizeSupported(width, height) == true
+            }?.name
+        }.getOrNull()
     }
 
     private fun softwareDecoderName(mime: String): String? {

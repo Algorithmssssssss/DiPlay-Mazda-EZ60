@@ -34,6 +34,24 @@ class VideoOperatingRateTest {
         )
     }
 
+    @Test fun aSeparateLowLatencyDecoderComesFirstThenTheUsualAttempts() {
+        val lowLatency = "c2.mtk.avc.decoder.lowlatency"
+        assertEquals(
+            listOf(
+                DecoderAttempt(lowLatency, tuned = true, operatingRate = 60),
+                DecoderAttempt(lowLatency, tuned = true),
+                DecoderAttempt(null, tuned = true, operatingRate = 60),
+                DecoderAttempt(null, tuned = true),
+                DecoderAttempt(null, tuned = false),
+            ),
+            videoDecoderAttempts(60, softwareDecoder = null, lowLatencyDecoder = lowLatency),
+        )
+        assertEquals(
+            listOf(DecoderAttempt(lowLatency, tuned = true), DecoderAttempt(null, tuned = true), DecoderAttempt(null, tuned = false)),
+            videoDecoderAttempts(0, softwareDecoder = null, lowLatencyDecoder = lowLatency),
+        )
+    }
+
     @Test fun aRefusedRateIsNotAskedForAgain() {
         assertEquals(60, nextOperatingRate(60, DecoderAttempt(null, tuned = true, operatingRate = 60)))
         assertEquals(0, nextOperatingRate(60, DecoderAttempt(null, tuned = true))) // refused, tuned worked
