@@ -71,7 +71,7 @@ internal object MazdaCockpitProbe {
     private const val SESSION_LOG_LINES = 300
     private const val SETUP_LINES = 150
     private const val VIDEO_STATS_LINES = 240
-    private val setupLine = Regex("(?i)MHz|GHz|frequency|channel|P2P|Wi-Fi|hotspot|station|Starting CarPlay|decoder|fps|Display|transport|session")
+    private val setupLine = Regex("(?i)MHz|GHz|frequency|channel|P2P|Wi-Fi|hotspot|station|Starting CarPlay|decoder|fps|Display|transport|session|HUD")
     private val periodicLine = Regex("iAP tunnel|video stats|audio stats|decoder stats|Receive:|THEME_DIAGNOSTIC")
     private const val MAX_EVENT_LINES = 1500
     private const val MAX_SETTINGS_PER_TABLE = 200

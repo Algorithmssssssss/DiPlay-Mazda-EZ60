@@ -27,13 +27,15 @@ internal class MazdaHud(private val context: Context) {
     private var presentation: Presentation? = null
     private var card: MazdaHudCardView? = null
 
-    /** Shows [guidance], or clears the HUD when there is none. Main thread. */
-    fun update(guidance: ClusterTurnGuidance?) {
+    /** Shows [guidance], or clears the HUD when there is none; false when the HUD display could not be used. Main thread. */
+    fun update(guidance: ClusterTurnGuidance?): Boolean {
         if (guidance == null) {
             close()
-            return
+            return true
         }
-        (card ?: open())?.guidance = guidance
+        val view = card ?: open() ?: return false
+        view.guidance = guidance
+        return true
     }
 
     private fun open(): MazdaHudCardView? {

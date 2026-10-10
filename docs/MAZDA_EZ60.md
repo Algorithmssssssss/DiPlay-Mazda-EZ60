@@ -16,7 +16,7 @@ different app. This fork includes upstream DiPlay through 0.2.17.
 | Passenger half | The panel mirrors the driver's: `[0,192]–[2496,1272]` in the window, 1728 wide while the right voice assistant shows. This mirroring is assumed, not measured. |
 | Two-finger swipe | Moves the window between halves without resizing or relaunching it, so CarPlay keeps its session; the panel follows the new half. The CarPlay screen shares the DiPlay menu's task, so both move together. |
 | Opening on the launch half | A new task started from DiPlay opens on DiPlay's half (tested on both halves), and the CarPlay screen now opens inside DiPlay's own task. Opening DiPlay from the other half's app list moves it there. |
-| Video | H.264 at 2496×1080, 60 fps by default on the EZ-60. DiPlay tries the car's separate low-latency decoder first. First wireless session (Wi-Fi Direct, 5 GHz, 30 fps): decoding took 6–13 ms per frame with no late frames, but the stream paused for 0.4–1 s every few seconds. |
+| Video | H.264 at 2496×1080, 60 fps by default on the EZ-60, through `c2.mtk.avc.decoder.lowlatency` with its own output thread. Best measured so far (built-in car hotspot, 2026-10-11): 43–59 fps while in use, decode 4–5 ms (p90 7–11 ms), touch to picture 21–60 ms, up to 33 Mbps. Earlier, Wi-Fi Direct with the car joined to the iPhone's hotspot gave 23–35 fps and pauses of up to 1.5 s. |
 | Wheel keys | Previous, next and play/pause arrive as standard media keys. |
 | USB | An iPhone on the USB port appears as a USB data device (Apple `05ac:12a8`, 12 interfaces). Wired CarPlay runs through an Android VPN, and CAMZD OS has no VPN consent screen (`com.android.vpndialogs` is missing), so the VPN must be allowed once over ADB; see below. |
 | Wi-Fi, audio | Upstream behaviour so far. |
@@ -83,7 +83,8 @@ car hotspot's name and password: without them **Connect** returns to Connection 
 - **Wi-Fi scanning:** with Wi-Fi Direct and no network joined, the car's Wi-Fi client keeps scanning, which
   takes the radio off the CarPlay channel (upstream measured a 10 s period on BYD cars). Upstream 0.2.17
   pauses that during Wi-Fi Direct, but only with the car's ADB over network approved. The **Built-in car
-  hotspot** mode runs with the client off and avoids it; upstream now recommends it.
+  hotspot** mode runs with the client off and avoids it; upstream now recommends it, and on the EZ-60 it
+  gave the smoothest sessions so far (see Video above).
 
 ## Instrument cluster and HUD
 
