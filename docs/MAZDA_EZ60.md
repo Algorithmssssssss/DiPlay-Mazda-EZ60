@@ -124,13 +124,12 @@ shows only lyrics, which CarPlay does not send, so DiPlay leaves it alone in thi
 
 ## Known issues
 
-- **Music pausing and playing by itself.** When the iPhone is also connected to the car's own Bluetooth music,
+- **Fixed: music pausing and playing by itself.** When the iPhone is also connected to the car's own Bluetooth music,
   the car's Bluetooth player takes audio focus as the iPhone plays (`bt_source_focus_key` = 1), and it pauses
   the iPhone over Bluetooth whenever it loses focus. DiPlay used to take focus back on each play or new track,
   so CarPlay music paused and resumed every few seconds (report 16: a new track at 04:37:15.98, the iPhone's
   music stopped at 04:37:16.47). DiPlay now leaves focus to that player while it holds it; CarPlay audio plays
-  without focus, and the wheel keys reach the iPhone through it. Not yet confirmed on the car: if it still
-  happens, turning the car's Bluetooth off and on again stops it.
+  without focus, and the wheel keys reach the iPhone through it. Confirmed on the car on 2026-10-11.
 - **Wired CarPlay needs one ADB command** (see Connect above).
 - **Passenger half:** CarPlay's panel there is assumed to mirror the driver's; it has not been measured.
 
@@ -141,9 +140,9 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew :mobile:assembleDebug
 ```
 
-Add `-Pez60.variant=next` to build "DiPlay EZ-60 Next" (`com.reachkim.diplay.ez60.next`), which installs
-next to the working "DiPlay EZ-60 Test" app instead of over it, for trying a branch. Its settings, paired
-iPhone and VPN permission are its own.
+Add `-Pez60.variant=next` to build `com.reachkim.diplay.ez60.next`, labelled "DiPlay EZ-60", which installs
+next to the "DiPlay EZ-60 Test" app instead of over it. Its settings, paired iPhone and VPN permission are its
+own.
 
 The APK is `mobile/build/outputs/apk/debug/mobile-debug.apk`. It has no CarPlay accessory identity, so
 it cannot connect an iPhone; it is enough for the probe. To build one that connects, see

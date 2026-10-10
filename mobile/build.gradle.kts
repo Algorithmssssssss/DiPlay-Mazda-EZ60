@@ -44,7 +44,7 @@ android {
             val next = providers.gradleProperty("ez60.variant").orNull == "next"
             applicationIdSuffix = if (next) ".next" else ".hudtest"
             versionNameSuffix = "-hud-test"
-            manifestPlaceholders["ez60DebugLabel"] = if (next) "DiPlay EZ-60 Next" else "DiPlay EZ-60 Test"
+            manifestPlaceholders["ez60DebugLabel"] = if (next) "DiPlay EZ-60" else "DiPlay EZ-60 Test"
         }
         release {
             optimization {

@@ -14,11 +14,11 @@
 - **Windshield HUD.** While CarPlay navigation guides, the car's HUD draws its own turn arrow, distance and remaining route, and shows CarPlay's map in its map area. Confirmed with Google Maps.
 - **Picture tuned for the MT8676:** 60 fps and the MediaTek low-latency H.264 decoder by default.
 - Steering-wheel previous, next and play/pause.
+- **Works beside the car's own Bluetooth music:** DiPlay leaves audio focus to the car's Bluetooth player, so the car no longer pauses the iPhone when CarPlay plays.
 - BYD-only settings are hidden; everything else from DiPlay 0.2.17 is included.
 
 ## Known issues
 
-- **Music pausing and playing by itself** when the iPhone is also connected to the car's own Bluetooth music: DiPlay now leaves audio focus to the car's Bluetooth player instead of taking it back, which caused the pauses. Not yet confirmed on the car; if it still happens, turn the car's Bluetooth off and on again.
 - **The HUD's music line** shows "暂无歌词" (no lyrics). It is the car's lyrics line, and CarPlay sends no lyrics.
 - The passenger half's CarPlay panel is assumed to mirror the driver's; it has not been measured.
 

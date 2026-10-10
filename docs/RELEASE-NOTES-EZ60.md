@@ -10,13 +10,13 @@ First pre-release of the Mazda EZ-60 fork, based on [DiPlay 0.2.17](https://gith
 - **Windshield HUD.** While CarPlay navigation guides, DiPlay feeds the car's navigation service the way the car's own navigation apps do. The HUD then draws its turn arrow, distance, remaining distance and time, and its 3D guidance chevrons, and shows CarPlay's map in its map area.
 - **Picture:** 60 fps and the MediaTek low-latency H.264 decoder by default; Wi-Fi Direct starts on 5 GHz and the slow software HEVC decoder is skipped.
 - **Steering-wheel keys:** previous, next and play/pause.
+- **Beside the car's own Bluetooth music.** The car's Bluetooth player pauses the iPhone over Bluetooth whenever it loses audio focus, and DiPlay used to take focus back on each play or new track, so CarPlay music paused and resumed every few seconds. DiPlay now leaves focus to that player while it holds it; CarPlay audio plays without it and the wheel keys reach the iPhone through it.
 - **EZ-60 probe** under **Settings → Diagnostics**, for reports about the car's screens, windows and hardware.
 
 BYD-only settings are hidden. Upstream's update check is off, because upstream releases are a different app.
 
 ## Known issues
 
-- **Music pausing and playing by itself** when the iPhone is also connected to the car's own Bluetooth music. The car's Bluetooth player pauses the iPhone over Bluetooth whenever it loses audio focus, and DiPlay used to take focus back on each play or new track. DiPlay now leaves focus to that player while it holds it. Not yet confirmed on the car; if it still happens, turning the car's Bluetooth off and on again stops it.
 - **The HUD's music line** shows "暂无歌词" (no lyrics). It belongs to the car's media center, which shows only lyrics; CarPlay sends none.
 - **Wired CarPlay needs one ADB command**, because CAMZD OS has no VPN approval screen:
   `adb shell appops set com.reachkim.diplay.ez60 ACTIVATE_VPN allow`

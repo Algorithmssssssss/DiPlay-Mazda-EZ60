@@ -58,8 +58,6 @@ audio**). Keep HEVC off. **Settings → Diagnostics → FPS counter** shows the 
 If wireless stops connecting after a reinstall, close other projection apps, then use **Settings → Connection
 → Wireless connection help → Reset CarPlay Wi-Fi**.
 
-If music pauses and plays by itself, see the known issues in [DiPlay for the Mazda EZ-60](MAZDA_EZ60.md#known-issues).
-
 To report a problem:
 
 1. Reproduce it on the latest release, while parked.

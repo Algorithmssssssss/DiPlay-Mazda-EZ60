@@ -74,7 +74,7 @@ mobile/build/outputs/apk/debug/mobile-debug.apk
 ```
 
 The debug application ID is `com.reachkim.diplay.ez60.hudtest` ("DiPlay EZ-60 Test").
-Add `-Pez60.variant=next` for `com.reachkim.diplay.ez60.next` ("DiPlay EZ-60 Next"), which installs beside it.
+Add `-Pez60.variant=next` for `com.reachkim.diplay.ez60.next` (labelled "DiPlay EZ-60"), which installs beside it.
 The release application ID is `com.reachkim.diplay.ez60`.
 
 The source APK contains no accessory identity unless you supply runtime authentication assets.
