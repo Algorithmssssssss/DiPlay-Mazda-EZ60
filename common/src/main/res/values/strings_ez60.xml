@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_mazda_hud">Turn-by-turn on the HUD (experimental)</string>
+    <string name="settings_mazda_hud_description">Shows CarPlay’s next turn, distance and road on the windshield head-up display while CarPlay navigation is guiding. Applies at the next turn update.</string>
+</resources>

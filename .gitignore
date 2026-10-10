@@ -39,3 +39,6 @@ release-signing.properties
 *.key
 *.apk
 *.aab
+
+# dont commit findings
+EZNAV-FINDINGS.md

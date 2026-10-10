@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_mazda_hud">Подсказки поворотов на HUD (экспериментально)</string>
+    <string name="settings_mazda_hud_description">Показывает следующий поворот, расстояние и дорогу из CarPlay на проекционном дисплее на лобовом стекле во время навигации CarPlay. Применяется при следующем обновлении поворота.</string>
+</resources>

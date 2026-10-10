@@ -1909,6 +1909,11 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 getString(R.string.sends_precise_android_location_as_carplay_gps_data_when_th),
                 AirPlayPersistence.loadLocationReportingEnabled(this), save = ::onLocationReportingChanged)
             card.addView(label(getString(R.string.location_reporting_reconnects), 14, MUTED))
+            // Only the EZ-60 has this head-up display; the switch is shown there alone.
+            if (MazdaPlatform.isEz60) {
+                toggle(card, getString(R.string.settings_mazda_hud), getString(R.string.settings_mazda_hud_description),
+                    MazdaHudSettings.enabled(this)) { MazdaHudSettings.save(this, it) }
+            }
         }
         // Cluster video does not require a BYD navigation broadcast receiver.
         filteredSection(content, SettingsSection.CLUSTER_MAP,
@@ -5143,13 +5148,20 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         MazdaCockpitProbe.setRecording(this, true)
         val shown = "${display.displayId} ${display.name}"
         val card = android.app.Presentation(this, display).apply {
-            // Views for another display use that display's context.
-            setContentView(TextView(context).apply {
-                text = getString(R.string.settings_probe_meter_card, shown)
-                textSize = 34f
-                gravity = Gravity.CENTER
-                setTextColor(Color.WHITE)
-                setBackgroundColor(Color.rgb(0, 96, 220))
+            // Only part of the EZ-60's HUD surface reaches the windshield; put the card there.
+            setContentView(FrameLayout(context).apply {
+                setBackgroundColor(Color.BLACK)
+                addView(TextView(context).apply {
+                    text = getString(R.string.settings_probe_meter_card, shown)
+                    textSize = 22f
+                    gravity = Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                    setBackgroundColor(Color.rgb(0, 96, 220))
+                }, FrameLayout.LayoutParams(MazdaHud.VISIBLE_RIGHT - MazdaHud.VISIBLE_LEFT,
+                    MazdaHud.VISIBLE_BOTTOM - MazdaHud.VISIBLE_TOP).apply {
+                    leftMargin = MazdaHud.VISIBLE_LEFT
+                    topMargin = MazdaHud.VISIBLE_TOP
+                })
             })
         }
         runCatching { card.show() }

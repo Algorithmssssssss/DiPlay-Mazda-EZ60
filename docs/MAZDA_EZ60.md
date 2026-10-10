@@ -87,11 +87,16 @@ car hotspot's name and password: without them **Connect** returns to Connection 
 
 ## Instrument cluster and HUD
 
-The car exposes an 800×480 presentation display, `MeterDisplay#0`, besides the 5K screen. **Settings →
-Diagnostics → Test instrument display** shows a blue test card on it for 20 seconds. If the card appears in
-the cluster or the HUD, DiPlay's dashboard-map path can show CarPlay's map there. Turn-by-turn arrows in
-the AR-HUD need the car's own navigation interface, which is not public: it can be found by analysing the
-car's navigation and HUD apps (for example `com.baidu.naviauto`, `com.tinnove.wecarnavi`).
+The windshield HUD is an 800×480 presentation display, `MeterDisplay#0`, of which only the rectangle
+(573,167)–(800,355), 227×188 pixels, is projected. The car's own navigation apps draw their HUD view into
+that rectangle from an ordinary window on the display; black is not projected.
+
+- **Turn-by-turn on the HUD (experimental)** (**Settings → Navigation → Location**, EZ-60 only, on by
+  default) shows CarPlay's next turn arrow, distance and road there while CarPlay navigation guides. It
+  uses the route guidance the iPhone already sends, and only that public display.
+- **Settings → Diagnostics → Test instrument display** shows a blue test card in the same rectangle for 20
+  seconds.
+- Not used: writing guidance into the car's own HUD controller through its private car-property service.
 
 ## Build
 

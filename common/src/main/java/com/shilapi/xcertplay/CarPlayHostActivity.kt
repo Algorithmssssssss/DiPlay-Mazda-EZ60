@@ -348,10 +348,12 @@ class CarPlayHostActivity : ComponentActivity() {
     // Keep one surface per layer alive, including while its map card is hidden.
     private val clusterLayers = mutableMapOf<Boolean, ClusterMapPresentation>()
     private var clusterTurnGuidance: com.shilapi.xcertplay.hud.ClusterTurnGuidance? = null
+    private var mazdaHud: MazdaHud? = null
     private val clusterTurnOverlayListener: (com.shilapi.xcertplay.hud.ClusterTurnGuidance?) -> Unit = { guidance ->
         runOnUiThread {
             clusterTurnGuidance = guidance
             applyClusterTurnOverlay()
+            updateMazdaHud(guidance)
         }
     }
     // Copies of stream 111 outside the dashboard (centre card, launcher maps) each get their own decoder.
@@ -1520,6 +1522,8 @@ class CarPlayHostActivity : ComponentActivity() {
 
     override fun onDestroy() {
         MazdaCockpitProbe.detach(this)
+        mazdaHud?.close()
+        mazdaHud = null
         resetSidePanel()
         releaseSidePanelEffects()
         hostAppearanceResumed = false
@@ -5500,6 +5504,17 @@ class CarPlayHostActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // EZ-60: CarPlay's next turn on the windshield HUD while CarPlay guides; cleared when guidance ends.
+    private fun updateMazdaHud(guidance: com.shilapi.xcertplay.hud.ClusterTurnGuidance?) {
+        if (isDestroyed || !MazdaHudSettings.enabled(this)) {
+            mazdaHud?.close()
+            mazdaHud = null
+            return
+        }
+        val hud = mazdaHud ?: MazdaHud(this).also { mazdaHud = it }
+        hud.update(guidance)
     }
 
     private fun showDiPlayHome(page: String = "home") {
