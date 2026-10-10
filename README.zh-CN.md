@@ -43,4 +43,4 @@
 
 ## 来源与致谢
 
-基于 [DiPlay](https://github.com/shihabal3amri/DiPlay)，DiPlay 又基于 [xcertplay](https://github.com/shilapi/xcertplay)（GPL-3.0）。主页和设置界面改编自 [DiAuto](https://github.com/shihabal3amri/DiAuto)（AGPL-3.0），许可证见 `docs/licenses`。EZ-60 座舱区域尺寸来自 [TidePlayer](https://github.com/JulyStar-Lv/TidePlayer) 公布的测量结果。分发修改版本时请保留这些声明。CarPlay 及其图标归 Apple Inc. 所有。
+基于 [DiPlay](https://github.com/shihabal3amri/DiPlay)，DiPlay 又基于 [xcertplay](https://github.com/shilapi/xcertplay)（GPL-3.0）。主页和设置界面改编自 [DiAuto](https://github.com/shihabal3amri/DiAuto)（AGPL-3.0），许可证见 `docs/licenses`。最初的 EZ-60 座舱适配（5K 屏幕上的显示区域切换）来自 [JulyStar-Lv 的 DiPlay 分支](https://github.com/JulyStar-Lv/DiPlay)，其尺寸依据 [TidePlayer](https://github.com/JulyStar-Lv/TidePlayer) 公布的测量结果。分发修改版本时请保留这些声明。CarPlay 及其图标归 Apple Inc. 所有。

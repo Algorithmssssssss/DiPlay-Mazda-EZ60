@@ -2,7 +2,7 @@
 
 ## Mazda EZ-60 fork
 
-This repository is a Mazda EZ-60 fork of [DiPlay by shihabal3amri](https://github.com/shihabal3amri/DiPlay). It keeps DiPlay's licenses and notices below. The EZ-60 cockpit panel geometry follows the car's own window measurements published by [TidePlayer](https://github.com/JulyStar-Lv/TidePlayer/blob/main/docs/automotive/CAR_WINDOW_PROFILES.md). No Mazda, Changan or Tinnove affiliation or endorsement is implied.
+This repository is a Mazda EZ-60 fork of [DiPlay by shihabal3amri](https://github.com/shihabal3amri/DiPlay). It keeps DiPlay's licenses and notices below. The first EZ-60 cockpit port (view-area switching on the 5K screen) is by JulyStars, from [JulyStar-Lv's DiPlay fork](https://github.com/JulyStar-Lv/DiPlay); its panel geometry follows the car's own window measurements published by [TidePlayer](https://github.com/JulyStar-Lv/TidePlayer/blob/main/docs/automotive/CAR_WINDOW_PROFILES.md). No Mazda, Changan or Tinnove affiliation or endorsement is implied.
 
 ## Receiver
 
