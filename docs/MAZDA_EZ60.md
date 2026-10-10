@@ -113,7 +113,8 @@ connection.
 Only these navigation calls are made, from a background thread, and the session log records each step
 (`HUD: ...`). Turn icons use the numbers EZNav sends: 3 destination, 16 straight, 17/18 slight or keep
 right/left, 19 left, 20 right, 21/22 sharp left/right, 23 U-turn, 53 roundabout, 74–83 roundabout exit 1–10.
-No vehicle properties are written.
+With these the HUD draws its own arrow beside the distance and its 3D guidance chevrons (16, 19 and 3 confirmed
+with Google Maps on 2026-10-11). No vehicle properties are written.
 
 ## Build
 
