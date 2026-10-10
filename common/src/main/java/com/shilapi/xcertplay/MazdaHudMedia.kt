@@ -1,6 +1,10 @@
 package com.shilapi.xcertplay
 
 import android.content.Context
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import com.shilapi.xcertplay.MazdaInteractiveService.Companion.ABANDON_MEDIA_FOCUS
 import com.shilapi.xcertplay.MazdaInteractiveService.Companion.MEDIA_SOURCE
@@ -16,7 +20,9 @@ import java.util.concurrent.Executors
  *
  * Like the media center, DiPlay sends only while it holds Android audio focus for CarPlay music
  * ([CarPlayMediaKeys]): the media center sends only while it holds audio focus, so the two never take the HUD
- * from each other. Song names are not logged.
+ * from each other. The media center's Bluetooth player also takes audio focus whenever the iPhone reports playing
+ * over Bluetooth, if the car's per-phone "always play" switch is on, and then reclaims the line every second
+ * (EZ-60 report 14); DiPlay steps aside while it holds focus ("bt_source_focus_key" = 1). Song names are not logged.
  */
 internal object MazdaHudMedia {
     private const val TAG = "DiPlay-MazdaHudMedia"
@@ -34,6 +40,7 @@ internal object MazdaHudMedia {
     @Volatile var log: ((String) -> Unit)? = null
 
     @Volatile private var requested: Song? = null
+    @Volatile private var observing = false
     private val worker = Executors.newSingleThreadExecutor {
         Thread(it, "diplay-mazda-hud-media").apply { isDaemon = true }
     }
@@ -49,12 +56,14 @@ internal object MazdaHudMedia {
     private var wanted: Song? = null
     private var active = false
     private var sent: Song? = null
+    private var yieldLogged = false
 
     /** The song CarPlay plays while it holds audio focus, or null. Any thread. */
     fun update(context: Context, song: Song?) {
         if (!MazdaPlatform.isEz60 || song == requested) return
         requested = song
         val app = context.applicationContext
+        observeBluetoothSource(app)
         worker.execute {
             appContext = app
             wanted = song
@@ -75,7 +84,43 @@ internal object MazdaHudMedia {
     private fun applyOnWorker() {
         val context = appContext ?: return
         val song = wanted?.takeIf { MazdaHudSettings.song(context) }
-        if (song == null) stopOnWorker(context) else sendOnWorker(context, song)
+        when {
+            song == null -> stopOnWorker(context)
+            bluetoothSourceHasFocus(context) -> yieldOnWorker(context)
+            else -> {
+                yieldLogged = false
+                sendOnWorker(context, song)
+            }
+        }
+    }
+
+    // The car's Bluetooth player holds focus: its record owns the line until it lets go.
+    private fun yieldOnWorker(context: Context) {
+        if (!yieldLogged) emit("HUD: song waits; the car's Bluetooth music has focus")
+        yieldLogged = true
+        if (!active) return
+        active = false
+        sent = null
+        service.call(ABANDON_MEDIA_FOCUS) {
+            writeString(context.packageName)
+            writeStrongBinder(callback)
+        }
+    }
+
+    private fun bluetoothSourceHasFocus(context: Context): Boolean =
+        runCatching { Settings.Global.getInt(context.contentResolver, BT_SOURCE_FOCUS, 0) == 1 }.getOrDefault(false)
+
+    private fun observeBluetoothSource(context: Context) {
+        if (observing) return
+        observing = true
+        runCatching {
+            context.contentResolver.registerContentObserver(Settings.Global.getUriFor(BT_SOURCE_FOCUS), false,
+                object : ContentObserver(Handler(Looper.getMainLooper())) {
+                    override fun onChange(selfChange: Boolean) {
+                        worker.execute(::applyOnWorker)
+                    }
+                })
+        }.onFailure { emit("HUD: Bluetooth source focus not observable ${it.javaClass.simpleName}") }
     }
 
     private fun sendOnWorker(context: Context, song: Song) {
@@ -127,6 +172,7 @@ internal object MazdaHudMedia {
     }
 
     private const val FOCUS_GAINED = 1
+    private const val BT_SOURCE_FOCUS = "bt_source_focus_key" // the media center's Bluetooth player: 1 = focus
     private const val PLAYING = 2 // the media center's play states
     private const val PAUSED = 7
     private const val SOURCE_OTHER = 35 // the media center's type for any source but Bluetooth, local or USB music

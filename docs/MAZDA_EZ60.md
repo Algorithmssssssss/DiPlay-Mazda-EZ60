@@ -125,6 +125,14 @@ other; when CarPlay music stops or another source plays, it sends the media cent
 `abandonMediaFocus`. The cover is not sent yet: the media center hands the HUD a world-readable image file in
 its own shared folder.
 
+The car's own Bluetooth music player can take the line back. If the iPhone is also connected to the car's
+Bluetooth and the car's per-phone "always play" Bluetooth music switch is on, the player takes audio focus each
+time the iPhone reports playing. It then sends its own record every second, and for an iPhone song that record
+has no lyric line ("暂无歌词"); seen in report 14 as `bt_source_focus_key=1` and `HUD: media focus changed value=0`
+within a second of each grant. DiPlay then steps aside (`HUD: song waits; the car's Bluetooth music has focus`)
+instead of fighting for the line. Turn that switch off for the iPhone in the car's Bluetooth settings to show the
+CarPlay song.
+
 ## Build
 
 ```sh
