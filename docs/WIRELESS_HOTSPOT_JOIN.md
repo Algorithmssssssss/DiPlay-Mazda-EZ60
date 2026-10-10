@@ -182,7 +182,7 @@ journal and transaction: default configurations and older prepared snapshots are
 refused before writing; eligible user configurations apply, restore and compensate
 failed/cancelled writes without relaxing drift detection. Build/lint results are
 recorded in
-[hotspot repair validation](HOTSPOT_JOIN_VALIDATION.md).
+[hotspot repair validation](https://github.com/shihabal3amri/DiPlay/blob/main/docs/HOTSPOT_JOIN_VALIDATION.md).
 
 The controlled phone experiment above used the original APK and a separate
 privileged helper. It did not exercise this new in-app path. BYD firmware,

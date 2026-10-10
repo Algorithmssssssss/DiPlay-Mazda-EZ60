@@ -1,67 +1,45 @@
-# DiPlay
+# DiPlay for Mazda EZ-60
 
-**CarPlay for compatible BYD Android head units.** Wired and wireless, with the familiar DiAuto interface. Independent app: `com.shihab.diplay`.
+**CarPlay for the Chinese-market Mazda EZ-60** (Changan Mazda J90K, CAMZD OS on Android 14, MediaTek MT8676), wired and wireless, on the car's 5K split screen and windshield HUD. A fork of [DiPlay](https://github.com/shihabal3amri/DiPlay). App: `com.reachkim.diplay.ez60`, installs beside upstream DiPlay.
 
-> **BYD support scope:** These projects focus on BYD cars. They may work on other brands, but other brands are unsupported and there are no plans to add support or fix brand-specific incompatibilities.
+> **Pre-release.** Tested on one EZ-60 with an iPhone on iOS 27. It is not an Apple-certified product, and it is not affiliated with or endorsed by Apple, Mazda, Changan or Tinnove.
 
-[Download & website](https://shihabal3amri.github.io/DiPlay/) · [Release](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.17) · [Report a problem](https://github.com/shihabal3amri/DiPlay/issues/new/choose)
+[Releases](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/releases) · [Install and connect](docs/INSTALL.md) · [Report a problem](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/issues/new/choose) · [中文](README.zh-CN.md)
 
-![DiPlay home](site/assets/home.png)
+## What works in 0.2.17-ez60.1
 
-## 0.2.17 — public preview
+- **Wireless CarPlay** over the car's built-in hotspot (smoothest: 43–59 fps while in use, 4–5 ms per frame to decode, 21–60 ms from touch to picture) or Wi-Fi Direct on 5 GHz.
+- **Wired CarPlay** over USB, after one ADB command (the car has no VPN approval screen).
+- **Both screen halves.** CarPlay opens on the half you start it from, follows the car's two-finger swipe to the other half without reconnecting, and narrows when the car shows its vehicle panel or voice assistant.
+- **Windshield HUD.** While CarPlay navigation guides, the car's HUD draws its own turn arrow, distance and remaining route, and shows CarPlay's map in its map area. Confirmed with Google Maps.
+- **Picture tuned for the MT8676:** 60 fps and the MediaTek low-latency H.264 decoder by default.
+- Steering-wheel previous, next and play/pause.
+- BYD-only settings are hidden; everything else from DiPlay 0.2.17 is included.
 
-Install on the **car**, not the iPhone. No jailbreak, dongle, Mac, account or authentication server is required for use. Core CarPlay does not require ADB; optional dashboard, battery, wheel-speed and parked-video features do. Your head unit must permit APK installation. The APK supports Android 7.1+ (API 25); Android 7.1–8.1 support is not yet confirmed on a vehicle. Wireless supports Wi-Fi Direct, the car’s existing hotspot or Existing Wi-Fi / Same LAN. Android 7.1–9 Wi-Fi Direct uses a firmware-dependent legacy path with generated group credentials and unverified requested frequency; see [Android 9 Wi-Fi Direct](docs/ANDROID9_WIFI_DIRECT.md). Android 10+ verifies its negotiated group frequency.
+## Known issues
 
-- Wired USB and wireless CarPlay with local authentication.
-- BYD HUD navigation with arrows, distance and street names on verified firmware.
-- Car hotspot support, improved audio buffering and saved receive diagnostics.
-- Automatic address discovery, fixed-channel Wi-Fi fallbacks and successful-configuration memory.
-- Icon/text size, resolution and frame rate; applying a display change reconnects CarPlay.
-- Local diagnostic export. Reports are sent only if you choose to share them.
-- Separate installation alongside DiAuto. Run one projection app at a time.
+- **Music pauses and plays by itself** when the iPhone is also connected to the car's own Bluetooth music and the car plays it automatically. Turning the car's Bluetooth off and on again stopped it on the test car.
+- **The HUD's music line** shows "暂无歌词" (no lyrics). It is the car's lyrics line, and CarPlay sends no lyrics.
+- The passenger half's CarPlay panel is assumed to mirror the driver's; it has not been measured.
 
-This is **not an Apple-certified product**. The APK bundles an experimental accessory identity recovered from public Carlinkit firmware, not a newly provisioned MFi identity for DiPlay. A bundled private key is extractable. Acceptance after future iOS updates, reliability across head units and suitability of that identity for general distribution are unresolved. This release invites community testing; it is not a guarantee of universal compatibility.
+Details: [DiPlay for the Mazda EZ-60](docs/MAZDA_EZ60.md).
 
-Earlier releases were tested on the development DiLink5.1 car: live windshield guidance and street names work, Car hotspot now starts CarPlay, and Wi-Fi Direct performance is substantially improved. Audio underrun recovery is improved in 0.2.15; remaining cutouts need current diagnostic reports. The 0.2.16 software Opus microphone fallback was accepted on a BOS Mini A1 head unit (Android 9) with an iPhone 12 on iOS 27. The floating-map test build was installed on the development DiLink 5.1 car; feedback led to the pinch corrections in 0.2.9. Earlier wheel-speed and video contributions were tested on a BYD Tang with DiLink 5.0 and an iPhone 15 Pro on iOS 27; wheel-speed dead reckoning in tunnels remains unverified. Broader head-unit and iOS compatibility is not guaranteed. The HUD firmware scope and cleanup limits are documented in [BYD navigation](docs/BYD_NAVIGATION.md).
+## CarPlay accessory identity
 
-## What’s new in 0.2.17
-
-- Wired sessions keep running when the head unit delivers a damaged USB network block, instead of reconnecting seconds after the picture appears.
-- Older iPhones get a second identification attempt, and USB auto-confirm recognizes the Android 10+ and Chinese permission prompts.
-- A new iPhone charging choice under **Settings → Connection → USB connection** for USB ports that cannot supply the iPhone's charging current.
-- Voice notes in apps such as WhatsApp record the head unit's microphone and no longer sound slurred.
-- Settings recommends the built-in car hotspot; with approved network ADB, the car's Wi-Fi network search pauses during Wi-Fi Direct on Android 7.1 and later.
-- A daily update check with an **Update available** notice on Home, which can be turned off in About.
-- Album-cover ambient lighting, plus experimental BYD call popup hiding and external controller keys.
-
-See [0.2.17 release notes](docs/RELEASE-NOTES-0.2.17.md) and [validation](docs/VALIDATION.md) for contribution links and remaining physical tests. General stutter, calls/Siri, decoder and model-specific reports still need current-device evidence. [0.2.16 notes](docs/RELEASE-NOTES-0.2.16.md) remain available as historical guidance.
-
-If a problem remains, reproduce it on **0.2.17**, then use **Settings → Diagnostics → Save diagnostic report**. Android 10+ normally saves to **Downloads/DiPlay**; Android 7.1–9 asks for storage access and saves there too. If unavailable, use **View report** or **Share** from the confirmation, which identifies external/private fallback storage. Review the `.txt` and add it to a matching [existing issue](https://github.com/shihabal3amri/DiPlay/issues), or [create one](https://github.com/shihabal3amri/DiPlay/issues/new/choose). Include vehicle/head-unit model, exact firmware and Android/DiLink, phone/iOS, connection backend, relevant settings, steps and failure time. Reports are shared only when you choose; never post your hotspot password.
+The source code and source builds contain no CarPlay accessory identity, so they cannot connect an iPhone. A build that connects needs one supplied at build time; see [Build](docs/BUILD.md). Each release's notes say whether its APK contains one. Anyone with such an APK can extract its identity; see [SECURITY.md](SECURITY.md).
 
 ## Documentation
 
-[Existing Wi-Fi / Same LAN](docs/EXISTING_WIFI.md) keeps the iPhone and head unit
-on an external router. See the guide for setup, build requirements and the
-BYD DiLink 4.0 / Android 10 clean-install validation result.
-
-- [Mazda EZ-60 fork: status, build and probe](docs/MAZDA_EZ60.md)
 - [Install and connect](docs/INSTALL.md)
-- [Compatibility and troubleshooting](docs/COMPATIBILITY.md)
+- [DiPlay for the Mazda EZ-60](docs/MAZDA_EZ60.md): measurements, HUD, known issues and the EZ-60 probe
 - [Smooth wireless CarPlay](docs/SMOOTH_WIRELESS.md)
 - [Privacy and diagnostic reports](docs/PRIVACY.md)
-- [Build from source](docs/BUILD.md) — select `mobile` for the main DiPlay app; `maphost` is a map sample.
-- [Validation](docs/VALIDATION.md)
-- [Release notes](CHANGELOG.md)
+- [Build from source](docs/BUILD.md)
+- [Changes](CHANGELOG.md)
 - [Credits and licenses](docs/THIRD_PARTY_NOTICES.md)
 
-The app and release website are available in English, Arabic, Russian, Ukrainian, Spanish, Simplified Chinese and Traditional Chinese (Taiwan). Traditional Chinese uses Taiwan wording; the app also recognizes Hong Kong/Macao and explicit Hant selections without claiming separate regional translations. Choose the app language in Settings; on Android 13+, it stays synchronized with Android’s per-app language setting.
+Other files in `docs/` describe DiPlay features inherited from upstream.
 
 ## Source and credits
 
-Based on [xcertplay](https://github.com/shilapi/xcertplay), GPL-3.0. The home/settings UI and website adapt [DiAuto](https://github.com/shihabal3amri/DiAuto), AGPL-3.0; that license is included in `docs/licenses`. Preserve those notices when distributing modifications. CarPlay and its icon belong to Apple Inc.; no Apple or BYD affiliation or endorsement is implied.
-
-This repository starts with a clean public source snapshot. Local research, tester reports and release-signing secrets are excluded. The complete source corresponding to the APK is provided with every release; experimental runtime identity assets are described separately in the build instructions and notices.
-
-## Local release packaging
-
-The release APK intentionally contains the experimental accessory identity. The Git repository and source archive exclude all accessory and Android signing keys; tests generate synthetic identities at runtime. Source/CI builds omit runtime identity assets by default. Local release builds explicitly select an external asset directory. Publishing the APK makes its bundled identity extractable; building locally does not preserve that identity's confidentiality.
+Based on [DiPlay](https://github.com/shihabal3amri/DiPlay), which is based on [xcertplay](https://github.com/shilapi/xcertplay) (GPL-3.0). The home and settings UI adapts [DiAuto](https://github.com/shihabal3amri/DiAuto) (AGPL-3.0); that license is in `docs/licenses`. The EZ-60 cockpit geometry follows measurements published by [TidePlayer](https://github.com/JulyStar-Lv/TidePlayer). Keep these notices when you distribute modifications. CarPlay and its icon belong to Apple Inc.

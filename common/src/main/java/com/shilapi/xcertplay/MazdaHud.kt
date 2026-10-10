@@ -197,9 +197,9 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         )
 
         /**
-         * AMap icon (BydClusterFrame) -> the car's HUD turn icon, numbered as EZNav's frame builder sends them
-         * (c2.B4.c and D2.p.b; EZNav's ↖ at 18 confirmed on the car's HUD, 2026-10-11). The HUD draws no arrow
-         * for an unknown number.
+         * AMap icon (BydClusterFrame) -> the car's HUD turn icon, numbered as the car's navigation apps send them
+         * (16, 18, 19 and 3 confirmed on the car's HUD, 2026-10-11). The HUD draws no arrow for an unknown
+         * number.
          */
         fun turnId(amapIcon: Int, roundaboutExit: Int): Int = when (amapIcon) {
             2 -> 19 // left

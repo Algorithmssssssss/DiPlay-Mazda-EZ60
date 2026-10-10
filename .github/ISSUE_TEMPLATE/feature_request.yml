@@ -4,7 +4,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        For connection failures or disconnects, use the [Connection problem form](https://github.com/shihabal3amri/DiPlay/issues/new?template=connection.yml) and attach diagnostic logs. For other bugs, use the [Other bug form](https://github.com/shihabal3amri/DiPlay/issues/new?template=bug.yml).
+        For connection failures or disconnects, use the [Connection problem form](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/issues/new?template=connection.yml) and attach diagnostic logs. For other bugs, use the [Other bug form](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/issues/new?template=bug.yml).
   - type: textarea
     id: request
     attributes:
@@ -15,4 +15,4 @@ body:
     id: context
     attributes:
       label: Device information and additional context
-      description: 'If relevant, include the car/head-unit model, Android/DiLink/firmware version, DiPlay version and iPhone/iOS version.'
+      description: 'If relevant, include the EZ-60 trim/year, head-unit software version, DiPlay EZ-60 version and iPhone/iOS version.'

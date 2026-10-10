@@ -151,7 +151,7 @@
             </intent-filter>
         </service>
 
-        <!-- Optional: steering-wheel keys for the dashboard map zoom (docs/BYD_NAVIGATION.md). -->
+        <!-- Optional: BYD steering-wheel keys for the dashboard map zoom (upstream DiPlay docs/BYD_NAVIGATION.md). -->
         <service
             android:name="com.shilapi.xcertplay.WheelKeyService"
             android:exported="true"

@@ -73,8 +73,9 @@ Check that this file exists:
 mobile/build/outputs/apk/debug/mobile-debug.apk
 ```
 
-The debug application ID is `com.shihab.diplay.hudtest`.
-The release application ID is `com.shihab.diplay`.
+The debug application ID is `com.reachkim.diplay.ez60.hudtest` ("DiPlay EZ-60 Test").
+Add `-Pez60.variant=next` for `com.reachkim.diplay.ez60.next` ("DiPlay EZ-60 Next"), which installs beside it.
+The release application ID is `com.reachkim.diplay.ez60`.
 
 The source APK contains no accessory identity unless you supply runtime authentication assets.
 Standalone CarPlay needs these assets to connect to an iPhone.
@@ -163,11 +164,10 @@ The output is `mobile/build/outputs/apk/release/mobile-release.apk`.
 The APK contains the runtime identity you supplied.
 Recipients can extract that identity from the APK.
 The APK excludes the Android signing key.
-See [the project notices](THIRD_PARTY_NOTICES.md) for the experimental identity used in public releases.
+Do not publish an APK whose identity you are not allowed to distribute; see [SECURITY.md](../SECURITY.md).
 
 The public source archive matches the release tag.
 It excludes runtime identities, signing keys, local configuration, and build output.
-The retired `build-beta.py` helper is no longer part of the build procedure.
 
 ## Correct build problems
 

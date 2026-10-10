@@ -3,7 +3,7 @@
 Use the [installation guide](INSTALL.md). With the car parked, verify wired and wireless connection, picture, touch and music. Test disconnect/reconnect, then settings Apply/Cancel. Save a diagnostic report after reproducing an issue.
 
 For the USB trailer, software-window video and RFCOMM reliability changes, complete the
-[connection reliability matrix](CONNECTION_RELIABILITY.md#vehicle-acceptance-before-release).
+[connection reliability matrix](https://github.com/shihabal3amri/DiPlay/blob/main/docs/CONNECTION_RELIABILITY.md#vehicle-acceptance-before-release).
 Record the exact candidate APK and each untested setup before a release.
 
 ## Custom stream resolution

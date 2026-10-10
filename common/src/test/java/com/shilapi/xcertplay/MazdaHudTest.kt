@@ -6,7 +6,7 @@ import org.junit.Test
 
 class MazdaHudTest {
     @Test fun turnsUseTheCarsHudIcons() {
-        // AMap icon codes from DiPlay's guidance -> the turnIds EZNav's frame builder sends to the car.
+        // AMap icon codes from DiPlay's guidance -> the turnIds the car's navigation apps send.
         assertEquals(19, MazdaHud.turnId(2, 0))
         assertEquals(20, MazdaHud.turnId(3, 0))
         assertEquals(18, MazdaHud.turnId(4, 0))

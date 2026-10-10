@@ -1,5 +1,9 @@
 # Credits and license notices
 
+## Mazda EZ-60 fork
+
+This repository is a Mazda EZ-60 fork of [DiPlay by shihabal3amri](https://github.com/shihabal3amri/DiPlay). It keeps DiPlay's licenses and notices below. The EZ-60 cockpit panel geometry follows the car's own window measurements published by [TidePlayer](https://github.com/JulyStar-Lv/TidePlayer/blob/main/docs/automotive/CAR_WINDOW_PROFILES.md). No Mazda, Changan or Tinnove affiliation or endorsement is implied.
+
 ## Receiver
 
 DiPlay is a modified version of [xcertplay by shilapi](https://github.com/shilapi/xcertplay). The upstream receiver is licensed under GNU GPL version 3; the full text is in `LICENSE` and the original README is retained in `docs/UPSTREAM-README.md`.
@@ -42,11 +46,7 @@ Concentus uses the Opus BSD-style license. The full copyright notices, redistrib
 
 ## Experimental authentication data
 
-The public preview APK includes an accessory certificate/key pair recovered from public Carlinkit C2Air Allwinner V821 firmware during the owner's local investigation. These data are not newly generated Apple-issued credentials for DiPlay and are not relicensed as project source code. They are bundled in the preview APK to reproduce the offline experiment; continued acceptance and suitability for general distribution are unresolved. The source archive does not contain the private key, and the separate Android APK-signing key is never distributed.
-
-## Download website
-
-The static site layout, CSS and generator adapt DiAuto (AGPL-3.0). The AGPL license text is included with the source.
+Upstream DiPlay's public preview APK includes an accessory certificate/key pair recovered from public Carlinkit C2Air Allwinner V821 firmware during its owner's local investigation. These data are not Apple-issued credentials and are not part of the project source code. This fork's source contains no accessory identity: a CarPlay-capable build supplies one at build time ([Build](BUILD.md)), and each fork release says whether its APK contains one. The separate Android APK-signing key is never distributed.
 
 ## BYD HUD maneuver icons
 

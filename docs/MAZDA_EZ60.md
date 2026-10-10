@@ -6,20 +6,23 @@ passenger half; a two-finger swipe moves an app between them.
 
 It installs next to upstream DiPlay as `com.reachkim.diplay.ez60` (debug builds add `.hudtest`). The
 update check in About and upstream's background update checks are off, because upstream releases are a
-different app. This fork includes upstream DiPlay through 0.2.17.
+different app. This fork includes upstream DiPlay through 0.2.17; BYD-only settings are hidden on the
+EZ-60.
 
 ## Status
 
 | Area | State |
 | --- | --- |
-| Driver panel | CarPlay fills the 2496×1080 panel at `[64,192]–[2560,1272]` and narrows to 1728×1080 when the car shows its left vehicle panel or voice assistant, without reconnecting. Geometry from the car's own apps, via [TidePlayer's measurements](https://github.com/JulyStar-Lv/TidePlayer/blob/main/docs/automotive/CAR_WINDOW_PROFILES.md). Not yet seen with CarPlay running. |
+| Driver panel | CarPlay fills the 2496×1080 panel at `[64,192]–[2560,1272]` and narrows to 1728×1080 when the car shows its left vehicle panel or voice assistant, without reconnecting. Geometry from the car's own apps, via [TidePlayer's measurements](https://github.com/JulyStar-Lv/TidePlayer/blob/main/docs/automotive/CAR_WINDOW_PROFILES.md). |
 | Passenger half | The panel mirrors the driver's: `[0,192]–[2496,1272]` in the window, 1728 wide while the right voice assistant shows. This mirroring is assumed, not measured. |
 | Two-finger swipe | Moves the window between halves without resizing or relaunching it, so CarPlay keeps its session; the panel follows the new half. The CarPlay screen shares the DiPlay menu's task, so both move together. |
 | Opening on the launch half | A new task started from DiPlay opens on DiPlay's half (tested on both halves), and the CarPlay screen now opens inside DiPlay's own task. Opening DiPlay from the other half's app list moves it there. |
 | Video | H.264 at 2496×1080, 60 fps by default on the EZ-60, through `c2.mtk.avc.decoder.lowlatency` with its own output thread. Best measured so far (built-in car hotspot, 2026-10-11): 43–59 fps while in use, decode 4–5 ms (p90 7–11 ms), touch to picture 21–60 ms, up to 33 Mbps. Earlier, Wi-Fi Direct with the car joined to the iPhone's hotspot gave 23–35 fps and pauses of up to 1.5 s. |
 | Wheel keys | Previous, next and play/pause arrive as standard media keys. |
 | USB | An iPhone on the USB port appears as a USB data device (Apple `05ac:12a8`, 12 interfaces). Wired CarPlay runs through an Android VPN, and CAMZD OS has no VPN consent screen (`com.android.vpndialogs` is missing), so the VPN must be allowed once over ADB; see below. |
-| Wi-Fi, audio | Upstream behaviour so far. |
+| Wireless | Works over the built-in car hotspot (smoothest) and Wi-Fi Direct; see Smooth wireless below. |
+| Windshield HUD | Turn arrows, distance, remaining route and CarPlay's map, confirmed with Google Maps; see below. |
+| Audio | Upstream behaviour; see Known issues for the car's own Bluetooth music. |
 
 ## Measured on the car
 
@@ -33,7 +36,7 @@ From the EZ-60 probe on 2026-10-10 (CAMZD OS build 20250930150736):
 - **Wi-Fi:** 5 GHz and 6 GHz, Wi-Fi Direct, hotspot and client at the same time. The hotspot interface is `ap0`.
 - **Audio:** Android Automotive buses for media, navigation, calls, ringtone and voice per seat; the car sets the volume.
 - **Bluetooth:** hands-free and music receiver only.
-- **Instrument cluster:** an 800×480 presentation display, `MeterDisplay#0`.
+- **Windshield HUD:** an 800×480 presentation display, `MeterDisplay#0`; the car has no instrument cluster.
 - **Also installed:** `com.autochips.carplayapp`, a CarPlay app from the head unit's maker.
 
 ## Connect
@@ -88,11 +91,11 @@ car hotspot's name and password: without them **Connect** returns to Connection 
 
 ## Windshield HUD
 
-The EZ-60 has no instrument cluster; the windshield HUD is the driver's only other display. It does not
-project apps' windows: a test card on its 800×480 presentation display (`MeterDisplay#0`) never appeared.
-Its navigation comes from the head unit's navigation service, `com.incall.double.INTERACTIVE_SERVICE`
+The EZ-60 has no instrument cluster; the windshield HUD is the driver's only other display. Its navigation
+comes from the head unit's navigation service, `com.incall.double.INTERACTIVE_SERVICE`
 (`IDouInteractiveManager`, reached through `com.incall.SVR_MNG_SERVICE`), which the car's navigation apps
-feed.
+feed. A window on its 800×480 presentation display (`MeterDisplay#0`) is projected only while an app holds
+that service's navigation focus.
 
 **Turn-by-turn on the HUD (experimental)** (**Settings → Navigation → Location**, EZ-60 only, on by
 default) feeds it with CarPlay's route guidance, which Google Maps and Apple Maps both send:
@@ -107,14 +110,27 @@ While DiPlay holds navigation focus, the HUD also projects the (573,167)–(800,
 its 800×480 display (`MeterDisplay#0`); confirmed with the probe's test card on 2026-10-11. The HUD draws the
 turn arrow, distance and remaining route itself; DiPlay's window fills that area with CarPlay's
 instrument-cluster map (requested at 232×192 with the car marker centred; Google Maps sends it, confirmed
-2026-10-11), or with a turn card while the iPhone sends no map. The HUD switch also turns the map off; the change applies at the next
-connection.
+2026-10-11), or with a turn card while the iPhone sends no map. The HUD switch also turns the map off; the
+change applies at the next connection.
 
 Only these navigation calls are made, from a background thread, and the session log records each step
-(`HUD: ...`). Turn icons use the numbers EZNav sends: 3 destination, 16 straight, 17/18 slight or keep
+(`HUD: ...`). Turn icons use the numbers the car's navigation apps send: 3 destination, 16 straight, 17/18 slight or keep
 right/left, 19 left, 20 right, 21/22 sharp left/right, 23 U-turn, 53 roundabout, 74–83 roundabout exit 1–10.
 With these the HUD draws its own arrow beside the distance and its 3D guidance chevrons (16, 19 and 3 confirmed
 with Google Maps on 2026-10-11). No vehicle properties are written.
+
+The HUD's music line (top left, "暂无歌词" when there are no lyrics) belongs to the car's media center. It
+shows only lyrics, which CarPlay does not send, so DiPlay leaves it alone in this release.
+
+## Known issues
+
+- **Music pauses and plays by itself.** If the iPhone is also connected to the car's own Bluetooth music and
+  the car's Bluetooth player is set to play the phone's music automatically, that player and CarPlay take
+  audio focus from each other, and the car pauses and resumes the iPhone over Bluetooth. Turning the car's
+  Bluetooth off and on again stopped it on the test car. Turning off the car's automatic Bluetooth music
+  playback for the iPhone, in the car's Bluetooth settings, should prevent it.
+- **Wired CarPlay needs one ADB command** (see Connect above).
+- **Passenger half:** CarPlay's panel there is assumed to mirror the driver's; it has not been measured.
 
 ## Build
 
