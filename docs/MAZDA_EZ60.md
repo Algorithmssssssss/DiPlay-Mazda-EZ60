@@ -103,8 +103,8 @@ default) feeds it with CarPlay's route guidance, which Google Maps and Apple Map
 | Step | Call |
 |---|---|
 | Guidance starts | `requestNaviFocus(package, callback)`, then `sendNavigateStatus(2)` |
-| Each update | `sendNavigateRoadInfo(current, next)` when the roads change, `sendNavigateTurnInfo(turnId, metres)`, `sendNavigateRemainInfo(metres, seconds)`: a new turn or road at once, other changes at most once a second |
-| Guidance ends | remaining 0/0, empty roads, turn 0/0, `sendNavigateStatus(0)`, `abandonNaviFocus` |
+| Each update | `sendNavigateRoadInfo(current, next)` when the roads change, `sendNavigateTurnInfo(turnId, metres)`, `sendNavigateRemainInfo(metres, seconds)`, `sendNavigatePercent(driven %)` when it changes: a new turn or road at once, other changes at most once a second |
+| Guidance ends | remaining 0/0, empty roads, turn 0/0, `sendNavigateStatus(1)` (not navigating), `abandonNaviFocus` |
 
 Guidance ends when the iPhone reports no route (the driver ended it) or arrival, or when it sends no guidance
 for 30 seconds; it resends guidance about every 2 seconds while a route runs, even parked. The HUD has its own
@@ -119,10 +119,17 @@ instrument-cluster map (requested at 232×192 with the car marker centred; Googl
 change applies at the next connection.
 
 Only these navigation calls are made, from a background thread, and the session log records each step
-(`HUD: ...`). Turn icons use the numbers the car's navigation apps send: 3 destination, 16 straight, 17/18 slight or keep
-right/left, 19 left, 20 right, 21/22 sharp left/right, 23 U-turn, 53 roundabout, 74–83 roundabout exit 1–10.
-With these the HUD draws its own arrow beside the distance and its 3D guidance chevrons (16, 19 and 3 confirmed
-with Google Maps on 2026-10-11). No vehicle properties are written.
+(`HUD: ...`). Turn icons, status values and route progress follow the car's own navigation app
+(`WT_TinnoveNavigation`): 3 destination, 16 straight, 17/18 slight or keep right/left, 19 left, 20 right,
+21/22 sharp left/right, 23/24 U-turn left/right. Roundabouts have a set per direction: counter-clockwise
+(right-hand traffic) 53 enter, 42–51 exit 1–10, 63 leave; clockwise (left-hand traffic) 70 enter, 74–83 exit
+1–10, 68 leave. With these the HUD draws its own arrow beside the distance and its 3D guidance chevrons (16,
+19 and 3 confirmed with Google Maps on 2026-10-11). No vehicle properties are written.
+
+The car's navigation also sends lane guidance (`sendNavigateLaneInfo`, JSON `{"laneNum":n,"lane1":code,…}`),
+speed cameras (`sendNavigateCameraInfo`, JSON `{"nearestDistance","type","cameraSpeed"}`), junction views
+and 3D map data. DiPlay does not send these: CarPlay gives accessories no speed cameras, and DiPlay does not
+read CarPlay's lane guidance yet.
 
 The HUD's music line (top left, "暂无歌词" when there are no lyrics) belongs to the car's media center. It
 shows only lyrics, which CarPlay does not send, so DiPlay leaves it alone in this release.

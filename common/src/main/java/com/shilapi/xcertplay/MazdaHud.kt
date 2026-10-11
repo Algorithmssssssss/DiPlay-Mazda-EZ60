@@ -25,6 +25,8 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
     private var active = false
     private var sent: Frame? = null
     private var sentAtMillis = 0L
+    private var routeLongestMeters = 0
+    private var sentPercent = -1
     private var unavailableLogged = false
 
     /** One HUD update, in the car's vocabulary. */
@@ -56,6 +58,8 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             val status = call(binder, STATUS) { writeInt(STATUS_NAVIGATING) }
             active = true
             sent = null
+            routeLongestMeters = 0
+            sentPercent = -1
             log("HUD: navigation started on the car's service focus=$focus status=$status")
         }
         val previous = sent
@@ -69,6 +73,13 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         }
         val turn = call(binder, TURN) { writeInt(frame.turnId); writeInt(frame.distanceMeters) }
         call(binder, REMAIN) { writeInt(frame.remainingMeters); writeInt(frame.remainingSeconds) }
+        // The car's navigation also fills the HUD's route progress: driven / (driven + remaining).
+        routeLongestMeters = maxOf(routeLongestMeters, frame.remainingMeters)
+        val percent = progressPercent(routeLongestMeters, frame.remainingMeters)
+        if (percent != sentPercent) {
+            call(binder, PERCENT) { writeInt(percent) }
+            sentPercent = percent
+        }
         if (previous == null || previous.turnId != frame.turnId) {
             log("HUD: turn sent turnId=${frame.turnId} distanceM=${frame.distanceMeters} accepted=$turn")
         }
@@ -175,15 +186,17 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         private const val ON_FOCUS_CHANGE = 3
 
         private const val STATUS = 22 // sendNavigateStatus(int)
+        private const val PERCENT = 50 // sendNavigatePercent(int), route progress 0-100
         private const val TURN = 24 // sendNavigateTurnInfo(int turnId, int distanceMeters)
         private const val ROAD = 26 // sendNavigateRoadInfo(String current, String next)
         private const val REMAIN = 27 // sendNavigateRemainInfo(int meters, int seconds)
         private const val REQUEST_FOCUS = 63 // requestNaviFocus(String package, INaviFocusCallback)
         private const val ABANDON_FOCUS = 64 // abandonNaviFocus(String package, INaviFocusCallback)
-        val ALLOWED = setOf(STATUS, TURN, ROAD, REMAIN, REQUEST_FOCUS, ABANDON_FOCUS)
+        val ALLOWED = setOf(STATUS, TURN, ROAD, REMAIN, PERCENT, REQUEST_FOCUS, ABANDON_FOCUS)
 
+        // The car's own navigation (WT_TinnoveNavigation): 1 not navigating, 2 navigating, 3 simulating.
         private const val STATUS_NAVIGATING = 2
-        private const val STATUS_IDLE = 0
+        private const val STATUS_IDLE = 1
         private const val MIN_INTERVAL_MILLIS = 1_000L
 
         /** DiPlay's guidance (AMap icon codes) in the car's HUD vocabulary. */
@@ -196,10 +209,15 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             remainingSeconds = guidance.remainingSeconds?.coerceIn(0, Int.MAX_VALUE.toLong())?.toInt() ?: 0,
         )
 
+        /** Driven share of the route, from the longest remaining distance seen since guidance started. */
+        fun progressPercent(longestMeters: Int, remainingMeters: Int): Int =
+            if (longestMeters <= 0) 0 else ((longestMeters - remainingMeters) * 100L / longestMeters).toInt().coerceIn(0, 100)
+
         /**
-         * AMap icon (BydClusterFrame) -> the car's HUD turn icon, numbered as the car's navigation apps send them
-         * (16, 18, 19 and 3 confirmed on the car's HUD, 2026-10-11). The HUD draws no arrow for an unknown
-         * number.
+         * AMap icon (BydClusterFrame) -> the car's HUD turn icon, as the car's own navigation (WT_TinnoveNavigation,
+         * DashboardConverter) numbers them; 16, 18, 19 and 3 were confirmed on the car's HUD on 2026-10-11.
+         * Roundabouts have one set per direction: counter-clockwise (right-hand traffic) and clockwise (left-hand
+         * traffic). The HUD draws no arrow for an unknown number.
          */
         fun turnId(amapIcon: Int, roundaboutExit: Int): Int = when (amapIcon) {
             2 -> 19 // left
@@ -208,10 +226,13 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             5 -> 17 // slight right, keep right, ramp right
             6 -> 21 // sharp left
             7 -> 22 // sharp right
-            8, 19 -> 23 // U-turn
+            8 -> 23 // U-turn to the left (right-hand traffic)
+            19 -> 24 // U-turn to the right (left-hand traffic)
             9 -> 16 // straight
-            11, 17 -> if (roundaboutExit in 1..10) 73 + roundaboutExit else 53 // enter roundabout (take exit n)
-            12, 18 -> 53 // leave roundabout
+            11 -> if (roundaboutExit in 1..10) 41 + roundaboutExit else 53 // counter-clockwise roundabout, exit n
+            17 -> if (roundaboutExit in 1..10) 73 + roundaboutExit else 70 // clockwise roundabout, exit n
+            12 -> 63 // leave a counter-clockwise roundabout
+            18 -> 68 // leave a clockwise roundabout
             15 -> 3 // destination
             else -> 0 // no maneuver: no arrow
         }

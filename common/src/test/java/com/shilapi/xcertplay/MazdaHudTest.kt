@@ -14,18 +14,33 @@ class MazdaHudTest {
         assertEquals(21, MazdaHud.turnId(6, 0))
         assertEquals(22, MazdaHud.turnId(7, 0))
         assertEquals(23, MazdaHud.turnId(8, 0))
-        assertEquals(23, MazdaHud.turnId(19, 0))
+        assertEquals(24, MazdaHud.turnId(19, 0))
         assertEquals(16, MazdaHud.turnId(9, 0))
         assertEquals(3, MazdaHud.turnId(15, 0))
         assertEquals(0, MazdaHud.turnId(0, 0))
     }
 
-    @Test fun roundaboutsCarryTheExitNumber() {
-        assertEquals(75, MazdaHud.turnId(11, 2))
-        assertEquals(83, MazdaHud.turnId(17, 10))
+    @Test fun roundaboutsCarryTheExitNumberInTheirDirection() {
+        // Counter-clockwise (right-hand traffic): exits 1-10 are 42-51.
+        assertEquals(42, MazdaHud.turnId(11, 1))
+        assertEquals(43, MazdaHud.turnId(11, 2))
+        assertEquals(51, MazdaHud.turnId(11, 10))
         assertEquals(53, MazdaHud.turnId(11, 0))
         assertEquals(53, MazdaHud.turnId(11, 12))
-        assertEquals(53, MazdaHud.turnId(12, 2))
+        assertEquals(63, MazdaHud.turnId(12, 2))
+        // Clockwise (left-hand traffic): exits 1-10 are 74-83.
+        assertEquals(74, MazdaHud.turnId(17, 1))
+        assertEquals(83, MazdaHud.turnId(17, 10))
+        assertEquals(70, MazdaHud.turnId(17, 0))
+        assertEquals(68, MazdaHud.turnId(18, 0))
+    }
+
+    @Test fun progressIsTheDrivenShareOfTheLongestRemainingDistance() {
+        assertEquals(0, MazdaHud.progressPercent(0, 0))
+        assertEquals(0, MazdaHud.progressPercent(12_400, 12_400))
+        assertEquals(25, MazdaHud.progressPercent(12_400, 9_300))
+        assertEquals(100, MazdaHud.progressPercent(12_400, 0))
+        assertEquals(0, MazdaHud.progressPercent(12_400, 13_000))
     }
 
     @Test fun aFrameCarriesDistanceRoadAndWhatIsLeft() {
@@ -37,7 +52,7 @@ class MazdaHudTest {
     }
 
     @Test fun onlyNavigationCallsAreAllowed() {
-        // Status, turn, road, remaining route, and taking and giving back navigation focus.
-        assertEquals(setOf(22, 24, 26, 27, 63, 64), MazdaHud.ALLOWED)
+        // Status, turn, road, remaining route, route progress, and taking and giving back navigation focus.
+        assertEquals(setOf(22, 24, 26, 27, 50, 63, 64), MazdaHud.ALLOWED)
     }
 }
