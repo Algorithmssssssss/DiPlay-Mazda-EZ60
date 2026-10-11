@@ -116,7 +116,17 @@ its 800×480 display (`MeterDisplay#0`); confirmed with the probe's test card on
 turn arrow, distance and remaining route itself; DiPlay's window fills that area with CarPlay's
 instrument-cluster map (requested at 232×192 with the car marker centred; Google Maps sends it, confirmed
 2026-10-11), or with a turn card while the iPhone sends no map. The HUD switch also turns the map off; the
-change applies at the next connection.
+change applies at the next connection. **HUD map view** (same card: Far, Normal, Near) sets how much map
+shows: Normal asks the iPhone for a stream at the area's size (232×192), Far for 150 % (336×280, scaled down:
+more streets, smaller) and Near for 75 % (176×144, scaled up). It applies at the next connection.
+
+**Safety.** DiPlay talks only to the HUD's display service (`IDouInteractiveManager`); it writes no vehicle
+properties and has no path to the car's driver assistance. It sends only while CarPlay navigation guides,
+asks for the HUD's navigation focus once per route, and stops sending at once if the service says another
+navigation app took the HUD (`HUD: another navigation app took the HUD`); it then leaves that app's guidance
+on the HUD when its own route ends. The car's built-in navigation does not use that focus, so DiPlay cannot
+yet tell when it is guiding: while using the car's own navigation (for example with its driving assistance),
+do not start CarPlay directions, or turn **Turn-by-turn on the HUD** off.
 
 Only these navigation calls are made, from a background thread, and the session log records each step
 (`HUD: ...`). Turn icons, status values and route progress follow the car's own navigation app

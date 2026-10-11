@@ -2,4 +2,9 @@
 <resources>
     <string name="settings_mazda_hud">Indicaciones en el HUD (experimental)</string>
     <string name="settings_mazda_hud_description">Muestra el próximo giro, la distancia y la calle de CarPlay en el HUD del parabrisas mientras la navegación de CarPlay te guía. Se aplica en la siguiente actualización del giro.</string>
+    <string name="settings_mazda_hud_map_view">Vista del mapa en el HUD</string>
+    <string name="settings_mazda_hud_map_far">Lejos</string>
+    <string name="settings_mazda_hud_map_normal">Normal</string>
+    <string name="settings_mazda_hud_map_near">Cerca</string>
+    <string name="settings_mazda_hud_map_view_description">Cuánto mapa muestra el HUD. Lejos muestra más calles, más pequeñas; Cerca, menos calles y más grandes. Se aplica en la próxima conexión.</string>
 </resources>

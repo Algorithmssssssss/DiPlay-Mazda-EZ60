@@ -1267,15 +1267,17 @@ class CarPlayHostActivity : ComponentActivity() {
         adbClusterConfigured = false
         clusterStreamOnDisplay = false
         requestedSmallWindowForStream = null
-        // EZ-60: CarPlay's cluster map at about the HUD area's own size, so text stays legible there.
+        // EZ-60: CarPlay's cluster map for the HUD area. Normal asks for the area's own size; Far asks for a larger
+        // stream that the window scales down (more streets, smaller), Near for a smaller one it scales up.
         if (MazdaPlatform.isEz60) {
             if (!MazdaHudSettings.enabled(this)) return null
             clusterStreamOnDisplay = true
+            val view = MazdaHudSettings.mapView(this)
             return CarPlayClusterDisplay.config(MazdaHudScreen.AREA_WIDTH, MazdaHudScreen.AREA_HEIGHT,
-                scalePercent = 100, content = CarPlayClusterDisplay.Content.MAP,
+                scalePercent = view.scalePercent, content = CarPlayClusterDisplay.Content.MAP,
                 baseSafeArea = CarPlayClusterDisplay.VIRTUAL_SAFE_AREA_PERCENT).also {
                 MapMirrors.streamAspect = it.widthPixels.toDouble() / it.heightPixels
-                appendLog("HUD: requesting the CarPlay cluster map at ${it.widthPixels}x${it.heightPixels}")
+                appendLog("HUD: requesting the CarPlay cluster map at ${it.widthPixels}x${it.heightPixels} view=$view")
             }
         }
         if (!AirPlayPersistence.loadClusterMapEnabled(this)) return null

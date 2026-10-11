@@ -19,7 +19,10 @@ import java.util.concurrent.Executors
  */
 internal class MazdaHud(private val context: Context, private val log: (String) -> Unit) {
     private val worker = Executors.newSingleThreadExecutor { Thread(it, "diplay-mazda-hud").apply { isDaemon = true } }
-    private val callback = FocusCallback(log)
+    private val callback = FocusCallback { value ->
+        log("HUD: navigation focus changed value=$value")
+        runCatching { worker.execute { onFocusOnWorker(value) } }
+    }
     // Worker thread only.
     private var service: IBinder? = null
     private var active = false
@@ -27,6 +30,8 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
     private var sentAtMillis = 0L
     private var routeLongestMeters = 0
     private var sentPercent = -1
+    // The car's service says who shows navigation on the HUD; assumed granted on request until it says otherwise.
+    private var holdsFocus = true
     private var unavailableLogged = false
 
     /** One HUD update, in the car's vocabulary. */
@@ -57,11 +62,14 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             val focus = call(binder, REQUEST_FOCUS) { writeString(context.packageName); writeStrongBinder(callback) }
             val status = call(binder, STATUS) { writeInt(STATUS_NAVIGATING) }
             active = true
+            holdsFocus = true
             sent = null
             routeLongestMeters = 0
             sentPercent = -1
             log("HUD: navigation started on the car's service focus=$focus status=$status")
         }
+        // Another navigation app (the car's own included) took the HUD: never overwrite its guidance.
+        if (!holdsFocus) return
         val previous = sent
         val now = System.currentTimeMillis()
         val turnOrRoadChanged = previous == null || previous.turnId != frame.turnId ||
@@ -93,13 +101,25 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         active = false
         sent = null
         if (binder == null) return
-        // The car's navigation apps clear in this order, then give focus back.
-        call(binder, REMAIN) { writeInt(0); writeInt(0) }
-        call(binder, ROAD) { writeString(""); writeString("") }
-        call(binder, TURN) { writeInt(0); writeInt(0) }
-        call(binder, STATUS) { writeInt(STATUS_IDLE) }
+        // The car's navigation apps clear in this order, then give focus back. Only the focus holder clears:
+        // after another app took the HUD, its guidance stays.
+        if (holdsFocus) {
+            call(binder, REMAIN) { writeInt(0); writeInt(0) }
+            call(binder, ROAD) { writeString(""); writeString("") }
+            call(binder, TURN) { writeInt(0); writeInt(0) }
+            call(binder, STATUS) { writeInt(STATUS_IDLE) }
+        }
         call(binder, ABANDON_FOCUS) { writeString(context.packageName); writeStrongBinder(callback) }
-        log("HUD: guidance ended; HUD cleared")
+        log(if (holdsFocus) "HUD: guidance ended; HUD cleared" else "HUD: guidance ended; HUD left to the other app")
+    }
+
+    private fun onFocusOnWorker(value: Int?) {
+        if (!active) return
+        val holds = value == FOCUS_GAINED
+        if (holds == holdsFocus) return
+        holdsFocus = holds
+        if (holds) sent = null // resend everything to the HUD now it is ours again
+        else log("HUD: another navigation app took the HUD; DiPlay stops sending until it is returned")
     }
 
     private fun service(): IBinder? {
@@ -151,7 +171,7 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
     }
 
     /** The car tells the focus holder when another navigation app takes or returns the HUD. */
-    private class FocusCallback(private val log: (String) -> Unit) : Binder() {
+    private class FocusCallback(private val onFocus: (Int?) -> Unit) : Binder() {
         init {
             attachInterface(null, FOCUS_CALLBACK_INTERFACE)
         }
@@ -162,7 +182,7 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
                 data.enforceInterface(FOCUS_CALLBACK_INTERFACE)
                 data.readInt()
             }.getOrNull()
-            if (code == ON_FOCUS_CHANGE) log("HUD: navigation focus changed value=$value")
+            if (code == ON_FOCUS_CHANGE) onFocus(value)
             reply?.writeNoException()
             return true
         }
@@ -184,6 +204,7 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         private const val NAVIGATION_INTERFACE = "com.incall.serversdk.interactive.IDouInteractiveManager"
         private const val FOCUS_CALLBACK_INTERFACE = "com.incall.serversdk.interactive.callback.INaviFocusCallback"
         private const val ON_FOCUS_CHANGE = 3
+        private const val FOCUS_GAINED = 1
 
         private const val STATUS = 22 // sendNavigateStatus(int)
         private const val PERCENT = 50 // sendNavigatePercent(int), route progress 0-100
@@ -247,10 +268,23 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
     }
 }
 
-/** The HUD's on/off choice; on by default on the EZ-60, the only car that shows it. */
+/** The HUD's choices; on by default on the EZ-60, the only car that shows it. */
 internal object MazdaHudSettings {
     private const val PREFS = "diplay_mazda_hud"
     private const val KEY_ENABLED = "turn_by_turn"
+    private const val KEY_MAP_VIEW = "map_view"
+
+    /** How much map the HUD shows, as the stream size asked of the iPhone in percent of the HUD area. */
+    enum class MapView(val scalePercent: Int) { NEAR(75), NORMAL(100), FAR(150) }
+
+    fun mapView(context: Context): MapView = runCatching {
+        MapView.valueOf(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_MAP_VIEW, null) ?: MapView.NORMAL.name)
+    }.getOrDefault(MapView.NORMAL)
+
+    fun saveMapView(context: Context, view: MapView) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_MAP_VIEW, view.name).apply()
+    }
 
     fun enabled(context: Context): Boolean = MazdaPlatform.isEz60 &&
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_ENABLED, true)

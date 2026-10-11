@@ -1913,6 +1913,11 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             if (MazdaPlatform.isEz60) {
                 toggle(card, getString(R.string.settings_mazda_hud), getString(R.string.settings_mazda_hud_description),
                     MazdaHudSettings.enabled(this)) { MazdaHudSettings.save(this, it) }
+                card.addView(button("${getString(R.string.settings_mazda_hud_map_view)} · " +
+                    getString(mazdaHudMapViewName(MazdaHudSettings.mapView(this))), false) {
+                    showMazdaHudMapViewPicker()
+                }, matchButton(12, 60))
+                card.addView(label(getString(R.string.settings_mazda_hud_map_view_description), 14, MUTED))
             }
         }
         // Cluster video does not require a BYD navigation broadcast receiver.
@@ -4396,6 +4401,28 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     private fun reconnectIfRunning() {
         if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
+    }
+
+    private fun mazdaHudMapViewName(view: MazdaHudSettings.MapView): Int = when (view) {
+        MazdaHudSettings.MapView.FAR -> R.string.settings_mazda_hud_map_far
+        MazdaHudSettings.MapView.NORMAL -> R.string.settings_mazda_hud_map_normal
+        MazdaHudSettings.MapView.NEAR -> R.string.settings_mazda_hud_map_near
+    }
+
+    // EZ-60: how much map the HUD shows; the stream size is set when CarPlay connects.
+    private fun showMazdaHudMapViewPicker() {
+        val views = listOf(MazdaHudSettings.MapView.FAR, MazdaHudSettings.MapView.NORMAL, MazdaHudSettings.MapView.NEAR)
+        val current = views.indexOf(MazdaHudSettings.mapView(this))
+        appDialogBuilder().setTitle(getString(R.string.settings_mazda_hud_map_view))
+            .setSingleChoiceItems(views.map { getString(mazdaHudMapViewName(it)) }.toTypedArray(), current) { dialog, which ->
+                dialog.dismiss()
+                if (which == current) return@setSingleChoiceItems
+                MazdaHudSettings.saveMapView(this, views[which])
+                markReconnectNeeded()
+                render()
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
     }
 
     // Saved without dropping CarPlay; the reconnect bar lets the driver choose when.

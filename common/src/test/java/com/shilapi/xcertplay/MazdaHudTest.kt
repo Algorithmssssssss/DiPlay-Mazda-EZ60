@@ -55,4 +55,13 @@ class MazdaHudTest {
         // Status, turn, road, remaining route, route progress, and taking and giving back navigation focus.
         assertEquals(setOf(22, 24, 26, 27, 50, 63, 64), MazdaHud.ALLOWED)
     }
+
+    @Test fun mapViewsAskForSmallerOrLargerStreamsThanTheHudArea() {
+        fun size(view: MazdaHudSettings.MapView) = com.shilapi.xcertplay.airplay.CarPlayClusterDisplay.config(
+            MazdaHudScreen.AREA_WIDTH, MazdaHudScreen.AREA_HEIGHT, scalePercent = view.scalePercent,
+        ).let { it.widthPixels to it.heightPixels }
+        assertEquals(176 to 144, size(MazdaHudSettings.MapView.NEAR))
+        assertEquals(232 to 192, size(MazdaHudSettings.MapView.NORMAL))
+        assertEquals(336 to 280, size(MazdaHudSettings.MapView.FAR))
+    }
 }

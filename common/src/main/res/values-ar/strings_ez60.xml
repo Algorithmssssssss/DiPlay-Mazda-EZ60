@@ -2,4 +2,9 @@
 <resources>
     <string name="settings_mazda_hud">الإرشاد خطوة بخطوة على شاشة العرض الأمامية (تجريبي)</string>
     <string name="settings_mazda_hud_description">يعرض المنعطف التالي والمسافة والطريق من CarPlay على شاشة العرض الأمامية على الزجاج أثناء إرشاد CarPlay. يُطبَّق عند تحديث المنعطف التالي.</string>
+    <string name="settings_mazda_hud_map_view">عرض خريطة شاشة العرض الأمامية</string>
+    <string name="settings_mazda_hud_map_far">بعيد</string>
+    <string name="settings_mazda_hud_map_normal">عادي</string>
+    <string name="settings_mazda_hud_map_near">قريب</string>
+    <string name="settings_mazda_hud_map_view_description">مقدار الخريطة الذي تعرضه شاشة العرض الأمامية. «بعيد» يعرض شوارع أكثر بحجم أصغر، و«قريب» يعرض شوارع أقل بحجم أكبر. يُطبَّق عند الاتصال التالي.</string>
 </resources>

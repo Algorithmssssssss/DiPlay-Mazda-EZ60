@@ -2,4 +2,9 @@
 <resources>
     <string name="settings_mazda_hud">Підказки поворотів на HUD (експериментально)</string>
     <string name="settings_mazda_hud_description">Показує наступний поворот, відстань і дорогу з CarPlay на проєкційному дисплеї на лобовому склі під час навігації CarPlay. Застосовується під час наступного оновлення повороту.</string>
+    <string name="settings_mazda_hud_map_view">Вигляд карти на HUD</string>
+    <string name="settings_mazda_hud_map_far">Далеко</string>
+    <string name="settings_mazda_hud_map_normal">Звичайно</string>
+    <string name="settings_mazda_hud_map_near">Близько</string>
+    <string name="settings_mazda_hud_map_view_description">Скільки карти показує HUD. «Далеко» — більше вулиць, дрібніше; «Близько» — менше вулиць, більше. Застосовується під час наступного підключення.</string>
 </resources>
