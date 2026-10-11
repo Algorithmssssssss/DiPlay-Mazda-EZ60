@@ -7,4 +7,6 @@
     <string name="settings_mazda_hud_map_normal">Обычно</string>
     <string name="settings_mazda_hud_map_near">Близко</string>
     <string name="settings_mazda_hud_map_view_description">Сколько карты показывает HUD. «Далеко» — больше улиц, мельче; «Близко» — меньше улиц, крупнее. Применяется при следующем подключении.</string>
+    <string name="settings_mazda_ambient_music">Следовать музыке CarPlay</string>
+    <string name="settings_mazda_ambient_music_description">Подсветка салона пульсирует в такт музыке CarPlay в собственном музыкальном режиме автомобиля. Сначала включите в автомобиле подсветку и её синхронизацию с музыкой. При любой ошибке DiPlay останавливается и возвращает подсветку автомобилю.</string>
 </resources>

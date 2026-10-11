@@ -63,6 +63,20 @@ internal object MazdaAmbientProbe {
         return PROPERTIES.keys.flatMap { id -> AREAS.map { area -> "$id area=$area" to value(binder, id, area) } }.toMap()
     }
 
+    /** An Integer property the car reports with status 0, else null. Read-only. */
+    fun intValue(id: Int, area: Int): Int? {
+        val binder = propertyService() ?: return null
+        return transact(binder, PROPERTY_INTERFACE, GET_VALUE, { writeInt(id); writeInt(area) }) {
+            if (readInt() == 0) return@transact null
+            readInt(); readInt(); readInt()
+            val code = readInt()
+            readLong()
+            readString()
+            val value = runCatching { readValue(MazdaAmbientProbe::class.java.classLoader) }.getOrNull()
+            if (code == 0) value as? Int else null
+        }
+    }
+
     private fun setting(context: Context, name: String): String? =
         runCatching { Settings.Global.getString(context.contentResolver, name) }.getOrElse { "blocked" }
 

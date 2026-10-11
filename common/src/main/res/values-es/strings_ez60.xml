@@ -7,4 +7,6 @@
     <string name="settings_mazda_hud_map_normal">Normal</string>
     <string name="settings_mazda_hud_map_near">Cerca</string>
     <string name="settings_mazda_hud_map_view_description">Cuánto mapa muestra el HUD. Lejos muestra más calles, más pequeñas; Cerca, menos calles y más grandes. Se aplica en la próxima conexión.</string>
+    <string name="settings_mazda_ambient_music">Seguir la música de CarPlay</string>
+    <string name="settings_mazda_ambient_music_description">Hace que la luz ambiental del coche pulse con la música de CarPlay usando el modo de música del propio coche. Primero enciende la luz ambiental y su sincronización con la música en el coche. Si algo falla, DiPlay se detiene y devuelve la luz al coche.</string>
 </resources>

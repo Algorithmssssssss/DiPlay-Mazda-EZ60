@@ -144,6 +144,31 @@ read CarPlay's lane guidance yet.
 The HUD's music line (top left, "暂无歌词" when there are no lyrics) belongs to the car's media center. It
 shows only lyrics, which CarPlay does not send, so DiPlay leaves it alone in this release.
 
+## Ambient lights following CarPlay music (experimental)
+
+**Settings → Advanced → Ambient lighting → Follow CarPlay music** (EZ-60 only, off by default). The car's own
+music sync runs inside its media center and only for that app's own player, so CarPlay music never reached the
+lights (report 17). With the switch on, DiPlay does what the media center does, through the same car adapter
+(`wt.atom`, `IAtomInterface.setValue`, priority 200):
+
+| Step | Writes |
+|---|---|
+| Music starts | light zones `[-1,-1,-1]`, scene mode `826278772` = 2 (music), rhythm colour `826278822` (area 1) = the car's colour |
+| While it plays | rhythm brightness `826278823` from the music level, 5–100, about 8 times a second; zones and scene mode again each second; the colour steps through the colour bar in the car's mode 0 |
+| Music stops | scene mode 1, zones `[0,0,0]`, rhythm colour and brightness back to the car's settings |
+
+It runs only while the car's ambient lights are on with their music sync on (`chinatsp.global.LIGHT_RHYTHM_CTL`
+= 1, brightness not 0), CarPlay music is playing, and CarPlay's music has the car's focus (or the car's
+Bluetooth player has it, which runs no light sync). Safety:
+
+- Only these four properties, with the media center's values, can be written; anything else is refused in code.
+- After switching music mode on, DiPlay reads the scene mode back; if the car did not enter music mode, or any
+  write fails, it hands the lights back and stays off until the next CarPlay connection
+  (`Ambient: stopped: …`).
+- If the car or its media center takes the lights back, DiPlay stops writing until the music starts again.
+- If DiPlay stops in the middle of a song, it hands the lights back the next time it starts.
+- The music level is read from audio DiPlay already plays; no microphone.
+
 ## Known issues
 
 - **Fixed: music pausing and playing by itself.** When the iPhone is also connected to the car's own Bluetooth music,

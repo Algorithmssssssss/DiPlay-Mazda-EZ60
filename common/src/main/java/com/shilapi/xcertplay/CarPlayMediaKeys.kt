@@ -75,6 +75,7 @@ internal object CarPlayMediaKeys {
         if (controller !== next) {
             releaseLocked()
             artworkOwner = artworkQueue.newSession()
+            MazdaAmbientLights.sessionStarted(context)
         }
         appContext = context.applicationContext
         controller = next
@@ -148,6 +149,7 @@ internal object CarPlayMediaKeys {
                 // minutes. The position goes in the playback state.
                 if (metadataChanged) session?.setMetadata(androidMetadata(update, shownArtworkLocked()))
                 publishPlaybackStateLocked()
+                publishAmbientLocked()
             }
         }
     }
@@ -261,6 +263,7 @@ internal object CarPlayMediaKeys {
         focusHeld = request.request(audio) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         if (focusHeld) forwardGrantedFocusLocked()
         Log.i(TAG, "audio focus regained=$focusHeld")
+        publishAmbientLocked()
     }
 
     // EZ-60: the car's Bluetooth music player takes audio focus when the iPhone plays over Bluetooth, and pauses
@@ -280,6 +283,7 @@ internal object CarPlayMediaKeys {
         mediaAudioActive = active
         if (active && session == null) start(context) else if (active) regainFocusLocked()
         publishPlaybackStateLocked()
+        publishAmbientLocked()
     }
 
     private fun start(context: Context) {
@@ -307,6 +311,7 @@ internal object CarPlayMediaKeys {
             isActive = true
         }
         Log.i(TAG, "media keys active focusGranted=$granted")
+        publishAmbientLocked()
     }
 
     private fun forwardGrantedFocusLocked() {
@@ -329,6 +334,7 @@ internal object CarPlayMediaKeys {
                 // Only permanent loss moves media keys elsewhere; transient losses come back.
                 if (change == AudioManager.AUDIOFOCUS_LOSS) focusHeld = false
                 else if (change == AudioManager.AUDIOFOCUS_GAIN) focusHeld = true
+                publishAmbientLocked()
                 true
             }
         }
@@ -362,6 +368,19 @@ internal object CarPlayMediaKeys {
         focusRequest?.let { request -> appContext?.getSystemService(AudioManager::class.java)?.let(request::abandon) }
         focusRequest = null
         focusHeld = false
+        publishAmbientLocked()
+    }
+
+    // EZ-60: the ambient lights follow CarPlay music while it plays and holds the car's music focus, or while the
+    // car's Bluetooth player holds it (that player runs no light sync of its own).
+    private fun publishAmbientLocked() {
+        val context = appContext ?: return
+        val playing = session != null && if (nowPlaying.elapsedMillis != null || nowPlaying.title != null) {
+            nowPlaying.playing
+        } else {
+            mediaAudioActive
+        }
+        MazdaAmbientLights.update(context, playing, focusHeld || MazdaPlatform.carBluetoothMusicHasFocus(context))
     }
 
     private fun publishPlaybackStateLocked() {

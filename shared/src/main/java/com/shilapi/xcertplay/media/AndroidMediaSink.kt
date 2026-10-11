@@ -2194,6 +2194,7 @@ private class AudioRenderer(
                     AmbientMusicEnvelope.pcmRms(data, offset + written, count),
                     ambientBass.rms(data, offset + written, count))
             }
+            if (ambientMedia && MusicLevel.wanted) MusicLevel.record(AmbientMusicEnvelope.pcmRms(data, offset + written, count))
             written += count
             totalWrittenFrames += framesWritten
             writtenFramesThisWindow += framesWritten

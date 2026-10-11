@@ -7,4 +7,6 @@
     <string name="settings_mazda_hud_map_normal">عادي</string>
     <string name="settings_mazda_hud_map_near">قريب</string>
     <string name="settings_mazda_hud_map_view_description">مقدار الخريطة الذي تعرضه شاشة العرض الأمامية. «بعيد» يعرض شوارع أكثر بحجم أصغر، و«قريب» يعرض شوارع أقل بحجم أكبر. يُطبَّق عند الاتصال التالي.</string>
+    <string name="settings_mazda_ambient_music">مزامنة مع موسيقى CarPlay</string>
+    <string name="settings_mazda_ambient_music_description">يجعل إضاءة المقصورة تنبض مع موسيقى CarPlay باستخدام وضع الموسيقى الخاص بالسيارة. شغّل إضاءة المقصورة ومزامنتها مع الموسيقى في السيارة أولًا. إذا فشل أي شيء، يتوقف DiPlay ويعيد الإضاءة إلى السيارة.</string>
 </resources>

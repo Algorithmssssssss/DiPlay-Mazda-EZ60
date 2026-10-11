@@ -361,6 +361,7 @@ class CarPlayHostActivity : ComponentActivity() {
         runOnUiThread { updateMazdaHud(guidance) }
     }
     private val mazdaHudRouteLog: (String) -> Unit = { appendLog(it) }
+    private val mazdaAmbientLog: (String) -> Unit = { appendLog(it) }
     // Copies of stream 111 outside the dashboard (centre card, launcher maps) each get their own decoder.
     private val mirrorSink: (String, Surface?) -> Unit = { key, surface -> sink?.setMirrorSurface(SCREEN_TYPE_ALT, key, surface) }
     private val mirrorsChanged: () -> Unit = {
@@ -652,6 +653,8 @@ class CarPlayHostActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         NavigationWidgetUpdater.attach(applicationContext)
         CarPlayCallKeys.install(applicationContext)
+        MazdaAmbientLights.log = mazdaAmbientLog
+        MazdaAmbientLights.restoreIfLeftOn(applicationContext)
         CenterMapOverlay.requestShow = ::showCenterMap
         MapMirrors.sink = mirrorSink
         MapMirrors.onChanged = mirrorsChanged
@@ -1553,6 +1556,7 @@ class CarPlayHostActivity : ComponentActivity() {
         mazdaHud?.close()
         mazdaHud = null
         dismissMazdaHudScreen()
+        if (MazdaAmbientLights.log === mazdaAmbientLog) MazdaAmbientLights.log = null
         resetSidePanel()
         releaseSidePanelEffects()
         hostAppearanceResumed = false

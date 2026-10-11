@@ -7,4 +7,6 @@
     <string name="settings_mazda_hud_map_normal">Normal</string>
     <string name="settings_mazda_hud_map_near">Near</string>
     <string name="settings_mazda_hud_map_view_description">How much of the map the HUD shows. Far shows more streets, smaller; Near shows fewer, larger. Applies at the next connection.</string>
+    <string name="settings_mazda_ambient_music">Follow CarPlay music</string>
+    <string name="settings_mazda_ambient_music_description">Pulses the car\'s ambient lights to CarPlay music, using the car\'s own music mode. Turn on the ambient lights and their music sync in the car first. If anything fails, DiPlay stops and hands the lights back to the car.</string>
 </resources>

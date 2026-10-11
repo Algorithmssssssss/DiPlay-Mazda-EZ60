@@ -342,6 +342,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MazdaAmbientLights.restoreIfLeftOn(this)
         // Back on the home page finishes this activity while the session runs on, so the icon lands here.
         if (savedInstanceState == null && isLauncherIntent(intent) && CarPlayBackgroundSession.hasSession()) {
             openProjection(); finish(); return
@@ -1899,9 +1900,17 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             navigationWheelControls(card)
         }
         filteredSection(content, SettingsSection.AMBIENT_LIGHTING, getString(R.string.settings_ambient_title)) { card ->
-            card.addView(button(ambientConfigurationLabel(AmbientMusicSettings.load(this)), false) {
-                showAmbientConfiguration()
-            }, matchButton(0, 60))
+            // The EZ-60's lights follow CarPlay music through the car's own music mode (MazdaAmbientLights).
+            if (MazdaPlatform.isEz60) {
+                toggle(card, getString(R.string.settings_mazda_ambient_music),
+                    getString(R.string.settings_mazda_ambient_music_description), MazdaAmbientLights.enabled(this)) {
+                    MazdaAmbientLights.saveEnabled(this, it)
+                }
+            } else {
+                card.addView(button(ambientConfigurationLabel(AmbientMusicSettings.load(this)), false) {
+                    showAmbientConfiguration()
+                }, matchButton(0, 60))
+            }
         }
         filteredSection(content, SettingsSection.LOCATION,
             getString(R.string.location), R.drawable.ic_dp_navigation) { card ->

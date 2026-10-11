@@ -7,4 +7,6 @@
     <string name="settings_mazda_hud_map_normal">標準</string>
     <string name="settings_mazda_hud_map_near">近</string>
     <string name="settings_mazda_hud_map_view_description">HUD 顯示的地圖範圍。「遠」顯示更多街道、較小；「近」顯示較少街道、較大。下次連線時生效。</string>
+    <string name="settings_mazda_ambient_music">跟隨 CarPlay 音樂</string>
+    <string name="settings_mazda_ambient_music_description">使用車輛內建的音樂律動模式，讓氛圍燈隨 CarPlay 音樂律動。請先在車上開啟氛圍燈及其音樂律動。若發生任何故障，DiPlay 會停止並將氛圍燈交還給車輛。</string>
 </resources>
