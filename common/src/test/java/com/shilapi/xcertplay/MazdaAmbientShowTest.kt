@@ -43,13 +43,6 @@ class MazdaAmbientShowTest {
         assertFalse(MazdaAmbientShow.allowed(Write(RHYTHM_BRIGHTNESS, 0, "50")))
     }
 
-    @Test fun brightnessFollowsTheMediaCentersScale() {
-        assertEquals(5, MazdaAmbientShow.brightness(0.0, 0.5))
-        assertEquals(50, MazdaAmbientShow.brightness(0.25, 0.5))
-        assertEquals(100, MazdaAmbientShow.brightness(0.5, 0.5))
-        assertEquals(100, MazdaAmbientShow.brightness(0.9, 0.5))
-    }
-
     @Test fun musicModeOpensThenPulses() {
         show.tick(true, on, 0.3)
         assertEquals(State.ACTIVE, show.state)
@@ -58,7 +51,9 @@ class MazdaAmbientShowTest {
         writes.clear()
         now = 900
         show.tick(true, on, 0.3)
-        assertEquals(Write(RHYTHM_BRIGHTNESS, 0, 100), writes.last())
+        val pulse = writes.last()
+        assertEquals(RHYTHM_BRIGHTNESS, pulse.property)
+        assertTrue(pulse.value as Int in 5..100)
     }
 
     @Test fun theCarNotEnteringMusicModeStopsAndHandsTheLightsBack() {

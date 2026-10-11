@@ -1,12 +1,11 @@
 package com.shilapi.xcertplay
 
-import kotlin.math.roundToInt
-
 /**
  * The EZ-60 ambient lights following CarPlay music, as the car's media center does for its own player
  * (com.tinnove.mediacenter, CarAtmoManager): music mode on (light zones open, scene mode 2), the rhythm colour, a
  * rhythm brightness from the music level about 8 times a second, then the lights handed back (scene mode 1, zones
- * closed, the driver's colour and brightness). Pure logic; [MazdaAmbientLights] runs it on one thread.
+ * closed, the driver's colour and brightness). How the brightness follows the music is [MazdaAmbientDynamics].
+ * Pure logic; [MazdaAmbientLights] runs it on one thread.
  *
  * Safety: only [allowed] writes leave this class. Any write that fails, or the car not entering music mode, stops
  * the show for the rest of the CarPlay session and hands the lights back. If the car or the media center takes the
@@ -34,7 +33,7 @@ internal class MazdaAmbientShow(
     private var verifyAtMillis = 0L
     private var nextCheckMillis = 0L
     private var nextKeepAliveMillis = 0L
-    private var loudest = MIN_LOUDEST
+    private val dynamics = MazdaAmbientDynamics()
     private var sentBrightness = -1
     private var sentColour = -1
     private var cycleStep = 0
@@ -42,15 +41,19 @@ internal class MazdaAmbientShow(
     // The car or media center took the lights back: wait for the music to stop before trying again.
     private var yielded = false
 
-    /** One tick. [wanted]: switch on, CarPlay music playing with fresh audio, and DiPlay's music in focus. */
-    fun tick(wanted: Boolean, settings: CarSettings, level: Double) {
+    /**
+     * One tick. [wanted]: switch on, CarPlay music playing with fresh audio, and DiPlay's music in focus; [level] and
+     * [bass]: the loudest music since the last tick.
+     */
+    fun tick(wanted: Boolean, settings: CarSettings, level: Double, bass: Double = 0.0,
+        tuning: MazdaAmbientTuning = MazdaAmbientTuning()) {
         if (state == State.FAILED) return
         if (!wanted) yielded = false
         val run = wanted && !yielded && settings.musicSyncOn && settings.brightness != 0
         when {
             state == State.IDLE && run -> open(settings)
             state == State.ACTIVE && !run -> close("music stopped or the lights were turned off")
-            state == State.ACTIVE -> pulse(settings, level)
+            state == State.ACTIVE -> pulse(settings, level, bass, tuning)
         }
     }
 
@@ -75,7 +78,7 @@ internal class MazdaAmbientShow(
     private fun open(settings: CarSettings) {
         restoreSettings = settings
         leftOn(true)
-        loudest = MIN_LOUDEST
+        dynamics.reset()
         sentBrightness = -1
         sentColour = -1
         cycleStep = 0
@@ -89,7 +92,7 @@ internal class MazdaAmbientShow(
         log("Ambient: music mode on colour=${colourFor(settings)} fixed=${settings.fixedColour}")
     }
 
-    private fun pulse(settings: CarSettings, level: Double) {
+    private fun pulse(settings: CarSettings, level: Double, bass: Double, tuning: MazdaAmbientTuning) {
         val time = now()
         if (time >= nextCheckMillis) {
             val mode = readSceneMode()
@@ -115,8 +118,7 @@ internal class MazdaAmbientShow(
         val colour = if (settings.fixedColour) colourFor(settings) else cycledColour(settings.colour)
         if (colour != sentColour && !send(Write(RHYTHM_COLOUR, COLOUR_AREA, colour))) return
         sentColour = colour
-        loudest = maxOf(level, loudest * LOUDEST_DECAY, MIN_LOUDEST)
-        val brightness = brightness(level, loudest)
+        val brightness = dynamics.brightness(level, bass, time, tuning)
         if (brightness != sentBrightness && !send(Write(RHYTHM_BRIGHTNESS, 0, brightness))) return
         sentBrightness = brightness
     }
@@ -175,16 +177,8 @@ internal class MazdaAmbientShow(
         private const val VERIFY_DELAY_MILLIS = 800L
         private const val CHECK_EVERY_MILLIS = 2_000L
         private const val KEEP_ALIVE_MILLIS = 1_000L
-        private const val MIN_LOUDEST = 0.02
-        private const val LOUDEST_DECAY = 0.995
 
         fun colourFor(settings: CarSettings): Int = settings.colour.coerceIn(1, MAX_COLOUR)
-
-        /** The media center's scale: a level from 0 to 10, sent as max(level × 10, 5). */
-        fun brightness(level: Double, loudest: Double): Int {
-            val share = if (loudest <= 0.0) 0.0 else (level / loudest).coerceIn(0.0, 1.0)
-            return maxOf((share * 10).roundToInt() * 10, 5)
-        }
 
         /** The only writes this show can make, each with the values the media center uses. */
         fun allowed(step: Write): Boolean = when (step.property) {

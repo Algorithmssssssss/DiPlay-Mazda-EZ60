@@ -154,8 +154,19 @@ lights (report 17). With the switch on, DiPlay does what the media center does, 
 | Step | Writes |
 |---|---|
 | Music starts | light zones `[-1,-1,-1]`, scene mode `826278772` = 2 (music), rhythm colour `826278822` (area 1) = the car's colour |
-| While it plays | rhythm brightness `826278823` from the music level, 5–100, about 8 times a second; zones and scene mode again each second; the colour steps through the colour bar in the car's mode 0 |
+| While it plays | rhythm brightness `826278823`, 5–100, about 8 times a second, only when it changes; zones and scene mode again each second; the colour steps through the colour bar in the car's mode 0 |
 | Music stops | scene mode 1, zones `[0,0,0]`, rhythm colour and brightness back to the car's settings |
+
+How the brightness follows the music is set on the same card (applies at once):
+
+- **Light effect · Rhythm** (default): the light rises and falls with the music's loudness, smoothed.
+  **Beat**: it jumps to full on each bass kick (40–180 Hz clearly above its recent average, at most one per
+  250 ms) and fades until the next.
+- **Smoothness** 1–5 (default 3): how fast the light rises and fades.
+- **Depth** 10–100 % (default 60 %): how far the light dims below full; at 30 % it never goes below 70.
+- **Beat sensitivity** 1–5 (default 3, Beat only): how small a bass kick counts as a beat.
+
+The first version set the brightness straight from each 120 ms loudness sample, which flickered (report 18).
 
 It runs only while the car's ambient lights are on with their music sync on (`chinatsp.global.LIGHT_RHYTHM_CTL`
 = 1, brightness not 0), CarPlay music is playing, and CarPlay's music has the car's focus (or the car's

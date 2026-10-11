@@ -21,6 +21,10 @@ internal object MazdaAmbientLights {
     private const val PREFS = "diplay_mazda_ambient"
     private const val KEY_ENABLED = "music"
     private const val KEY_LEFT_ON = "left_in_music_mode"
+    private const val KEY_EFFECT = "effect"
+    private const val KEY_SMOOTHNESS = "smoothness"
+    private const val KEY_DEPTH = "depth"
+    private const val KEY_SENSITIVITY = "sensitivity"
     private const val ATOM_SERVICE = "wt.atom"
     private const val ATOM_INTERFACE = "com.openos.systemadapter.atom.IAtomInterface"
     private const val ATOM_SET_VALUE = 1
@@ -48,6 +52,29 @@ internal object MazdaAmbientLights {
     }
 
     fun enabled(context: Context): Boolean = MazdaPlatform.isEz60 && prefs(context).getBoolean(KEY_ENABLED, false)
+
+    /** How the lights follow the music; read on every tick, so a change applies at once. */
+    fun tuning(context: Context): MazdaAmbientTuning {
+        val prefs = prefs(context)
+        val defaults = MazdaAmbientTuning()
+        fun int(key: String, fallback: Int) = runCatching { prefs.getInt(key, fallback) }.getOrDefault(fallback)
+        return MazdaAmbientTuning(
+            effect = runCatching { MazdaAmbientTuning.Effect.valueOf(prefs.getString(KEY_EFFECT, null) ?: "") }
+                .getOrDefault(defaults.effect),
+            smoothness = int(KEY_SMOOTHNESS, defaults.smoothness).coerceIn(MazdaAmbientTuning.SMOOTHNESS),
+            depth = int(KEY_DEPTH, defaults.depth).coerceIn(MazdaAmbientTuning.DEPTHS.first(), MazdaAmbientTuning.DEPTHS.last()),
+            sensitivity = int(KEY_SENSITIVITY, defaults.sensitivity).coerceIn(MazdaAmbientTuning.SENSITIVITY),
+        )
+    }
+
+    fun saveTuning(context: Context, tuning: MazdaAmbientTuning) {
+        prefs(context).edit()
+            .putString(KEY_EFFECT, tuning.effect.name)
+            .putInt(KEY_SMOOTHNESS, tuning.smoothness)
+            .putInt(KEY_DEPTH, tuning.depth)
+            .putInt(KEY_SENSITIVITY, tuning.sensitivity)
+            .apply()
+    }
 
     fun saveEnabled(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_ENABLED, enabled).apply()
@@ -95,7 +122,8 @@ internal object MazdaAmbientLights {
     private fun tick() {
         val context = appContext ?: return
         val fresh = System.nanoTime() - MusicLevel.atNanos < FRESH_AUDIO_NANOS
-        show.tick(enabled(context) && playing && focused && fresh, carSettings(context), MusicLevel.takePeak())
+        val peak = MusicLevel.take()
+        show.tick(enabled(context) && playing && focused && fresh, carSettings(context), peak.level, peak.bass, tuning(context))
     }
 
     private fun carSettings(context: Context): MazdaAmbientShow.CarSettings {

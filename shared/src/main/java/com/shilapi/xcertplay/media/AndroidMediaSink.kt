@@ -2189,12 +2189,15 @@ private class AudioRenderer(
             }
             if (count < writeLength) partialWritesThisWindow++
             val framesWritten = count / frameBytes
-            if (ambientMedia && AmbientMusicController.wantsPcm(ambientRendererToken)) {
-                ambientEnvelope.append(totalWrittenFrames, framesWritten.toLong(),
-                    AmbientMusicEnvelope.pcmRms(data, offset + written, count),
-                    ambientBass.rms(data, offset + written, count))
+            val ambientEnvelopeWanted = ambientMedia && AmbientMusicController.wantsPcm(ambientRendererToken)
+            val musicLevelWanted = ambientMedia && MusicLevel.wanted
+            if (ambientEnvelopeWanted || musicLevelWanted) {
+                // One pass of the bass filter per block keeps its state continuous for both readers.
+                val rms = AmbientMusicEnvelope.pcmRms(data, offset + written, count)
+                val bass = ambientBass.rms(data, offset + written, count)
+                if (ambientEnvelopeWanted) ambientEnvelope.append(totalWrittenFrames, framesWritten.toLong(), rms, bass)
+                if (musicLevelWanted) MusicLevel.record(rms, bass)
             }
-            if (ambientMedia && MusicLevel.wanted) MusicLevel.record(AmbientMusicEnvelope.pcmRms(data, offset + written, count))
             written += count
             totalWrittenFrames += framesWritten
             writtenFramesThisWindow += framesWritten

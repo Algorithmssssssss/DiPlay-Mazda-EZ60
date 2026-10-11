@@ -1906,6 +1906,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                     getString(R.string.settings_mazda_ambient_music_description), MazdaAmbientLights.enabled(this)) {
                     MazdaAmbientLights.saveEnabled(this, it)
                 }
+                mazdaAmbientTuning(card)
             } else {
                 card.addView(button(ambientConfigurationLabel(AmbientMusicSettings.load(this)), false) {
                     showAmbientConfiguration()
@@ -4410,6 +4411,47 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     private fun reconnectIfRunning() {
         if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
+    }
+
+    // EZ-60: how the ambient lights follow CarPlay music; every change applies at the next light update.
+    private fun mazdaAmbientTuning(card: LinearLayout) {
+        val tuning = MazdaAmbientLights.tuning(this)
+        fun save(change: (MazdaAmbientTuning) -> MazdaAmbientTuning) =
+            MazdaAmbientLights.saveTuning(this, change(MazdaAmbientLights.tuning(this)))
+        card.addView(button("${getString(R.string.settings_mazda_ambient_effect)} · " +
+            getString(mazdaAmbientEffectName(tuning.effect)), false) {
+            val effects = listOf(MazdaAmbientTuning.Effect.BEAT, MazdaAmbientTuning.Effect.RHYTHM)
+            appDialogBuilder().setTitle(getString(R.string.settings_mazda_ambient_effect))
+                .setSingleChoiceItems(effects.map { getString(mazdaAmbientEffectName(it)) }.toTypedArray(),
+                    effects.indexOf(tuning.effect)) { dialog, which ->
+                    dialog.dismiss()
+                    save { it.copy(effect = effects[which]) }
+                    render()
+                }
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show()
+        }, matchButton(12, 60))
+        card.addView(label(getString(R.string.settings_mazda_ambient_effect_description), 14, MUTED))
+        card.addView(overlaySliderRow(getString(R.string.settings_mazda_ambient_smoothness),
+            MazdaAmbientTuning.SMOOTHNESS.toList(), tuning.smoothness) { it.toString() }.apply {
+            onSave = { value -> save { it.copy(smoothness = value) } }
+        })
+        card.addView(overlaySliderRow(getString(R.string.settings_mazda_ambient_depth),
+            MazdaAmbientTuning.DEPTHS, tuning.depth) { "$it %" }.apply {
+            onSave = { value -> save { it.copy(depth = value) } }
+        })
+        if (tuning.effect == MazdaAmbientTuning.Effect.BEAT) {
+            card.addView(overlaySliderRow(getString(R.string.settings_mazda_ambient_sensitivity),
+                MazdaAmbientTuning.SENSITIVITY.toList(), tuning.sensitivity) { it.toString() }.apply {
+                onSave = { value -> save { it.copy(sensitivity = value) } }
+            })
+        }
+        card.addView(label(getString(R.string.settings_mazda_ambient_tuning_description), 14, MUTED))
+    }
+
+    private fun mazdaAmbientEffectName(effect: MazdaAmbientTuning.Effect): Int = when (effect) {
+        MazdaAmbientTuning.Effect.BEAT -> R.string.settings_mazda_ambient_effect_beat
+        MazdaAmbientTuning.Effect.RHYTHM -> R.string.settings_mazda_ambient_effect_rhythm
     }
 
     private fun mazdaHudMapViewName(view: MazdaHudSettings.MapView): Int = when (view) {

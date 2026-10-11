@@ -9,4 +9,12 @@
     <string name="settings_mazda_hud_map_view_description">Сколько карты показывает HUD. «Далеко» — больше улиц, мельче; «Близко» — меньше улиц, крупнее. Применяется при следующем подключении.</string>
     <string name="settings_mazda_ambient_music">Следовать музыке CarPlay</string>
     <string name="settings_mazda_ambient_music_description">Подсветка салона пульсирует в такт музыке CarPlay в собственном музыкальном режиме автомобиля. Сначала включите в автомобиле подсветку и её синхронизацию с музыкой. При любой ошибке DiPlay останавливается и возвращает подсветку автомобилю.</string>
+    <string name="settings_mazda_ambient_effect">Световой эффект</string>
+    <string name="settings_mazda_ambient_effect_beat">Бит</string>
+    <string name="settings_mazda_ambient_effect_rhythm">Ритм</string>
+    <string name="settings_mazda_ambient_effect_description">«Бит» вспыхивает на каждый удар баса и гаснет до следующего. «Ритм» плавно усиливает и ослабляет подсветку вместе с музыкой.</string>
+    <string name="settings_mazda_ambient_smoothness">Плавность</string>
+    <string name="settings_mazda_ambient_depth">Глубина</string>
+    <string name="settings_mazda_ambient_sensitivity">Чувствительность к биту</string>
+    <string name="settings_mazda_ambient_tuning_description">Плавность: 1 — быстрые изменения, 5 — медленные. Глубина: насколько подсветка гаснет между ударами. Чувствительность к биту: 5 ловит более тихие удары. Изменения применяются сразу.</string>
 </resources>

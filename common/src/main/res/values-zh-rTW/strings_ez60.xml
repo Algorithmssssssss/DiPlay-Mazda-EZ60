@@ -9,4 +9,12 @@
     <string name="settings_mazda_hud_map_view_description">HUD 顯示的地圖範圍。「遠」顯示更多街道、較小；「近」顯示較少街道、較大。下次連線時生效。</string>
     <string name="settings_mazda_ambient_music">跟隨 CarPlay 音樂</string>
     <string name="settings_mazda_ambient_music_description">使用車輛內建的音樂律動模式，讓氛圍燈隨 CarPlay 音樂律動。請先在車上開啟氛圍燈及其音樂律動。若發生任何故障，DiPlay 會停止並將氛圍燈交還給車輛。</string>
+    <string name="settings_mazda_ambient_effect">燈光效果</string>
+    <string name="settings_mazda_ambient_effect_beat">節拍</string>
+    <string name="settings_mazda_ambient_effect_rhythm">律動</string>
+    <string name="settings_mazda_ambient_effect_description">「節拍」在每個低音鼓點時點亮氛圍燈，並漸暗到下一個鼓點。「律動」隨音樂平滑地明暗變化。</string>
+    <string name="settings_mazda_ambient_smoothness">平滑度</string>
+    <string name="settings_mazda_ambient_depth">深度</string>
+    <string name="settings_mazda_ambient_sensitivity">節拍靈敏度</string>
+    <string name="settings_mazda_ambient_tuning_description">平滑度：1 變化快，5 變化慢。深度：鼓點之間燈光變暗的程度。節拍靈敏度：5 能捕捉較輕的鼓點。變更立即生效。</string>
 </resources>

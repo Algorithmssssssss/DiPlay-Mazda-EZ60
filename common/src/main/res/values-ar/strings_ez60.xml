@@ -9,4 +9,12 @@
     <string name="settings_mazda_hud_map_view_description">مقدار الخريطة الذي تعرضه شاشة العرض الأمامية. «بعيد» يعرض شوارع أكثر بحجم أصغر، و«قريب» يعرض شوارع أقل بحجم أكبر. يُطبَّق عند الاتصال التالي.</string>
     <string name="settings_mazda_ambient_music">مزامنة مع موسيقى CarPlay</string>
     <string name="settings_mazda_ambient_music_description">يجعل إضاءة المقصورة تنبض مع موسيقى CarPlay باستخدام وضع الموسيقى الخاص بالسيارة. شغّل إضاءة المقصورة ومزامنتها مع الموسيقى في السيارة أولًا. إذا فشل أي شيء، يتوقف DiPlay ويعيد الإضاءة إلى السيارة.</string>
+    <string name="settings_mazda_ambient_effect">تأثير الإضاءة</string>
+    <string name="settings_mazda_ambient_effect_beat">النبض</string>
+    <string name="settings_mazda_ambient_effect_rhythm">الإيقاع</string>
+    <string name="settings_mazda_ambient_effect_description">«النبض» يومض الإضاءة مع كل ضربة جهير ثم يخفتها حتى الضربة التالية. «الإيقاع» يرفعها ويخفضها بسلاسة مع الموسيقى.</string>
+    <string name="settings_mazda_ambient_smoothness">النعومة</string>
+    <string name="settings_mazda_ambient_depth">العمق</string>
+    <string name="settings_mazda_ambient_sensitivity">حساسية النبض</string>
+    <string name="settings_mazda_ambient_tuning_description">النعومة: 1 تتغير بسرعة و5 ببطء. العمق: مدى خفوت الإضاءة بين الضربات. حساسية النبض: 5 تلتقط الضربات الأخف. تُطبَّق التغييرات فورًا.</string>
 </resources>

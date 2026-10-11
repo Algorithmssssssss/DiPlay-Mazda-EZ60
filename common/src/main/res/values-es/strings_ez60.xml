@@ -9,4 +9,12 @@
     <string name="settings_mazda_hud_map_view_description">Cuánto mapa muestra el HUD. Lejos muestra más calles, más pequeñas; Cerca, menos calles y más grandes. Se aplica en la próxima conexión.</string>
     <string name="settings_mazda_ambient_music">Seguir la música de CarPlay</string>
     <string name="settings_mazda_ambient_music_description">Hace que la luz ambiental del coche pulse con la música de CarPlay usando el modo de música del propio coche. Primero enciende la luz ambiental y su sincronización con la música en el coche. Si algo falla, DiPlay se detiene y devuelve la luz al coche.</string>
+    <string name="settings_mazda_ambient_effect">Efecto de luz</string>
+    <string name="settings_mazda_ambient_effect_beat">Pulso</string>
+    <string name="settings_mazda_ambient_effect_rhythm">Ritmo</string>
+    <string name="settings_mazda_ambient_effect_description">Pulso enciende las luces en cada golpe de graves y las atenúa hasta el siguiente. Ritmo las sube y baja suavemente con la música.</string>
+    <string name="settings_mazda_ambient_smoothness">Suavidad</string>
+    <string name="settings_mazda_ambient_depth">Profundidad</string>
+    <string name="settings_mazda_ambient_sensitivity">Sensibilidad al pulso</string>
+    <string name="settings_mazda_ambient_tuning_description">Suavidad: 1 cambia rápido y 5 despacio. Profundidad: cuánto se atenúan las luces entre golpes. Sensibilidad al pulso: 5 detecta golpes más suaves. Los cambios se aplican al instante.</string>
 </resources>
