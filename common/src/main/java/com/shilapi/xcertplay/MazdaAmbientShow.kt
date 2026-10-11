@@ -68,8 +68,12 @@ internal class MazdaAmbientShow(
         yielded = false
     }
 
-    /** DiPlay stopped while the lights were in music mode: hand them back with [settings]. */
+    /**
+     * DiPlay stopped while the lights were in music mode: hand them back with [settings]. A show running in this
+     * process owns them (its screens are recreated when the driver moves between CarPlay and Settings): left alone.
+     */
     fun restoreLeftOn(settings: CarSettings) {
+        if (state == State.ACTIVE) return
         log("Ambient: handing back lights left in music mode")
         handBack(settings)
         leftOn(false)

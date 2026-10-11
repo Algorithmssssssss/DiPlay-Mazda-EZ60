@@ -113,6 +113,23 @@ class MazdaAmbientShowTest {
             writes.filter { it.property != LIGHT_ZONES })
     }
 
+    // EZ-60 report 20: opening DiPlay's screen from CarPlay ran the start-up hand-back while the show was running.
+    @Test fun theStartUpHandBackLeavesARunningShowAlone() {
+        show.tick(true, on, 0.3)
+        writes.clear()
+        show.restoreLeftOn(on)
+        assertTrue(writes.isEmpty())
+        assertTrue(leftOn)
+        assertEquals(State.ACTIVE, show.state)
+    }
+
+    @Test fun theStartUpHandBackRestoresLightsAStoppedAppLeftOn() {
+        leftOn = true
+        show.restoreLeftOn(on)
+        assertEquals(Write(SCENE_MODE, 0, 1), writes.first())
+        assertFalse(leftOn)
+    }
+
     @Test fun nothingHappensWithoutTheCarsMusicSync() {
         show.tick(true, on.copy(musicSyncOn = false), 0.3)
         show.tick(true, on.copy(brightness = 0), 0.3)
