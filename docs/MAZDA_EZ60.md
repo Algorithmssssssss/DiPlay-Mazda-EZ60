@@ -177,6 +177,14 @@ screens and windows, the OEM screen-state settings, the video decoders (with a t
 and 5120×1440), Wi-Fi/Bluetooth/USB, audio outputs, input devices and the installed projection apps.
 Serial numbers and addresses are left out or masked. Nothing is sent automatically.
 
+On the EZ-60 the snapshot also has **Ambient lighting (read-only)**: the car media center's music-sync switches
+(`chinatsp.global.LIGHT_RHYTHM_CTL`, `LIGHT_RHYTHM_MODE`, `LIGHT_COLORBAR_CTL`, `LIGHT_BRIGHTNESS_CTL`) and the
+ambient-light vehicle properties it uses (826278810 brightness, 826278811 colour, 826278822 rhythm colour,
+826278823 rhythm brightness, 826278772 scene mode, 829424549 light zones), read through the car's
+vehicle-property service with `getValue` and `isSupport` only. While recording, those properties are read once
+a second and changes are noted as `[ambient]`. Nothing is written; this decides whether DiPlay could sync the
+lights to CarPlay music, which the car's own music sync does only for the media center's own player.
+
 1. Open DiPlay from the **driver-side** app list. Tap **Run EZ-60 probe**.
 2. Tap **Start recording events**, then:
    - swipe DiPlay to the passenger half and back with two fingers;

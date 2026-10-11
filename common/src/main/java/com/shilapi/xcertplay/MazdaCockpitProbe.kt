@@ -109,6 +109,7 @@ internal object MazdaCockpitProbe {
     private var usbReceiver: BroadcastReceiver? = null
     @Volatile private var pendingLines = 0
     @Volatile private var crashRecorderInstalled = false
+    private var ambientPoll: java.util.concurrent.ScheduledExecutorService? = null
 
     private class WindowWatch(val tag: String) {
         var last: String? = null
@@ -129,6 +130,7 @@ internal object MazdaCockpitProbe {
             recording = true
             append(app, "probe", "recording started")
             startWatching(app)
+            watchAmbientLights(app)
             for ((activity, watch) in windows.entries.toList()) {
                 watch.last = windowLine(activity)
                 append(app, watch.tag, "window ${watch.last}")
@@ -140,6 +142,24 @@ internal object MazdaCockpitProbe {
             settingsObserver = null
             usbReceiver?.let { runCatching { app.unregisterReceiver(it) } }
             usbReceiver = null
+            ambientPoll?.shutdownNow()
+            ambientPoll = null
+        }
+    }
+
+    // EZ-60: the ambient lights' vehicle properties, read once a second, so a recording shows how the car's own
+    // music sync drives them. Read-only (MazdaAmbientProbe).
+    private fun watchAmbientLights(app: Context) {
+        if (!MazdaPlatform.isEz60 || ambientPoll != null) return
+        var last = emptyMap<String, String>()
+        ambientPoll = java.util.concurrent.Executors.newSingleThreadScheduledExecutor { task ->
+            Thread(task, "diplay-ez60-ambient-probe").apply { isDaemon = true }
+        }.also { poll ->
+            poll.scheduleWithFixedDelay({
+                val now = runCatching { MazdaAmbientProbe.values() }.getOrDefault(emptyMap())
+                for ((key, value) in now) if (last[key] != value) note(app, "ambient", "$key $value")
+                last = now
+            }, 0, 1, java.util.concurrent.TimeUnit.SECONDS)
         }
     }
 
@@ -161,6 +181,7 @@ internal object MazdaCockpitProbe {
         activity.window.decorView.viewTreeObserver.addOnGlobalLayoutListener(listener)
         if (isRecording(activity)) {
             startWatching(activity.applicationContext)
+            watchAmbientLights(activity.applicationContext)
             note(activity, tag, "created restored=$restored")
         }
     }
@@ -285,6 +306,7 @@ internal object MazdaCockpitProbe {
                 section("Audio and location") { audioAndLocation(app, this) }
                 section("Day/night and input") { dayNightAndInput(app, this) }
                 section("Apps") { apps(app, this) }
+                if (MazdaPlatform.isEz60) section("Ambient lighting (read-only)") { MazdaAmbientProbe.section(app, this) }
             }.lineSequence().joinToString("\n") { DiagnosticRedactor.mask(it) }
             runCatching { File(directory(app), SNAPSHOT_FILE).writeText(text) }
             main.post { done() }
