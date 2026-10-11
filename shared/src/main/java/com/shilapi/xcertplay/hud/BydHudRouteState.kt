@@ -37,6 +37,11 @@ internal class BydHudRouteState(
      * Arrived (2) still ends the route. The overlay's own stale window retires a truly ended one.
      */
     private val keepAcrossNoRoute: Boolean = false,
+    /**
+     * NoRouteSet and Arrived end the route but keep the cached 0x5202 maneuvers, which the iPhone never resends:
+     * if guidance for the same route follows (a route started on the iPhone itself), it can still be shown.
+     */
+    private val keepManeuversOnEnd: Boolean = false,
 ) {
     private data class Maneuver(val type: Int, val drivingSide: Int, val afterRoad: String)
 
@@ -50,6 +55,11 @@ internal class BydHudRouteState(
     private var remainingMeters: Long? = null
     private var emptyListSinceNs: Long? = null
     private var lastRouteUpdateNs: Long? = null
+
+    /** The last RouteGuidanceState the iPhone sent (0 none, 1 set, 2 arrived, …), for diagnostics. */
+    var lastRouteState: Int? = null
+        private set
+    val knownManeuvers: Int get() = maneuvers.size
 
     fun accept(messageId: Int, payload: ByteArray): BydHudRouteChange {
         if (!validTlvs(payload)) return BydHudRouteChange.NONE
@@ -82,6 +92,12 @@ internal class BydHudRouteState(
     }
 
     fun clear(): Boolean {
+        val wasActive = endRoute()
+        maneuvers.clear()
+        return wasActive
+    }
+
+    private fun endRoute(): Boolean {
         val wasActive = routeActive
         routeActive = false
         activeIndex = -1
@@ -92,7 +108,6 @@ internal class BydHudRouteState(
         remainingMeters = null
         emptyListSinceNs = null
         lastRouteUpdateNs = null
-        maneuvers.clear()
         return wasActive
     }
 
@@ -116,7 +131,10 @@ internal class BydHudRouteState(
             forEachTlv(data) { type, value, valueLength ->
                 if (type == 0x01 && valueLength >= 1) noRoute = data[value] == 0.toByte()
             }
-            if (noRoute) return BydHudRouteChange.NONE
+            if (noRoute) {
+                lastRouteState = 0
+                return BydHudRouteChange.NONE
+            }
         }
         lastRouteUpdateNs = nanoTime()
         var state: Int? = null
@@ -142,8 +160,10 @@ internal class BydHudRouteState(
 
         // Only NoRouteSet (0) and Arrived (2) end the route. A wireless handoff often sends
         // NoRouteSet while the session is still coming back — keep the overlay instruction then.
+        if (state != null) lastRouteState = state
         if (state == 0 || state == 2) {
-            return if (clear()) BydHudRouteChange.CLEAR else BydHudRouteChange.NONE
+            val wasActive = if (keepManeuversOnEnd) endRoute() else clear()
+            return if (wasActive) BydHudRouteChange.CLEAR else BydHudRouteChange.NONE
         }
         // The iPhone briefly sends an empty current list every few seconds and while rerouting. Keep the last
         // maneuver (and the cached 0x5202 details, which are never resent) and hide it only if the list stays

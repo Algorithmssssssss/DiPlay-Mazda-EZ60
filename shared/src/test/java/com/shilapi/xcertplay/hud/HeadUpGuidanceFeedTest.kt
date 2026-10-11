@@ -47,12 +47,32 @@ class HeadUpGuidanceFeedTest {
         assertEquals(90, events.last()!!.distanceMeters)
     }
 
+    @Test fun aRouteStartedOnTheIphoneShowsAfterANoRouteMessage() {
+        // The iPhone sends a route's maneuvers once; a NoRouteSet must not lose them for the guidance that follows.
+        val feed = guiding(keepAcrossNoRoute = false)
+        feed.accept(route(tlv(0x01, 0)))
+        assertNull(events.last())
+        feed.accept(route(tlv(0x01, 1) + tlv(0x0a, 0, 0, 0, 120) + tlv(0x0d, 0, 7)))
+        assertEquals(120, events.last()!!.distanceMeters)
+    }
+
+    @Test fun eachRouteStateChangeIsLoggedOnce() {
+        val notes = mutableListOf<String>()
+        val feed = guiding(keepAcrossNoRoute = false)
+        feed.stateLog = { notes += it }
+        feed.accept(route(tlv(0x01, 1) + tlv(0x0a, 0, 0, 0, 140)))
+        feed.accept(route(tlv(0x01, 0)))
+        feed.accept(route(tlv(0x01, 0)))
+        assertEquals(listOf("HUD: route state=0 maneuvers=1 guiding=false"), notes)
+    }
+
     private fun guiding(keepAcrossNoRoute: Boolean): TurnGuidanceFeed {
         val feed = TurnGuidanceFeed(BydHudRouteState(
             nanoTime = { now },
             staleRouteNs = 30_000_000_000L,
             emptyListHideNs = 8_000_000_000L,
             keepAcrossNoRoute = keepAcrossNoRoute,
+            keepManeuversOnEnd = !keepAcrossNoRoute,
         ))
         feed.setListener { events += it }
         events.clear()

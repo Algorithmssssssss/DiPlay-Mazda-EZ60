@@ -30,6 +30,7 @@ object BydNavigationOutputs {
     private val headUp = TurnGuidanceFeed(BydHudRouteState(
         staleRouteNs = 30_000_000_000L,
         emptyListHideNs = 8_000_000_000L,
+        keepManeuversOnEnd = true,
     ))
     private val standalone = NavigationOutputWorker("diplay-standalone-output", BydStandaloneNavigationBridge::clear)
     private val hud = NavigationOutputWorker("diplay-hud-output", BydHudBridge::clear)
@@ -113,6 +114,9 @@ object BydNavigationOutputs {
      */
     fun setHeadUpGuidanceListener(listener: ((ClusterTurnGuidance?) -> Unit)?) = headUp.setListener(listener)
 
+    /** Where the head-up feed reports each change of the iPhone's route state, for diagnostics. */
+    fun setHeadUpRouteLog(log: ((String) -> Unit)?) { headUp.stateLog = log }
+
     /** Called every second while the presentation owner lives, even without incoming frames. */
     fun refreshTurnOverlay() {
         overlay.refresh()
@@ -152,8 +156,10 @@ object BydNavigationOutputs {
 /** One consumer's view of the route: its own route state, the guidance last published, and its listener. */
 internal class TurnGuidanceFeed(private val route: BydHudRouteState) {
     @Volatile private var listener: ((ClusterTurnGuidance?) -> Unit)? = null
+    @Volatile var stateLog: ((String) -> Unit)? = null
     private val lock = Any()
     private var published: ClusterTurnGuidance? = null
+    private var loggedState: Int? = null
 
     fun setListener(next: ((ClusterTurnGuidance?) -> Unit)?) {
         listener = next
@@ -162,7 +168,17 @@ internal class TurnGuidanceFeed(private val route: BydHudRouteState) {
     }
 
     fun accept(frame: Iap2Frame) {
-        val change = synchronized(lock) { route.accept(frame.messageId, frame.payload) }
+        var note: String? = null
+        val change = synchronized(lock) {
+            route.accept(frame.messageId, frame.payload).also {
+                val state = route.lastRouteState
+                if (state != null && state != loggedState) {
+                    loggedState = state
+                    note = "HUD: route state=$state maneuvers=${route.knownManeuvers} guiding=${route.currentApple() != null}"
+                }
+            }
+        }
+        note?.let { message -> stateLog?.let { runCatching { it(message) } } }
         if (change != BydHudRouteChange.NONE) refresh()
     }
 
@@ -178,7 +194,10 @@ internal class TurnGuidanceFeed(private val route: BydHudRouteState) {
     }
 
     fun clear() {
-        synchronized(lock) { route.clear() }
+        synchronized(lock) {
+            route.clear()
+            loggedState = null
+        }
         refresh()
     }
 
