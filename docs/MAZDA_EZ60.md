@@ -33,7 +33,7 @@ From the EZ-60 probe on 2026-10-10 (CAMZD OS build 20250930150736):
 - **Swipe:** `global.fly_to_right_status` goes 1 (to the passenger half) or 2 (back), the window moves within about 0.2 s, and `copilot_display_status` / `main_display_status` name the app on each half. The app is not relaunched; it gets a configuration change with the new bounds.
 - **New tasks:** a separate task started from DiPlay opens on DiPlay's half. Launching DiPlay from the other half's app list moves its task to that half.
 - **Video decoders:** `c2.mtk.avc.decoder` (no low-latency mode) and `c2.mtk.avc.decoder.lowlatency`. H.264 at 2496×1080 is good for 87–191 fps, HEVC for 31–70 fps. No decoder accepts 5120 wide (the limit is 4096).
-- **Wi-Fi:** 5 GHz and 6 GHz, Wi-Fi Direct, hotspot and client at the same time. The hotspot interface is `ap0`.
+- **Wi-Fi:** 5 GHz and 6 GHz, Wi-Fi Direct, hotspot and client at the same time. The hotspot interface is `ap0`, or `ap_br_ap0` when the hotspot uses two bands.
 - **Audio:** Android Automotive buses for media, navigation, calls, ringtone and voice per seat; the car sets the volume.
 - **Bluetooth:** hands-free and music receiver only.
 - **Windshield HUD:** an 800×480 presentation display, `MeterDisplay#0`; the car has no instrument cluster.
@@ -88,6 +88,12 @@ car hotspot's name and password: without them **Connect** returns to Connection 
   pauses that during Wi-Fi Direct, but only with the car's ADB over network approved. The **Built-in car
   hotspot** mode runs with the client off and avoids it; upstream now recommends it, and on the EZ-60 it
   gave the smoothest sessions so far (see Video above).
+- **Car hotspot on two bands:** in the smooth sessions the hotspot interface was `ap0`. In later ones
+  (2026-10-11 evening) it was `ap_br_ap0`, which Android creates for a hotspot set to 2.4 and 5 GHz together.
+  At the same time, video reached the car with gaps of about 230 ms instead of 70–95 ms, touch to picture
+  rose from 20–33 ms to 50–150 ms, and the iPhone lowered its bitrate. The cause is not confirmed yet. If
+  the session log shows `hotspot interface confirmed iface=ap_br_ap0`, set the car hotspot to 5 GHz only
+  (if the car offers a choice), keep the car off other Wi-Fi networks, and turn the hotspot off and on.
 
 ## Windshield HUD
 

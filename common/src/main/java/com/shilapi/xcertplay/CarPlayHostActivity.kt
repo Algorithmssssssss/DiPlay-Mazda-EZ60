@@ -5850,7 +5850,9 @@ class CarPlayHostActivity : ComponentActivity() {
 
     private fun attachSurface(surface: Surface) {
         sink?.setSurface(SCREEN_TYPE_MAIN, surface)
-        if (AirPlayPersistence.loadClusterMapEnabled(this)) {
+        // Stream 111 asked for a display of its own (a cluster, the EZ-60 HUD) keeps that output. Given the main
+        // surface, its decoder can connect first and the main decoder then fails to configure: a frozen picture.
+        if (AirPlayPersistence.loadClusterMapEnabled(this) || clusterStreamOnDisplay) {
             clusterSurface?.let { sink?.setSurface(SCREEN_TYPE_ALT, it) }
         } else {
             sink?.setSurface(SCREEN_TYPE_ALT, surface)
