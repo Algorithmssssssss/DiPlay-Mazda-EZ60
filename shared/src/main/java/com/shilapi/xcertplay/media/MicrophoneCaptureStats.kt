@@ -30,6 +30,7 @@ internal class MicrophoneCaptureStats(
     private var lastSentNs: Long? = null
     private var sendGapMaxNs = 0L
     private var routedDeviceType: Int? = null
+    private var peak = 0
 
     fun started(routeType: Int?) {
         routedDeviceType = routeType
@@ -49,6 +50,18 @@ internal class MicrophoneCaptureStats(
             count == 0 -> zeroReads++
             else -> readErrors++
         }
+    }
+
+    /** The loudest 16-bit sample in [count] bytes of little-endian PCM: a muted or wrong input stays near 0. */
+    fun level(pcm: ByteArray, count: Int) {
+        var max = peak
+        var i = 0
+        while (i + 1 < count) {
+            val sample = (pcm[i].toInt() and 0xff) or (pcm[i + 1].toInt() shl 8)
+            if (sample > max) max = sample else if (-sample > max) max = -sample
+            i += 2
+        }
+        peak = max
     }
 
     fun encoded(frameCount: Int, emptyCount: Int) {
@@ -77,7 +90,7 @@ internal class MicrophoneCaptureStats(
             "captureBytes=$capturedBytes reads=$reads zeroReads=$zeroReads readErrors=$readErrors " +
             "readMaxMs=${readMaxNs / 1_000_000} encodedFrames=$encodedFrames " +
             "emptyEncodedFrames=$emptyEncodedFrames udpSent=$udpSent sendErrors=$sendErrors " +
-            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} ended=$ended")
+            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} peak=$peak ended=$ended")
         windowStart = now
         capturedBytes = 0
         reads = 0
@@ -89,6 +102,7 @@ internal class MicrophoneCaptureStats(
         udpSent = 0
         sendErrors = 0
         sendGapMaxNs = 0
+        peak = 0
     }
 
     private fun emit(message: String) { runCatching { report(message) } }

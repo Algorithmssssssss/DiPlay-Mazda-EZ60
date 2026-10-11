@@ -119,4 +119,18 @@ class MicrophoneCaptureStatsTest {
         assertEquals(4, reports.size)
         assertTrue(reports.all { it.length < 512 && '\n' !in it })
     }
+
+    @Test fun reportsTheLoudestSampleSoASilentInputShows() {
+        val reports = mutableListOf<String>()
+        val stats = MicrophoneCaptureStats(config, reports::add) { 0L }
+        stats.level(byteArrayOf(0, 0, 1, 0), 4)
+        stats.flush(ended = true)
+        assertTrue(reports.last().contains("peak=1 ended=true"))
+        // Little-endian 16-bit: -32768 is the loudest a sample can be; the window resets after a report.
+        stats.level(byteArrayOf(0x10, 0x00, 0x00, 0x80.toByte(), 0x05, 0x00), 6)
+        stats.flush(ended = true)
+        assertTrue(reports.last().contains("peak=32768 ended=true"))
+        stats.flush(ended = true)
+        assertTrue(reports.last().contains("peak=0 ended=true"))
+    }
 }

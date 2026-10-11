@@ -61,8 +61,10 @@ class ClusterTurnOverlayExpiryTest {
 
     private fun withRoute(test: (BydHudRouteState, (Long) -> Unit, MutableList<ClusterTurnGuidance?>) -> Unit) {
         var now = 0L
-        val field = BydNavigationOutputs::class.java.getDeclaredField("overlayRoute").apply { isAccessible = true }
-        val route = field.get(BydNavigationOutputs) as BydHudRouteState
+        val feed = BydNavigationOutputs::class.java.getDeclaredField("overlay").apply { isAccessible = true }
+            .get(BydNavigationOutputs)
+        val route = TurnGuidanceFeed::class.java.getDeclaredField("route").apply { isAccessible = true }
+            .get(feed) as BydHudRouteState
         val clock = BydHudRouteState::class.java.getDeclaredField("nanoTime").apply { isAccessible = true }
         val previousClock = clock.get(route)
         route.clear()

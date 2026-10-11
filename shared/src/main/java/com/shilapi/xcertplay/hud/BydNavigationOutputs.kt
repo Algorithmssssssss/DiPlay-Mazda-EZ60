@@ -19,14 +19,18 @@ object BydNavigationOutputs {
     }
     fun setDiagnosticHold(hold: Boolean) { BydStandaloneHudOutput.syntheticHold = hold }
     @Volatile private var useStandalone = false
-    @Volatile private var overlayListener: ((ClusterTurnGuidance?) -> Unit)? = null
-    private val overlayLock = Any()
-    private var publishedOverlay: ClusterTurnGuidance? = null
-    private val overlayRoute = BydHudRouteState(
+    // The dashboard card keeps the last instruction across a wireless handoff's NoRouteSet.
+    private val overlay = TurnGuidanceFeed(BydHudRouteState(
         staleRouteNs = 120_000_000_000L,
         emptyListHideNs = 8_000_000_000L,
         keepAcrossNoRoute = true,
-    )
+    ))
+    // A head-up display clears when the driver ends the route or arrives: NoRouteSet ends it too, and the
+    // iPhone resends guidance about every 2 s while a route runs, even parked (EZ-60 report 13).
+    private val headUp = TurnGuidanceFeed(BydHudRouteState(
+        staleRouteNs = 30_000_000_000L,
+        emptyListHideNs = 8_000_000_000L,
+    ))
     private val standalone = NavigationOutputWorker("diplay-standalone-output", BydStandaloneNavigationBridge::clear)
     private val hud = NavigationOutputWorker("diplay-hud-output", BydHudBridge::clear)
     private val cluster = NavigationOutputWorker("diplay-cluster-output", BydClusterBridge::clear)
@@ -91,7 +95,8 @@ object BydNavigationOutputs {
         if (frame.messageId != BydHudRouteState.ROUTE_GUIDANCE_UPDATE &&
             frame.messageId != BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE) return
         val owned = frame // Iap2Frame is immutable and defensively copies its payload.
-        updateOverlay(owned)
+        overlay.accept(owned)
+        headUp.accept(owned)
         if (useStandalone) standalone.submit { BydStandaloneNavigationBridge.onFrame(owned) }
         else {
             hud.submit { BydHudBridge.onFrame(owned) }
@@ -100,37 +105,18 @@ object BydNavigationOutputs {
     }
 
     /** Live next-turn state for the dashboard overlay. Called from the iAP2 thread. */
-    fun setTurnOverlayListener(listener: ((ClusterTurnGuidance?) -> Unit)?) {
-        overlayListener = listener
-        val next = currentOverlay()
-        synchronized(overlayLock) { publishedOverlay = next }
-        listener?.invoke(next)
-    }
+    fun setTurnOverlayListener(listener: ((ClusterTurnGuidance?) -> Unit)?) = overlay.setListener(listener)
 
-    private fun updateOverlay(frame: Iap2Frame) {
-        val change = synchronized(overlayLock) { overlayRoute.accept(frame.messageId, frame.payload) }
-        if (change != BydHudRouteChange.NONE) refreshTurnOverlay()
-    }
+    /**
+     * Live next-turn state for a head-up display, which must clear when the route ends: unlike the dashboard
+     * overlay, NoRouteSet ends it as well as Arrived.
+     */
+    fun setHeadUpGuidanceListener(listener: ((ClusterTurnGuidance?) -> Unit)?) = headUp.setListener(listener)
 
     /** Called every second while the presentation owner lives, even without incoming frames. */
     fun refreshTurnOverlay() {
-        val next = synchronized(overlayLock) {
-            val current = currentOverlay()
-            if (current == publishedOverlay) return
-            publishedOverlay = current
-            current
-        }
-        overlayListener?.invoke(next)
-    }
-
-    private fun currentOverlay(): ClusterTurnGuidance? = synchronized(overlayLock) {
-        overlayRoute.currentApple()?.let { apple ->
-            ClusterTurnGuidance.from(BydClusterFrame.from(apple)).copy(
-                arrivalEpochSeconds = apple.arrivalEpochSeconds,
-                remainingSeconds = apple.remainingSeconds,
-                remainingMeters = apple.remainingMeters,
-            )
-        }
+        overlay.refresh()
+        headUp.refresh()
     }
 
     /** The dashboard song setting changed; applies at once. */
@@ -157,8 +143,52 @@ object BydNavigationOutputs {
         // Only a wireless session replacement retains the card. Explicit controller close
         // and wired disconnect still clear it immediately.
         if (!preserveTurnOverlay) {
-            synchronized(overlayLock) { overlayRoute.clear() }
-            refreshTurnOverlay()
+            overlay.clear()
+            headUp.clear()
+        }
+    }
+}
+
+/** One consumer's view of the route: its own route state, the guidance last published, and its listener. */
+internal class TurnGuidanceFeed(private val route: BydHudRouteState) {
+    @Volatile private var listener: ((ClusterTurnGuidance?) -> Unit)? = null
+    private val lock = Any()
+    private var published: ClusterTurnGuidance? = null
+
+    fun setListener(next: ((ClusterTurnGuidance?) -> Unit)?) {
+        listener = next
+        val current = synchronized(lock) { current().also { published = it } }
+        next?.invoke(current)
+    }
+
+    fun accept(frame: Iap2Frame) {
+        val change = synchronized(lock) { route.accept(frame.messageId, frame.payload) }
+        if (change != BydHudRouteChange.NONE) refresh()
+    }
+
+    /** Publishes the guidance if it changed, including a route that went stale without a frame. */
+    fun refresh() {
+        val next = synchronized(lock) {
+            val current = current()
+            if (current == published) return
+            published = current
+            current
+        }
+        listener?.invoke(next)
+    }
+
+    fun clear() {
+        synchronized(lock) { route.clear() }
+        refresh()
+    }
+
+    fun current(): ClusterTurnGuidance? = synchronized(lock) {
+        route.currentApple()?.let { apple ->
+            ClusterTurnGuidance.from(BydClusterFrame.from(apple)).copy(
+                arrivalEpochSeconds = apple.arrivalEpochSeconds,
+                remainingSeconds = apple.remainingSeconds,
+                remainingMeters = apple.remainingMeters,
+            )
         }
     }
 }

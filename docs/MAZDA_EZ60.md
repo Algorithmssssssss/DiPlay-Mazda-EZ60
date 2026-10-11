@@ -106,6 +106,11 @@ default) feeds it with CarPlay's route guidance, which Google Maps and Apple Map
 | Each update | `sendNavigateRoadInfo(current, next)` when the roads change, `sendNavigateTurnInfo(turnId, metres)`, `sendNavigateRemainInfo(metres, seconds)`: a new turn or road at once, other changes at most once a second |
 | Guidance ends | remaining 0/0, empty roads, turn 0/0, `sendNavigateStatus(0)`, `abandonNaviFocus` |
 
+Guidance ends when the iPhone reports no route (the driver ended it) or arrival, or when it sends no guidance
+for 30 seconds; it resends guidance about every 2 seconds while a route runs, even parked. The HUD has its own
+route feed for this: upstream's dashboard turn card ignores "no route", to survive a wireless reconnect, and
+kept the HUD guiding after a route ended (fixed 2026-10-11).
+
 While DiPlay holds navigation focus, the HUD also projects the (573,167)–(800,355) area, 227×188 pixels, of
 its 800×480 display (`MeterDisplay#0`); confirmed with the probe's test card on 2026-10-11. The HUD draws the
 turn arrow, distance and remaining route itself; DiPlay's window fills that area with CarPlay's

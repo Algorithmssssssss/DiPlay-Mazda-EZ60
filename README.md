@@ -11,7 +11,7 @@
 - **Wireless CarPlay** over the car's built-in hotspot (smoothest: 43–59 fps while in use, 4–5 ms per frame to decode, 21–60 ms from touch to picture) or Wi-Fi Direct on 5 GHz.
 - **Wired CarPlay** over USB, after one ADB command (the car has no VPN approval screen).
 - **Both screen halves.** CarPlay opens on the half you start it from, follows the car's two-finger swipe to the other half without reconnecting, and narrows when the car shows its vehicle panel or voice assistant.
-- **Windshield HUD.** While CarPlay navigation guides, the car's HUD draws its own turn arrow, distance and remaining route, and shows CarPlay's map in its map area. Confirmed with Google Maps.
+- **Windshield HUD.** While CarPlay navigation guides, the car's HUD draws its own turn arrow, distance and remaining route, and shows CarPlay's map in its map area; it clears when you end the route or arrive. Confirmed with Google Maps.
 - **Picture tuned for the MT8676:** 60 fps and the MediaTek low-latency H.264 decoder by default.
 - Steering-wheel previous, next and play/pause.
 - **Works beside the car's own Bluetooth music:** DiPlay leaves audio focus to the car's Bluetooth player, so the car no longer pauses the iPhone when CarPlay plays.

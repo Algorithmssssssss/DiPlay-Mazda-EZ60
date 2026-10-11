@@ -6,7 +6,7 @@ First pre-release of the Mazda EZ-60 fork, based on DiPlay 0.2.17. See [release 
 - Fit CarPlay to the EZ-60's 5K split screen: the panel of either half, the car's two-finger swipe without reconnecting, and the narrower panel beside the vehicle panel or voice assistant.
 - Default to 60 fps and the MediaTek low-latency H.264 decoder; keep Wi-Fi Direct on 5 GHz and skip the software HEVC decoder.
 - Fix wired CarPlay crashing where the head unit has no VPN approval screen, and wireless not starting after a wired attempt.
-- Feed CarPlay's turn-by-turn guidance and map to the windshield HUD through the car's navigation service.
+- Feed CarPlay's turn-by-turn guidance and map to the windshield HUD through the car's navigation service, and clear it when the route ends or the driver arrives.
 - Leave audio focus to the car's Bluetooth music player while it holds it, instead of taking it back on each play, which made the car pause the iPhone over Bluetooth.
 - Add the EZ-60 probe under Settings → Diagnostics.
 

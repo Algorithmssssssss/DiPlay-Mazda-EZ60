@@ -354,8 +354,11 @@ class CarPlayHostActivity : ComponentActivity() {
         runOnUiThread {
             clusterTurnGuidance = guidance
             applyClusterTurnOverlay()
-            updateMazdaHud(guidance)
         }
+    }
+    // EZ-60: the windshield HUD follows its own feed, which ends when the driver ends the route or arrives.
+    private val mazdaHudGuidanceListener: (com.shilapi.xcertplay.hud.ClusterTurnGuidance?) -> Unit = { guidance ->
+        runOnUiThread { updateMazdaHud(guidance) }
     }
     // Copies of stream 111 outside the dashboard (centre card, launcher maps) each get their own decoder.
     private val mirrorSink: (String, Surface?) -> Unit = { key, surface -> sink?.setMirrorSurface(SCREEN_TYPE_ALT, key, surface) }
@@ -1005,6 +1008,9 @@ class CarPlayHostActivity : ComponentActivity() {
         ensureClusterPresentation()
         AirPlayPersistence.overlaySettingsListener = { runOnUiThread { applyClusterTurnOverlay() } }
         com.shilapi.xcertplay.hud.BydNavigationOutputs.setTurnOverlayListener(clusterTurnOverlayListener)
+        if (MazdaPlatform.isEz60) {
+            com.shilapi.xcertplay.hud.BydNavigationOutputs.setHeadUpGuidanceListener(mazdaHudGuidanceListener)
+        }
         mainHandler.removeCallbacks(refreshTurnOverlay)
         mainHandler.post(refreshTurnOverlay)
         var systemBarsChanged = false
@@ -1556,6 +1562,7 @@ class CarPlayHostActivity : ComponentActivity() {
         mainHandler.removeCallbacks(refreshTurnOverlay)
         AirPlayPersistence.overlaySettingsListener = null
         com.shilapi.xcertplay.hud.BydNavigationOutputs.setTurnOverlayListener(null)
+        com.shilapi.xcertplay.hud.BydNavigationOutputs.setHeadUpGuidanceListener(null)
         com.shilapi.xcertplay.hud.BydNavigationOutputs.setClusterNaviModeListener(null)
         clusterMonitor?.stop()
         getSystemService(android.hardware.display.DisplayManager::class.java)
