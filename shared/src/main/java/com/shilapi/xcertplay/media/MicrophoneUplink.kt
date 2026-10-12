@@ -6,6 +6,7 @@ import android.media.MediaRecorder
 import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.AudioEffect
 import android.media.audiofx.NoiseSuppressor
+import android.os.Build
 import android.util.Log
 import com.shilapi.xcertplay.airplay.AudioCodecKind
 import com.shilapi.xcertplay.airplay.MicrophoneConfig
@@ -29,6 +30,8 @@ internal class MicrophoneUplink(
     private val onDiagnostic: (String) -> Unit = {},
     /** A telephony stream records the plain MIC source without the platform voice effects. */
     private val speakerphoneCall: Boolean = false,
+    /** Every active recording on the device (sources, silenced ones marked), for the stats line; null if unknown. */
+    private val recordings: () -> String? = { null },
     /** The call's far-end audio; when set, telephony capture runs DiPlay's own echo canceller. */
     private val echoReference: EchoReference? = null,
     private val echoCancellerFactory: (Int, Int, Int) -> CallEchoCanceller? = { frame, rate, tail ->
@@ -262,6 +265,7 @@ internal class MicrophoneUplink(
         val readBuffer = ByteArray(maxOf(frame.size, MIN_READ_BYTES))
         val counters = MicrophoneCounters()
         val routeInfo = { routeType(recorder) }
+        val stateInfo = { captureState(recorder) }
         var canceller = echoCanceller
         val clock = canceller?.let { CaptureClock(config.sampleRate) }
         val reference = canceller?.let { ShortArray(it.frameSamples) }
@@ -283,7 +287,7 @@ internal class MicrophoneUplink(
                     return
                 }
                 if (count == 0) {
-                    stats.flush(routeType = routeInfo)
+                    stats.flush(routeType = routeInfo, captureState = stateInfo)
                     continue
                 }
                 var offset = 0
@@ -314,7 +318,7 @@ internal class MicrophoneUplink(
                         filled = 0
                     }
                 }
-                stats.flush(routeType = routeInfo)
+                stats.flush(routeType = routeInfo, captureState = stateInfo)
             }
         } catch (error: Exception) {
             if (running.get()) {
@@ -322,7 +326,7 @@ internal class MicrophoneUplink(
                 stats.failure(MicrophoneFailureStage.CAPTURE, error)
             }
         } finally {
-            stats.flush(ended = true, routeType = routeInfo)
+            stats.flush(ended = true, routeType = routeInfo, captureState = stateInfo)
             running.set(false)
             release()
         }
@@ -368,6 +372,14 @@ internal class MicrophoneUplink(
     }
 
     private fun routeType(recorder: AudioRecord): Int? = runCatching { recorder.routedDevice?.type }.getOrNull()
+
+    // Android 10+ silences one app's capture (all zeros) while another holds the microphone, such as a call.
+    private fun captureState(recorder: AudioRecord): String? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+        val silenced = runCatching { recorder.activeRecordingConfiguration?.isClientSilenced }.getOrNull()
+        val others = runCatching { recordings() }.getOrNull()
+        return "silenced=${silenced ?: "unknown"}" + (others?.let { " recordings=$it" } ?: "")
+    }
 
     /** Capture can continue with the same recorder if the optional native processor stops working. */
     @Synchronized

@@ -85,15 +85,17 @@ internal class MicrophoneCaptureStats(
         emit(failureMessage(metadata, stage, error, code))
     }
 
-    fun flush(ended: Boolean = false, routeType: (() -> Int?)? = null) {
+    /** [captureState]: whether Android silences this capture and what else records, queried only when due. */
+    fun flush(ended: Boolean = false, routeType: (() -> Int?)? = null, captureState: (() -> String?)? = null) {
         val now = nowNs()
         if (!ended && now - windowStart < REPORT_INTERVAL_NS) return
         if (routeType != null) routedDeviceType = runCatching { routeType() }.getOrNull()
+        val state = captureState?.let { runCatching { it() }.getOrNull() }?.let { "$it " }.orEmpty()
         emit("Microphone: stats $metadata routedDeviceType=${routedDeviceType ?: "unknown"} " +
             "captureBytes=$capturedBytes reads=$reads zeroReads=$zeroReads readErrors=$readErrors " +
             "readMaxMs=${readMaxNs / 1_000_000} encodedFrames=$encodedFrames " +
             "emptyEncodedFrames=$emptyEncodedFrames udpSent=$udpSent sendErrors=$sendErrors " +
-            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} peak=$peak ended=$ended")
+            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} ${state}peak=$peak ended=$ended")
         windowStart = now
         capturedBytes = 0
         reads = 0

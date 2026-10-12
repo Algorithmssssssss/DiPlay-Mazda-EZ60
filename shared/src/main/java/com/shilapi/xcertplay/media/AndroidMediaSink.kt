@@ -538,6 +538,7 @@ class AndroidMediaSink(
             val uplink = microphoneUplinks.computeIfAbsent(id) {
                 MicrophoneUplink(config, onAudioDiagnostic,
                     speakerphoneCall = plainMicrophone,
+                    recordings = ::activeRecordings,
                     echoReference = if (config.audioType == TELEPHONY_AUDIO_TYPE) callEchoReferences[id] else null)
             }
             if (!uplink.start()) {
@@ -548,6 +549,15 @@ class AndroidMediaSink(
             Log.e("xcertplay-usb", "microphone start failed stream=$id", error)
             MicrophoneCaptureStats.reportStartFailure(config, error, onAudioDiagnostic)
             onMicrophoneStopped(id)
+        }
+    }
+
+    /** Every recording active on the device by source, "(silenced)" when Android gives it zeros. */
+    private fun activeRecordings(): String? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+        val configurations = audioManager?.activeRecordingConfigurations ?: return null
+        return configurations.joinToString(",", "[", "]") { recording ->
+            MicrophoneSources.name(recording.clientAudioSource) + if (recording.isClientSilenced) "(silenced)" else ""
         }
     }
 

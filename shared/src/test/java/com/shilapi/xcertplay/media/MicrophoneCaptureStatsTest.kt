@@ -46,6 +46,24 @@ class MicrophoneCaptureStatsTest {
         assertTrue(final.endsWith("ended=true"))
     }
 
+    // EZ-60 report 21: a call's capture was all zeros; the line now says whether Android silenced it and why.
+    @Test fun theCaptureStateComesBeforeThePeakAndAFailingQueryIsLeftOut() {
+        var now = 0L
+        val reports = mutableListOf<String>()
+        val stats = MicrophoneCaptureStats(config, reports::add) { now }
+        now = 5_000_000_000
+        stats.flush(captureState = { "silenced=true recordings=[VOICE_CALL,MIC(silenced)]" })
+        assertTrue(reports.last().endsWith("silenced=true recordings=[VOICE_CALL,MIC(silenced)] peak=0 ended=false"))
+        stats.flush(ended = true, captureState = { throw IllegalStateException("no configuration") })
+        assertTrue(reports.last().contains("sendGapMaxMs=0 peak=0 ended=true"))
+    }
+
+    @Test fun sourcesAreNamedIncludingSystemOnes() {
+        assertEquals("VOICE_COMMUNICATION", MicrophoneSources.name(7))
+        assertEquals("HOTWORD", MicrophoneSources.name(1999))
+        assertEquals("SOURCE_42", MicrophoneSources.name(42))
+    }
+
     @Test fun reportingIsBoundedAndRouteQueriesRunOnlyWhenDue() {
         var now = 0L
         var reports = 0
