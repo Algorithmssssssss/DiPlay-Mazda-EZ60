@@ -110,6 +110,22 @@ class TelephonyMicrophoneTest {
         assertEquals(AudioManager.MODE_NORMAL, manager.mode)
     }
 
+    // Mazda EZ-60: calls reached the phone silent through the communication path while voice notes (MIC) worked.
+    @Test fun aPlainCallMicrophoneRecordsCallsAsVoiceNotesAreRecorded() {
+        sink.close()
+        val diagnostics = CopyOnWriteArrayList<String>()
+        sink = AndroidMediaSink(context = context, onAudioDiagnostic = diagnostics::add, plainCallMicrophone = true)
+        manager.mode = AudioManager.MODE_NORMAL
+        sink.onMicrophoneStarted(telephony, config("telephony"))
+        val record = awaitCapture()
+        assertEquals(AudioManager.MODE_NORMAL, manager.mode)
+        assertEquals(MediaRecorder.AudioSource.MIC, record.audioSource)
+        assertTrue(ShadowAudioEffect.getAudioEffects().isEmpty())
+        assertTrue(diagnostics.any { it.startsWith("Microphone: start type=telephony source=MIC ") })
+        sink.onMicrophoneStopped(telephony)
+        assertEquals(AudioManager.MODE_NORMAL, manager.mode)
+    }
+
     @Test fun anUnverifiedPauseFlagDoesNotSwitchCallAudioRouting() {
         context.getSharedPreferences("diplay_bt_suspend", 0).edit()
             .putBoolean("suspended_by_us", true).putBoolean("restore_initially_enabled", true).commit()

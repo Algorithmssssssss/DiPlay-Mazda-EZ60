@@ -4696,6 +4696,7 @@ class CarPlayHostActivity : ComponentActivity() {
             mainVideoFrameRate = fps,
             vendorLowLatencyDecoder = AirPlayPersistence.loadLowLatencyDecoder(this),
             lowLatencyMainDecoder = MazdaPlatform.isEz60,
+            plainCallMicrophone = MazdaPlatform.isEz60,
         )
     }
 

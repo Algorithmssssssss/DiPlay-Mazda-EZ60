@@ -35,6 +35,12 @@ From the EZ-60 probe on 2026-10-10 (CAMZD OS build 20250930150736):
 - **Video decoders:** `c2.mtk.avc.decoder` (no low-latency mode) and `c2.mtk.avc.decoder.lowlatency`. H.264 at 2496×1080 is good for 87–191 fps, HEVC for 31–70 fps. No decoder accepts 5120 wide (the limit is 4096).
 - **Wi-Fi:** 5 GHz and 6 GHz, Wi-Fi Direct, hotspot and client at the same time. The hotspot interface is `ap0`, or `ap_br_ap0` when the hotspot uses two bands.
 - **Audio:** Android Automotive buses for media, navigation, calls, ringtone and voice per seat; the car sets the volume.
+- **Call microphone:** app voice notes (Telegram, Messenger) recorded through CarPlay worked, but the other side of a
+  Messenger call heard nothing. Calls normally record through Android's communication mode (`VOICE_COMMUNICATION`);
+  on the EZ-60, DiPlay now records calls from the plain microphone, like voice notes, without the car's call mode or
+  voice effects. If the other side hears an echo, turn on **Settings → Advanced → Video and audio → Call echo
+  cancellation (experimental)**. The report's "Calls and microphone" section shows each call's microphone source
+  and level (`peak=`, 0 means silence).
 - **Bluetooth:** hands-free and music receiver only.
 - **Windshield HUD:** an 800×480 presentation display, `MeterDisplay#0`; the car has no instrument cluster.
 - **Also installed:** `com.autochips.carplayapp`, a CarPlay app from the head unit's maker.

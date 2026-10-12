@@ -38,7 +38,10 @@ internal class MicrophoneCaptureStats(
     }
 
     /** Call before the capture thread starts; [metadata] is not volatile. */
-    fun useVoiceCommunicationSource() { metadata = "type=$type source=VOICE_COMMUNICATION $format" }
+    fun useVoiceCommunicationSource() = useSource("VOICE_COMMUNICATION")
+
+    /** The source actually recorded, when it is not the stream type's usual one. Before the capture thread starts. */
+    fun useSource(source: String) { metadata = "type=$type source=$source $format" }
 
     fun reading() { readStart = nowNs() }
 

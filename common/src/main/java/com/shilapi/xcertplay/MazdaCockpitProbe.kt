@@ -71,6 +71,8 @@ internal object MazdaCockpitProbe {
     private const val SESSION_LOG_LINES = 300
     private const val SETUP_LINES = 150
     private const val VIDEO_STATS_LINES = 240
+    private const val MICROPHONE_LINES = 120
+    private val microphoneLine = Regex("Microphone: |Audio: mode |Audio: (starting|ready) .*audioType=(telephony|speechrecognition)")
     private val setupLine = Regex("(?i)MHz|GHz|frequency|channel|P2P|Wi-Fi|hotspot|station|Starting CarPlay|decoder|fps|Display|transport|session|HUD")
     private val periodicLine = Regex("iAP tunnel|video stats|audio stats|decoder stats|Receive:|THEME_DIAGNOSTIC")
     private const val MAX_EVENT_LINES = 1500
@@ -352,6 +354,11 @@ internal object MazdaCockpitProbe {
         // One line per 5 s: how smooth the whole session was, which the tail alone often misses.
         appendLine("--- Video stats (whole session) ---")
         lines.filter { "video stats" in it }.takeLast(VIDEO_STATS_LINES)
+            .forEach { line -> DiagnosticRedactor.redact(line)?.let(::appendLine) }
+        appendLine()
+        // Calls and Siri: which microphone each recorded and how loud it was, which the tail rarely still holds.
+        appendLine("--- Calls and microphone (whole session) ---")
+        lines.filter { microphoneLine.containsMatchIn(it) }.takeLast(MICROPHONE_LINES)
             .forEach { line -> DiagnosticRedactor.redact(line)?.let(::appendLine) }
         appendLine()
         appendLine("--- Session log (last $SESSION_LOG_LINES lines) ---")

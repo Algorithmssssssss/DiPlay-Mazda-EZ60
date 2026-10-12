@@ -216,6 +216,12 @@ class AndroidMediaSink(
      * does: the Mazda EZ-60's default c2.mtk.avc.decoder lacks the feature, c2.mtk.avc.decoder.lowlatency has it.
      */
     private val lowLatencyMainDecoder: Boolean = false,
+    /**
+     * Record CarPlay calls from the microphone as app voice notes are recorded (plain MIC source, the audio mode
+     * left alone, no platform voice effects). On the Mazda EZ-60 the call path (communication mode,
+     * VOICE_COMMUNICATION) reached the phone silent while voice notes worked.
+     */
+    private val plainCallMicrophone: Boolean = false,
 ) : MediaSink {
     // Each downlink publishes its own reference; a mic must match that stream and sample rate.
     private val callEchoReferences = ConcurrentHashMap<AudioStreamId, EchoReference>()
@@ -526,10 +532,12 @@ class AndroidMediaSink(
         try {
             val speakerphoneCall = config.audioType == "telephony" &&
                 appContext != null && BydBluetoothSuspend.isSuspendedByUs(appContext)
-            if (config.audioType == "telephony" && !speakerphoneCall) enterCommunicationMode(id)
+            // Both record the plain microphone outside the communication mode.
+            val plainMicrophone = speakerphoneCall || (config.audioType == "telephony" && plainCallMicrophone)
+            if (config.audioType == "telephony" && !plainMicrophone) enterCommunicationMode(id)
             val uplink = microphoneUplinks.computeIfAbsent(id) {
                 MicrophoneUplink(config, onAudioDiagnostic,
-                    speakerphoneCall = speakerphoneCall,
+                    speakerphoneCall = plainMicrophone,
                     echoReference = if (config.audioType == TELEPHONY_AUDIO_TYPE) callEchoReferences[id] else null)
             }
             if (!uplink.start()) {
