@@ -5340,7 +5340,11 @@ class CarPlayHostActivity : ComponentActivity() {
         val target = cockpitViewAreaIndex(DisplaySize(viewWidth, viewHeight)) ?: return area
         if (display.cockpitViewAreas.isEmpty()) return area
         // Both layouts contain this region, including frames before the view-area command completes.
-        val index = if (cockpitTransitionUntil == 0L && target == display.viewAreaIndex) display.viewAreaIndex else 1
+        val index = if (cockpitTransitionUntil == 0L && target == display.viewAreaIndex) display.viewAreaIndex
+            // Nothing clips a SurfaceView to its parent: the narrow region scaled up to cover the wide panel drew
+            // CarPlay over the car's own screen until the transition ended (EZ-60, closing the vehicle panel).
+            else if (fallbackVideoView != null && target == 0) 0
+            else 1
         val visible = display.cockpitViewAreas[index]
         if (index != 1) return visible
         // The narrow CarPlay region includes an 8 px black strip at its right edge at 1080p.

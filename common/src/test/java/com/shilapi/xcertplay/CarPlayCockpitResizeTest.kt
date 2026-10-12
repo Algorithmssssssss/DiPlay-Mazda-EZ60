@@ -91,6 +91,27 @@ class CarPlayCockpitResizeTest {
         assertEquals(0L, getField("cockpitTransitionUntil"))
     }
 
+    // EZ-60 report 22: with smooth video, closing the vehicle panel drew CarPlay over the whole half for about 1 s.
+    @Test fun aSurfaceViewNeverOutgrowsTheWidenedPanel() {
+        setField("fallbackVideoView", android.view.SurfaceView(activity))
+        updateVideo()
+        switchTo(2496, 0)
+        assertEquals(CarPlaySurfaceBounds(0, 0, 2496, 1080), getField("fallbackVideoBounds"))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1501))
+        assertEquals(CarPlaySurfaceBounds(0, 0, 2496, 1080), getField("fallbackVideoBounds"))
+    }
+
+    @Test fun aSurfaceViewStillCropsToTheNarrowRegionWhenThePanelNarrows() {
+        setField("fallbackVideoView", android.view.SurfaceView(activity))
+        switchTo(2496, 0)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1501))
+        switchTo(1728, 1)
+        val bounds = getField("fallbackVideoBounds") as CarPlaySurfaceBounds
+        assertEquals(0, bounds.left)
+        assertTrue("The narrow region fills the 1728 px panel", bounds.width >= 2496 && bounds.top <= 0)
+        assertTrue("No more than the 8 px strip spills over", bounds.height <= 1090)
+    }
+
     @Test fun acknowledgedWideWindowRestoresAfterAnimationWithoutAnotherFrame() {
         switchTo(2496, 0)
         val listener = activity.javaClass.getDeclaredMethod("createSessionListener", Int::class.javaPrimitiveType)
