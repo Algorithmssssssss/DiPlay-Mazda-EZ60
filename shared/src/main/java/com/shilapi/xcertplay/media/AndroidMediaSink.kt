@@ -217,11 +217,12 @@ class AndroidMediaSink(
      */
     private val lowLatencyMainDecoder: Boolean = false,
     /**
-     * Record CarPlay calls from the microphone as app voice notes are recorded (plain MIC source, the audio mode
-     * left alone, no platform voice effects). On the Mazda EZ-60 the call path (communication mode,
-     * VOICE_COMMUNICATION) reached the phone silent while voice notes worked.
+     * Record CarPlay calls from these sources in order (MediaRecorder.AudioSource), with the audio mode left alone
+     * and no platform voice effects, moving to the next while Android silences the capture. Empty: the usual call
+     * path (communication mode, VOICE_COMMUNICATION). On the Mazda EZ-60 a call's MIC capture was silenced by
+     * Android while Siri's VOICE_RECOGNITION capture, on the same microphone, was not.
      */
-    private val plainCallMicrophone: Boolean = false,
+    private val callMicrophoneSources: List<Int> = emptyList(),
 ) : MediaSink {
     // Each downlink publishes its own reference; a mic must match that stream and sample rate.
     private val callEchoReferences = ConcurrentHashMap<AudioStreamId, EchoReference>()
@@ -532,13 +533,14 @@ class AndroidMediaSink(
         try {
             val speakerphoneCall = config.audioType == "telephony" &&
                 appContext != null && BydBluetoothSuspend.isSuspendedByUs(appContext)
-            // Both record the plain microphone outside the communication mode.
-            val plainMicrophone = speakerphoneCall || (config.audioType == "telephony" && plainCallMicrophone)
-            if (config.audioType == "telephony" && !plainMicrophone) enterCommunicationMode(id)
+            // Both record outside the communication mode.
+            val ownSources = config.audioType == "telephony" && callMicrophoneSources.isNotEmpty()
+            if (config.audioType == "telephony" && !speakerphoneCall && !ownSources) enterCommunicationMode(id)
             val uplink = microphoneUplinks.computeIfAbsent(id) {
                 MicrophoneUplink(config, onAudioDiagnostic,
-                    speakerphoneCall = plainMicrophone,
+                    speakerphoneCall = speakerphoneCall,
                     recordings = ::activeRecordings,
+                    callSources = if (speakerphoneCall) emptyList() else callMicrophoneSources,
                     echoReference = if (config.audioType == TELEPHONY_AUDIO_TYPE) callEchoReferences[id] else null)
             }
             if (!uplink.start()) {

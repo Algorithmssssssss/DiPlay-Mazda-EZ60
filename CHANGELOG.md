@@ -10,7 +10,7 @@ First pre-release of the Mazda EZ-60 fork, based on DiPlay 0.2.17. See [release 
 - Leave audio focus to the car's Bluetooth music player while it holds it, instead of taking it back on each play, which made the car pause the iPhone over Bluetooth.
 - Add the EZ-60 probe under Settings → Diagnostics.
 - Fix the CarPlay picture freezing after returning from Settings while the HUD map is on: the HUD map stream was given the CarPlay screen.
-- Record CarPlay calls from the plain microphone on the EZ-60, where the call path reached the other side silent (Messenger calls), and list each call's microphone in the EZ-60 report.
+- Record EZ-60 CarPlay calls the way Siri is recorded, and move to another microphone source while Android silences the call's capture; the other side of Messenger calls heard nothing. The EZ-60 report lists each call's microphone, whether Android silenced it and every other recording.
 - Experimental: let the car's ambient lights follow CarPlay music through the car's own music mode (off by default; stops and hands the lights back on any failure).
 
 # Upstream DiPlay history

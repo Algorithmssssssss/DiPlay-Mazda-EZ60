@@ -36,13 +36,14 @@ From the EZ-60 probe on 2026-10-10 (CAMZD OS build 20250930150736):
 - **Wi-Fi:** 5 GHz and 6 GHz, Wi-Fi Direct, hotspot and client at the same time. The hotspot interface is `ap0`, or `ap_br_ap0` when the hotspot uses two bands.
 - **Audio:** Android Automotive buses for media, navigation, calls, ringtone and voice per seat; the car sets the volume.
 - **Call microphone:** Siri hears the driver through CarPlay, but the other side of a Messenger call heard nothing.
-  On the EZ-60, DiPlay records calls from the plain microphone (like voice notes), not through Android's
-  communication mode. Report 21 (2026-10-12): the call still recorded the built-in microphone as pure silence
-  (`peak=0`) while the car's own phone app reacted to the same call over Bluetooth (`call_incoming_sing_status`,
-  `HARD_KEY_PRIORITY=1025`), which points to the car's hands-free taking the microphone. Each "Microphone: stats"
-  line now says whether Android silenced DiPlay's capture and lists every recording on the car. The report's
-  "Calls and microphone" section keeps these lines. If the other side hears an echo once calls work, turn on
-  **Settings → Advanced → Video and audio → Call echo cancellation (experimental)**.
+  The call's capture of the built-in microphone was silenced by Android itself (report 22: `silenced=true`,
+  `peak=0`), with the car's Bluetooth off, while Siri's `VOICE_RECOGNITION` capture of the same microphone got
+  real audio (`peak=4779`). The car keeps its own recordings running (`CAMCORDER`, `VOICE_RECOGNITION`,
+  `VOICE_PERFORMANCE`). On the EZ-60, DiPlay now records calls with `VOICE_RECOGNITION`, outside Android's
+  communication mode and without the platform voice effects. If Android still silences it, DiPlay restarts the
+  capture with `VOICE_COMMUNICATION`, then `MIC`, and logs "Microphone: silenced by Android with source=…". The
+  report's "Calls and microphone" section keeps these lines. If the other side hears an echo once calls work,
+  turn on **Settings → Advanced → Video and audio → Call echo cancellation (experimental)**.
 - **Bluetooth:** hands-free and music receiver only.
 - **Windshield HUD:** an 800×480 presentation display, `MeterDisplay#0`; the car has no instrument cluster.
 - **Also installed:** `com.autochips.carplayapp`, a CarPlay app from the head unit's maker.

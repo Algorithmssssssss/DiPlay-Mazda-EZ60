@@ -4696,7 +4696,12 @@ class CarPlayHostActivity : ComponentActivity() {
             mainVideoFrameRate = fps,
             vendorLowLatencyDecoder = AirPlayPersistence.loadLowLatencyDecoder(this),
             lowLatencyMainDecoder = MazdaPlatform.isEz60,
-            plainCallMicrophone = MazdaPlatform.isEz60,
+            // EZ-60: Siri's VOICE_RECOGNITION got the cabin microphone where a call's MIC capture was silenced.
+            callMicrophoneSources = if (MazdaPlatform.isEz60) listOf(
+                android.media.MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                android.media.MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                android.media.MediaRecorder.AudioSource.MIC,
+            ) else emptyList(),
         )
     }
 

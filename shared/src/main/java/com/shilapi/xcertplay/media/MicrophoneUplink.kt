@@ -32,6 +32,14 @@ internal class MicrophoneUplink(
     private val speakerphoneCall: Boolean = false,
     /** Every active recording on the device (sources, silenced ones marked), for the stats line; null if unknown. */
     private val recordings: () -> String? = { null },
+    /**
+     * Sources for a telephony stream in order, without the platform voice effects: the first that builds is used,
+     * and while Android silences the capture (another app holds the microphone) the next is tried. Empty: the
+     * usual call source.
+     */
+    private val callSources: List<Int> = emptyList(),
+    /** Whether Android gives [AudioRecord] zeros because another capture has priority; null when unknown. */
+    private val isSilenced: (AudioRecord) -> Boolean? = ::platformSilenced,
     /** The call's far-end audio; when set, telephony capture runs DiPlay's own echo canceller. */
     private val echoReference: EchoReference? = null,
     private val echoCancellerFactory: (Int, Int, Int) -> CallEchoCanceller? = { frame, rate, tail ->
@@ -57,6 +65,10 @@ internal class MicrophoneUplink(
     @Volatile private var effects: List<AudioEffect> = emptyList()
     @Volatile private var echoCanceller: CallEchoCanceller? = null
     private var thread: Thread? = null
+    // Set by start() for the capture thread's source switches.
+    private var channelMask = 0
+    private var bufferSize = 0
+    private var remainingSources: List<Int> = emptyList()
 
     fun start(): Boolean {
         if (!running.compareAndSet(false, true)) return true
@@ -78,13 +90,15 @@ internal class MicrophoneUplink(
             return false
         }
 
+        val sources = if (config.audioType == "telephony") callSources else emptyList()
         val source = when {
+            sources.isNotEmpty() -> sources.first()
             config.audioType == "telephony" && speakerphoneCall -> MediaRecorder.AudioSource.MIC
             config.audioType == "telephony" -> MediaRecorder.AudioSource.VOICE_COMMUNICATION
             config.audioType == "speechrecognition" -> MediaRecorder.AudioSource.VOICE_RECOGNITION
             else -> MediaRecorder.AudioSource.MIC
         }
-        if (config.audioType == "telephony" && speakerphoneCall) stats.useSource("MIC")
+        val plainCall = config.audioType == "telephony" && (speakerphoneCall || sources.isNotEmpty())
         val nextEncoder = if (config.codec == AudioCodecKind.OPUS) {
             opusEncoderFactory(config.bitrate ?: 48_000)
         } else {
@@ -103,9 +117,15 @@ internal class MicrophoneUplink(
             runCatching { onDiagnostic(message) }
         }
         val bufferSize = maxOf(minBuffer * 2, config.frameBytes * 4)
+        this.channelMask = channelMask
+        this.bufferSize = bufferSize
+        remainingSources = sources.drop(1)
+        if (plainCall) stats.useSource(MicrophoneSources.name(source))
         // Some head units throw on VOICE_RECOGNITION at build(); VOICE_COMMUNICATION works there.
         val nextRecorder = createRecorder(source, channelMask, bufferSize)
-            ?: if (source == MediaRecorder.AudioSource.VOICE_RECOGNITION) {
+            ?: if (sources.isNotEmpty()) {
+                nextCallRecorder()
+            } else if (source == MediaRecorder.AudioSource.VOICE_RECOGNITION) {
                 stats.useVoiceCommunicationSource()
                 createRecorder(MediaRecorder.AudioSource.VOICE_COMMUNICATION, channelMask, bufferSize)
             } else {
@@ -137,7 +157,7 @@ internal class MicrophoneUplink(
         return try {
             if (config.audioType == "telephony") {
                 echoCanceller = createEchoCanceller()
-                if (!speakerphoneCall) effects = voiceEffects(nextRecorder.audioSessionId)
+                if (!plainCall) effects = voiceEffects(nextRecorder.audioSessionId)
                 if (echoReference != null) {
                     Log.i(TAG, "microphone echo canceller enabled=${echoCanceller != null} tail=${ECHO_TAIL_MILLIS}ms")
                 }
@@ -182,6 +202,50 @@ internal class MicrophoneUplink(
             return null
         }
         return recorder
+    }
+
+    /** The next of [callSources] that builds, named in the stats; null when none is left. */
+    private fun nextCallRecorder(): AudioRecord? {
+        while (remainingSources.isNotEmpty()) {
+            val source = remainingSources.first()
+            remainingSources = remainingSources.drop(1)
+            createRecorder(source, channelMask, bufferSize)?.let { next ->
+                stats.useSource(MicrophoneSources.name(source))
+                return next
+            }
+        }
+        return null
+    }
+
+    /**
+     * On the capture thread: while Android silences [current], record from the next call source instead (a
+     * restarted capture is also the latest one, which Android favours). Returns the recorder to read from.
+     */
+    private fun replaceSilenced(current: AudioRecord): AudioRecord {
+        val from = MicrophoneSources.name(current.audioSource)
+        val next = nextCallRecorder() ?: return current
+        synchronized(this) {
+            if (!running.get()) {
+                next.release()
+                return current
+            }
+            recorder = next
+        }
+        try {
+            next.startRecording()
+        } catch (error: Exception) {
+            Log.w(TAG, "microphone source switch failed", error)
+            synchronized(this) { if (recorder === next) recorder = current }
+            next.release()
+            return current
+        }
+        runCatching { current.stop() }
+        runCatching { current.release() }
+        val message = "Microphone: silenced by Android with source=$from; " +
+            "now source=${MicrophoneSources.name(next.audioSource)} routedDeviceType=${routeType(next) ?: "unknown"}"
+        Log.i(TAG, message)
+        runCatching { onDiagnostic(message) }
+        return next
     }
 
     private fun createEchoCanceller(): CallEchoCanceller? {
@@ -260,18 +324,37 @@ internal class MicrophoneUplink(
         }
     }
 
-    private fun capture(recorder: AudioRecord, socket: DatagramSocket) {
+    private fun capture(initial: AudioRecord, socket: DatagramSocket) {
         val frame = ByteArray(config.frameBytes)
         val readBuffer = ByteArray(maxOf(frame.size, MIN_READ_BYTES))
         val counters = MicrophoneCounters()
+        var recorder = initial
         val routeInfo = { routeType(recorder) }
         val stateInfo = { captureState(recorder) }
         var canceller = echoCanceller
-        val clock = canceller?.let { CaptureClock(config.sampleRate) }
+        var clock = canceller?.let { CaptureClock(config.sampleRate) }
+        var silencedSinceNs = 0L
+        var nextSilenceCheckNs = System.nanoTime() + SILENCE_CHECK_NS
         val reference = canceller?.let { ShortArray(it.frameSamples) }
         var filled = 0
         try {
             while (running.get()) {
+                if (remainingSources.isNotEmpty() && System.nanoTime() >= nextSilenceCheckNs) {
+                    val now = System.nanoTime()
+                    nextSilenceCheckNs = now + SILENCE_CHECK_NS
+                    if (runCatching { isSilenced(recorder) }.getOrNull() != true) {
+                        silencedSinceNs = 0L
+                    } else if (silencedSinceNs == 0L) {
+                        silencedSinceNs = now
+                    } else if (now - silencedSinceNs >= SILENCED_SWITCH_NS) {
+                        val next = replaceSilenced(recorder)
+                        if (next !== recorder) {
+                            recorder = next
+                            if (clock != null) clock = CaptureClock(config.sampleRate)
+                        }
+                        silencedSinceNs = 0L
+                    }
+                }
                 stats.reading()
                 val count = recorder.read(readBuffer, 0, readBuffer.size, AudioRecord.READ_BLOCKING)
                 stats.read(count)
@@ -467,6 +550,12 @@ internal class MicrophoneUplink(
         const val CLOSE_JOIN_MILLIS = 500L
         const val ECHO_TAIL_MILLIS = 250
         const val ECHO_REFERENCE_LEAD_NS = 30_000_000L
+        const val SILENCE_CHECK_NS = 250_000_000L
+        const val SILENCED_SWITCH_NS = 750_000_000L
+
+        fun platformSilenced(recorder: AudioRecord): Boolean? =
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) null
+            else recorder.activeRecordingConfiguration?.isClientSilenced
     }
 }
 

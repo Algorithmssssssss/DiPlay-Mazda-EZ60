@@ -110,18 +110,20 @@ class TelephonyMicrophoneTest {
         assertEquals(AudioManager.MODE_NORMAL, manager.mode)
     }
 
-    // Mazda EZ-60: calls reached the phone silent through the communication path while voice notes (MIC) worked.
-    @Test fun aPlainCallMicrophoneRecordsCallsAsVoiceNotesAreRecorded() {
+    // Mazda EZ-60: a call's MIC capture was silenced by Android while Siri's VOICE_RECOGNITION capture worked.
+    @Test fun ownCallSourcesRecordTheFirstOutsideTheCommunicationModeWithoutEffects() {
         sink.close()
         val diagnostics = CopyOnWriteArrayList<String>()
-        sink = AndroidMediaSink(context = context, onAudioDiagnostic = diagnostics::add, plainCallMicrophone = true)
+        sink = AndroidMediaSink(context = context, onAudioDiagnostic = diagnostics::add, callMicrophoneSources = listOf(
+            MediaRecorder.AudioSource.VOICE_RECOGNITION, MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+            MediaRecorder.AudioSource.MIC))
         manager.mode = AudioManager.MODE_NORMAL
         sink.onMicrophoneStarted(telephony, config("telephony"))
         val record = awaitCapture()
         assertEquals(AudioManager.MODE_NORMAL, manager.mode)
-        assertEquals(MediaRecorder.AudioSource.MIC, record.audioSource)
+        assertEquals(MediaRecorder.AudioSource.VOICE_RECOGNITION, record.audioSource)
         assertTrue(ShadowAudioEffect.getAudioEffects().isEmpty())
-        assertTrue(diagnostics.any { it.startsWith("Microphone: start type=telephony source=MIC ") })
+        assertTrue(diagnostics.any { it.startsWith("Microphone: start type=telephony source=VOICE_RECOGNITION ") })
         sink.onMicrophoneStopped(telephony)
         assertEquals(AudioManager.MODE_NORMAL, manager.mode)
     }
