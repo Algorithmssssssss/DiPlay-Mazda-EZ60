@@ -156,6 +156,9 @@ internal class BydHudRouteState(
                 if (!holdingAcrossDrop && noRouteSinceNs == null) noRouteSinceNs = nanoTime()
                 return BydHudRouteChange.NONE
             }
+            // A route that stayed unset past the hide ended; one that follows starts clean, not on the old turn.
+            val noRouteSince = noRouteSinceNs
+            if (keepManeuversOnEnd && noRouteSince != null && nanoTime() - noRouteSince >= noRouteHideNs) endRoute()
             noRouteSinceNs = null
             holdingAcrossDrop = false
         }

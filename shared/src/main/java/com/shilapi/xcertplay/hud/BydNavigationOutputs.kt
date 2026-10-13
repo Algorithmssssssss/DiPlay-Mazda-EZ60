@@ -25,13 +25,19 @@ object BydNavigationOutputs {
         emptyListHideNs = 8_000_000_000L,
         keepAcrossNoRoute = true,
     ))
-    // A head-up display clears when the driver ends the route or arrives: NoRouteSet ends it too, and the
-    // iPhone resends guidance about every 2 s while a route runs, even parked (EZ-60 report 13).
-    private val headUp = TurnGuidanceFeed(BydHudRouteState(
+    // A head-up display clears when the driver ends the route or arrives, and the iPhone resends guidance about
+    // every 2 s while a route runs, even parked (EZ-60 report 13). NoRouteSet hides it only if no route follows
+    // within the hide: Google Maps resuming a route mid-drive sends NoRouteSet, Loading and RouteSet in bursts up
+    // to 2 s apart, and ending on each left the EZ-60 HUD without its map for minutes (report 23).
+    private val headUp = TurnGuidanceFeed(headUpRoute())
+
+    internal fun headUpRoute(nanoTime: () -> Long = System::nanoTime) = BydHudRouteState(
+        nanoTime = nanoTime,
         staleRouteNs = 30_000_000_000L,
         emptyListHideNs = 8_000_000_000L,
+        keepAcrossNoRoute = true,
         keepManeuversOnEnd = true,
-    ))
+    )
     private val standalone = NavigationOutputWorker("diplay-standalone-output", BydStandaloneNavigationBridge::clear)
     private val hud = NavigationOutputWorker("diplay-hud-output", BydHudBridge::clear)
     private val cluster = NavigationOutputWorker("diplay-cluster-output", BydClusterBridge::clear)
@@ -112,8 +118,8 @@ object BydNavigationOutputs {
     fun setTurnOverlayListener(listener: ((ClusterTurnGuidance?) -> Unit)?) = overlay.setListener(listener)
 
     /**
-     * Live next-turn state for a head-up display, which must clear when the route ends: unlike the dashboard
-     * overlay, NoRouteSet ends it as well as Arrived.
+     * Live next-turn state for a head-up display, which must clear when the route ends: Arrived at once, NoRouteSet
+     * once no route follows within the hide (5 s).
      */
     fun setHeadUpGuidanceListener(listener: ((ClusterTurnGuidance?) -> Unit)?) = headUp.setListener(listener)
 
