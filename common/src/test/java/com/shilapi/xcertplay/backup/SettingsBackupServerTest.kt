@@ -112,6 +112,42 @@ class SettingsBackupServerTest {
         }
     }
 
+    // EZ-60: the probe report downloads from the same page as the diagnostic report, under the same token.
+    @Test
+    fun aFurtherReportDownloadsUnderTheTokenPathAndIsListed() {
+        val withProbe = SettingsBackupServer(page = ByteArray(0), export = { ByteArray(0) },
+            import = { SettingsImportOutcome(0, 0, invalid = false) },
+            extraReports = listOf(SettingsReportFile("probe", { "DiPlay-EZ60-probe-1.txt" }) {
+                "=== DiPlay EZ-60 probe\n診斷".toByteArray(Charsets.UTF_8)
+            }))
+        val started = withProbe.start()!!
+        try {
+            val base = "http://127.0.0.1:${started.port}"
+            val listed = URL("$base/b/${started.token}/reports").openConnection() as HttpURLConnection
+            assertEquals("{\"reports\":[\"probe\"]}", listed.inputStream.readBytes().toString(Charsets.UTF_8))
+            listed.disconnect()
+            val probe = URL("$base/b/${started.token}/probe").openConnection() as HttpURLConnection
+            assertEquals(200, probe.responseCode)
+            assertEquals("text/plain; charset=utf-8", probe.getHeaderField("Content-Type"))
+            assertEquals("attachment; filename=\"DiPlay-EZ60-probe-1.txt\"", probe.getHeaderField("Content-Disposition"))
+            assertEquals("=== DiPlay EZ-60 probe\n診斷", probe.inputStream.readBytes().toString(Charsets.UTF_8))
+            probe.disconnect()
+            val outside = URL("$base/probe").openConnection() as HttpURLConnection
+            assertEquals(404, outside.responseCode)
+            outside.disconnect()
+        } finally {
+            withProbe.stop()
+        }
+    }
+
+    @Test
+    fun withoutFurtherReportsTheListIsEmpty() {
+        val (status, body) = get("/b/${endpoint.token}/reports")
+        assertEquals(200, status)
+        assertEquals("{\"reports\":[]}", body)
+        assertEquals(404, get("/b/${endpoint.token}/probe").first)
+    }
+
     // Session logs make a report of a megabyte or more; all of it has to arrive.
     @Test
     fun aLargeReportArrivesWhole() {

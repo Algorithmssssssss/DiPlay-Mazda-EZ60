@@ -21,6 +21,7 @@ button:disabled { opacity:.5; }
 #result { margin-top:12px; font-size:14px; color:#9aa0a6; min-height:20px; white-space:pre-line; }
 #result.err { color:#f28b82; }
 input[type=file] { display:none; }
+#probeText { margin-top:16px; }
 </style>
 </head>
 <body>
@@ -43,6 +44,10 @@ input[type=file] { display:none; }
     <h2 id="reportTitle"></h2>
     <p id="reportText"></p>
     <a class="btn" id="reportBtn" href="report" download></a>
+    <div id="probeBox" hidden>
+      <p id="probeText">The EZ-60 probe report: what the probe measured on this car, the events it recorded, and the session's connection, video and call statistics.</p>
+      <a class="btn" id="probeBtn" href="probe" download>Download probe report</a>
+    </div>
   </div>
 </main>
 <script>
@@ -128,6 +133,10 @@ $("reportTitle").textContent = t.reportTitle;
 $("reportText").textContent = t.reportText;
 $("reportBtn").textContent = t.report;
 document.documentElement.dir = key === "ar" ? "rtl" : "ltr";
+// Further reports this head unit offers (the EZ-60 probe report); their text is English only.
+fetch("reports").then(function(r) { return r.ok ? r.json() : {reports: []}; })
+  .then(function(j) { if ((j.reports || []).indexOf("probe") >= 0) $("probeBox").hidden = false; })
+  .catch(function() {});
 $("importBtn").addEventListener("click", function() { $("file").click(); });
 $("file").addEventListener("change", function() {
   var file = this.files[0];

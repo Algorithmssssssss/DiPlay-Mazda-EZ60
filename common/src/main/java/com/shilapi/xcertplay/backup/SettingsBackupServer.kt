@@ -26,6 +26,9 @@ data class SettingsBackupEndpoint(val port: Int, val token: String, val code: St
     fun typedAddress(address: String) = "$address:$port"
 }
 
+/** A further text file the report page offers for download, such as the EZ-60 probe report. */
+data class SettingsReportFile(val route: String, val fileName: () -> String, val content: () -> ByteArray)
+
 /**
  * One-request-per-connection HTTP transport that serves the settings backup page.
  *
@@ -41,6 +44,8 @@ class SettingsBackupServer(
     private val report: (() -> ByteArray)? = null,
     /** The page that asks for the typed code, or null when the address cannot be typed. */
     private val codePage: ByteArray? = null,
+    /** More downloads next to the report; the page lists their routes from "reports". */
+    private val extraReports: List<SettingsReportFile> = emptyList(),
 ) {
     private var server: ServerSocket? = null
     private var thread: Thread? = null
@@ -219,6 +224,23 @@ class SettingsBackupServer(
                 ),
                 report(),
             )
+            route == "reports" && request.method == "GET" -> Triple(
+                200,
+                mapOf("Content-Type" to "application/json", "Cache-Control" to "no-store"),
+                extraReports.joinToString(",", "{\"reports\":[", "]}") { "\"${it.route}\"" }.toByteArray(Charsets.UTF_8),
+            )
+            request.method == "GET" && extraReports.any { it.route == route } -> {
+                val file = extraReports.first { it.route == route }
+                Triple(
+                    200,
+                    mapOf(
+                        "Content-Type" to "text/plain; charset=utf-8",
+                        "Content-Disposition" to "attachment; filename=\"${file.fileName()}\"",
+                        "Cache-Control" to "no-store",
+                    ),
+                    file.content(),
+                )
+            }
             route == "import" && request.method == "POST" -> {
                 val outcome = import(request.body)
                 onImported?.invoke(outcome)

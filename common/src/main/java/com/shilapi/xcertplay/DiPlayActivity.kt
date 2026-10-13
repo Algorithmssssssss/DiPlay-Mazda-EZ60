@@ -54,6 +54,7 @@ import com.shilapi.xcertplay.backup.SettingsBackupCodec
 import com.shilapi.xcertplay.backup.SettingsBackupEndpoint
 import com.shilapi.xcertplay.backup.SettingsBackupServer
 import com.shilapi.xcertplay.backup.SettingsQrCode
+import com.shilapi.xcertplay.backup.SettingsReportFile
 import com.shilapi.xcertplay.compat.closeCompat
 import com.shilapi.xcertplay.hud.BydAdbAccess
 import com.shilapi.xcertplay.hud.BydNavigationOutputs
@@ -2471,6 +2472,10 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 import = { SettingsBackupCodec.import(this, it) },
                 report = { diagnosticReportText(applicationContext).toByteArray(Charsets.UTF_8) },
                 codePage = assets.open("settings-code.html").use { it.readBytes() },
+                // The probe report, with the events it recorded, as a file instead of a typed address.
+                extraReports = listOf(SettingsReportFile("probe", ::probeReportFileName) {
+                    MazdaCockpitProbe.relayReport(applicationContext).toByteArray(Charsets.UTF_8)
+                }),
             )
             created.onCodeEntryClosed = {
                 runOnUiThread {
@@ -5431,6 +5436,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     private fun reportFileName() = "DiPlay-${SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date())}.txt"
+    private fun probeReportFileName() = "DiPlay-EZ60-probe-${SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())}.txt"
 
     private fun saveReportToDownloads() {
         if (exportInProgress) return
