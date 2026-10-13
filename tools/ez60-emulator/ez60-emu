@@ -1,0 +1,668 @@
+#!/usr/bin/env bash
+# ez60-emu: an Android 14 emulator shaped like the Mazda EZ-60 head unit, for trying DiPlay on a Mac.
+# It copies the car's screen, HUD display and model name. It cannot run CarPlay (no iPhone link).
+# Run `ez60-emu help` for the commands, and see README.md next to this file.
+# Works with macOS's bash 3.2.
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AVD_NAME="${EZ60_AVD:-DiPlay_EZ60}"
+AVD_HOME="${ANDROID_AVD_HOME:-${ANDROID_USER_HOME:-$HOME/.android}/avd}"
+AVD_DIR="$AVD_HOME/$AVD_NAME.avd"
+
+# The car, as measured by the EZ-60 probe.
+CAR_MODEL=J90K
+SCREEN_W=5120
+SCREEN_H=1440
+HALF_W=2560
+HUD_W=800
+HUD_H=480
+
+# DiPlay. The first installed package wins; EZ60_PKG overrides it.
+ACTIVITY=com.shilapi.xcertplay.DiPlayActivity
+PACKAGES="com.reachkim.diplay.ez60.next com.reachkim.diplay.ez60.hudtest com.reachkim.diplay.ez60"
+
+# Settings.Global keys the car's own system writes.
+KEY_SCREEN_SHOW=key_screen_show   # vehicle panel open on the driver half
+KEY_VPA_LEFT=key_vpa_cui_show_left
+KEY_VPA_RIGHT=key_vpa_cui_show_right
+KEY_FLY=fly_to_right_status       # last two-finger swipe: 1 = to passenger, 2 = back to driver
+KEY_BT_FOCUS=bt_source_focus_key  # the car's Bluetooth music player holds audio focus
+CAR_KEYS="$KEY_SCREEN_SHOW $KEY_VPA_LEFT $KEY_VPA_RIGHT $KEY_FLY $KEY_BT_FOCUS"
+
+case "$(uname -m)" in
+    arm64) ABI=arm64-v8a ;;
+    x86_64) ABI=x86_64 ;;
+    *) ABI=unknown ;;
+esac
+# Google APIs, not Google Play: only this kind of image allows `adb root`.
+IMAGE="system-images;android-34;google_apis;$ABI"
+
+SDK="" ADB="" EMULATOR="" SDKMANAGER="" AVDMANAGER="" SERIAL="" PKG=""
+
+say() { printf '\033[1m==>\033[0m %s\n' "$*"; }
+warn() { printf '\033[33mwarning:\033[0m %s\n' "$*" >&2; }
+die() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
+
+confirm() {
+    local answer
+    [[ -t 0 ]] || return 1
+    read -r -p "$1 [y/N] " answer
+    [[ "$answer" == y || "$answer" == Y || "$answer" == yes ]]
+}
+
+free_gb() { df -g "$HOME" | awk 'NR == 2 { print $4 }'; }
+
+# --- Android SDK ---------------------------------------------------------------------------------
+
+require_sdk() {
+    [[ -z "$SDK" ]] || return 0
+    local candidate bin
+    for candidate in "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}" "$HOME/Library/Android/sdk"; do
+        if [[ -n "$candidate" && -x "$candidate/emulator/emulator" ]]; then
+            SDK="$candidate"
+            break
+        fi
+    done
+    [[ -n "$SDK" ]] || die "No Android SDK with the emulator found. Install Android Studio, or set ANDROID_HOME."
+    ADB="$SDK/platform-tools/adb"
+    EMULATOR="$SDK/emulator/emulator"
+    [[ -x "$ADB" ]] || die "adb is missing. Install Android SDK Platform-Tools in Android Studio's SDK Manager."
+    for bin in "$SDK/cmdline-tools/latest/bin" "$SDK"/cmdline-tools/*/bin; do
+        if [[ -x "$bin/sdkmanager" ]]; then
+            SDKMANAGER="$bin/sdkmanager"
+            AVDMANAGER="$bin/avdmanager"
+            break
+        fi
+    done
+    # sdkmanager and avdmanager need Java; Android Studio ships one.
+    if [[ -z "${JAVA_HOME:-}" && -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]]; then
+        export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+    fi
+}
+
+require_cmdline_tools() {
+    [[ -n "$SDKMANAGER" ]] || die "Android SDK Command-line Tools are missing. Install them in Android Studio:" \
+        "Settings > Languages & Frameworks > Android SDK > SDK Tools."
+}
+
+avd_exists() { [[ -f "$AVD_DIR/config.ini" ]]; }
+
+image_installed() { [[ -f "$SDK/system-images/android-34/google_apis/$ABI/source.properties" ]]; }
+
+# Copies every key=value line of avd-config.ini into the AVD's config.ini, replacing the same keys.
+apply_profile() {
+    local config="$1" tmp
+    tmp="$(mktemp)"
+    awk 'NR == FNR {
+             if ($0 ~ /^[A-Za-z0-9_.]+=/) { key = substr($0, 1, index($0, "=") - 1); set[key] = 1; lines[++n] = $0 }
+             next
+         }
+         { key = substr($0, 1, index($0, "=") - 1); gsub(/[ \t]/, "", key) }
+         !(key in set) { print }
+         END { for (i = 1; i <= n; i++) print lines[i] }' "$HERE/avd-config.ini" "$config" >"$tmp"
+    mv "$tmp" "$config"
+}
+
+# --- The running emulator ------------------------------------------------------------------------
+
+adb_s() { "$ADB" -s "$SERIAL" "$@"; }
+dev_shell() { "$ADB" -s "$SERIAL" shell "$@" | tr -d '\r'; }
+prop() { dev_shell getprop "$1"; }
+global_get() { dev_shell settings get global "$1"; }
+global_put() { dev_shell settings put global "$1" "$2" >/dev/null; }
+
+# Prints the adb serial (emulator-5554, ...) of the running DiPlay_EZ60 emulator.
+find_serial() {
+    local serial state name
+    while read -r serial state; do
+        [[ "$serial" == emulator-* && "$state" == device ]] || continue
+        name="$("$ADB" -s "$serial" emu avd name 2>/dev/null | head -n 1 | tr -d '\r' || true)"
+        if [[ -z "$name" || "$name" == KO* ]]; then
+            name="$("$ADB" -s "$serial" shell getprop ro.boot.qemu.avd_name 2>/dev/null | tr -d '\r' || true)"
+        fi
+        if [[ "$name" == "$AVD_NAME" ]]; then
+            echo "$serial"
+            return 0
+        fi
+    done < <("$ADB" devices 2>/dev/null | tail -n +2)
+    return 1
+}
+
+require_device() {
+    require_sdk
+    SERIAL="$(find_serial)" || die "The $AVD_NAME emulator is not running. Start it with: $0 start"
+}
+
+wait_boot() {
+    local tries=0
+    adb_s wait-for-device
+    until [[ "$(dev_shell getprop sys.boot_completed 2>/dev/null || true)" == 1 ]]; do
+        tries=$((tries + 1))
+        (( tries <= 180 )) || die "Android did not finish starting within 6 minutes."
+        sleep 2
+    done
+}
+
+reboot_and_wait() {
+    local tries=0
+    say "Restarting Android (about a minute)..."
+    adb_s reboot
+    # Let the old system go down first, so its boot_completed=1 is not mistaken for the new one.
+    while [[ "$(dev_shell getprop sys.boot_completed 2>/dev/null || true)" == 1 ]]; do
+        tries=$((tries + 1))
+        (( tries <= 60 )) || break
+        sleep 1
+    done
+    wait_boot
+}
+
+adb_root() {
+    local tries=0
+    [[ "$(dev_shell id -u 2>/dev/null || true)" != 0 ]] || return 0
+    adb_s root >/dev/null 2>&1 || true
+    until [[ "$(dev_shell id -u 2>/dev/null || true)" == 0 ]]; do
+        tries=$((tries + 1))
+        (( tries <= 15 )) || die "adb root failed. This needs a Google APIs image; Google Play images refuse root."
+        sleep 1
+        adb_s wait-for-device >/dev/null 2>&1 || true
+    done
+}
+
+make_system_writable() {
+    local output
+    output="$(adb_s remount 2>&1 || true)"
+    if grep -qi reboot <<<"$output"; then
+        say "Unlocking the system partition needs one restart."
+        reboot_and_wait
+        adb_root
+        output="$(adb_s remount 2>&1 || true)"
+    fi
+    if ! dev_shell 'touch /system/.ez60-write-test && rm /system/.ez60-write-test' >/dev/null 2>&1; then
+        printf '%s\n' "$output" >&2
+        die "Could not make /system writable. Start the emulator with '$0 start', which adds -writable-system."
+    fi
+}
+
+# DiPlay turns on its EZ-60 defaults when Build.MODEL is J90K (MazdaPlatform.isEz60).
+# Android derives ro.product.model only when no build.prop sets it, and a later file wins, so set it in each.
+set_car_model() {
+    local file written=0
+    for file in /system/build.prop /vendor/build.prop /product/etc/build.prop; do
+        if dev_shell "[ -f $file ] && { grep -qx 'ro.product.model=$CAR_MODEL' $file ||" \
+            "printf '\\nro.product.model=$CAR_MODEL\\n' >> $file; }" >/dev/null 2>&1; then
+            written=$((written + 1))
+        fi
+    done
+    (( written > 0 )) || die "Could not write the model name to any build.prop."
+}
+
+# Prints the id of an 800x480 presentation display, which is what DiPlay looks for as the HUD.
+hud_display_id() {
+    dev_shell dumpsys display 2>/dev/null | grep 'DisplayInfo{' | grep FLAG_PRESENTATION \
+        | grep "real $HUD_W x $HUD_H" | sed -nE 's/.*displayId ([0-9]+).*/\1/p' | head -n 1 || true
+}
+
+ensure_hud_display() {
+    local id="" tries=0
+    # The emulator adds its second display shortly after Android starts.
+    while (( tries < 15 )); do
+        id="$(hud_display_id)"
+        [[ -z "$id" ]] || break
+        tries=$((tries + 1))
+        sleep 2
+    done
+    if [[ -z "$id" ]]; then
+        warn "The emulator's second display is not an ${HUD_W}x${HUD_H} presentation display; adding an overlay display instead."
+        global_put overlay_display_devices "${HUD_W}x${HUD_H}/160"
+        sleep 3
+        id="$(hud_display_id)"
+    fi
+    if [[ -n "$id" ]]; then
+        say "HUD display: display $id (${HUD_W}x${HUD_H}). The car projects only its area (573,167)-(800,355)."
+    else
+        warn "No HUD display found. DiPlay's HUD map and the probe's test card will have nowhere to show."
+    fi
+}
+
+# --- DiPlay windows ------------------------------------------------------------------------------
+
+diplay_package() {
+    local installed pkg
+    if [[ -n "${EZ60_PKG:-}" ]]; then
+        echo "$EZ60_PKG"
+        return 0
+    fi
+    installed="$(dev_shell pm list packages com.reachkim.diplay 2>/dev/null || true)"
+    for pkg in $PACKAGES; do
+        if grep -qx "package:$pkg" <<<"$installed"; then
+            echo "$pkg"
+            return 0
+        fi
+    done
+    return 1
+}
+
+require_package() {
+    PKG="$(diplay_package)" || die "DiPlay is not installed in the emulator. Install it with '$0 install <apk>'," \
+        "or press Run in Android Studio with this emulator selected."
+}
+
+# Prints "taskId windowingMode left" for each DiPlay task (DiPlay itself and the probe's test windows).
+diplay_tasks() {
+    local listing escaped
+    listing="$(dev_shell am stack list 2>/dev/null || true)"
+    printf '%s\n' "$listing" | awk -v pkg="$PKG/" '
+        /^RootTask id=/ { mode = "?" }
+        /mWindowingMode=/ { if (match($0, /mWindowingMode=[a-z-]+/)) mode = substr($0, RSTART + 15, RLENGTH - 15) }
+        $1 ~ /^taskId=/ && index($2, pkg) == 1 {
+            id = $1; sub(/^taskId=/, "", id); sub(/:$/, "", id)
+            left = "?"
+            if (match($0, /bounds=\[-?[0-9]+,/)) left = substr($0, RSTART + 8, RLENGTH - 9)
+            print id, mode, left
+        }'
+    # Fallback when `am stack list` prints nothing useful: task ids and modes from dumpsys.
+    if ! grep -qE '^ *taskId=' <<<"$listing"; then
+        escaped="${PKG//./\\.}"
+        dev_shell dumpsys activity activities 2>/dev/null | grep -E '^ *\* Task\{' \
+            | grep -E "A=[0-9]+:${escaped}([. ]|\$)" \
+            | sed -nE 's/.* #([0-9]+) .* mode=([a-z-]+).*/\1 \2 ?/p' | sort -u || true
+    fi
+}
+
+side_of_left() {
+    if (( $1 + HALF_W / 2 >= SCREEN_W / 2 )); then echo passenger; else echo driver; fi
+}
+
+check_side() {
+    [[ "${1:-}" == driver || "${1:-}" == passenger ]] || die "Say which half: driver or passenger."
+}
+
+open_in_window() {
+    local tasks tries=0
+    tasks="$(diplay_tasks)"
+    if grep -qE ' (fullscreen|multi-window|pinned) ' <<<"$tasks"; then
+        say "DiPlay is open full screen; restarting it in a window."
+        dev_shell am force-stop "$PKG" >/dev/null
+    fi
+    say "Opening DiPlay ($PKG) in a window..."
+    dev_shell am start -W --windowingMode 5 -n "$PKG/$ACTIVITY" >/dev/null
+    until [[ -n "$(diplay_tasks)" ]]; do
+        tries=$((tries + 1))
+        (( tries <= 10 )) || die "DiPlay did not open."
+        sleep 1
+    done
+}
+
+# Puts every DiPlay window on one half: [0,0][2560,1440] or [2560,0][5120,1440], as the car does.
+place() {
+    local side="$1" left right id mode current moved=0
+    if [[ "$side" == driver ]]; then left=0; else left=$HALF_W; fi
+    right=$((left + HALF_W))
+    while read -r id mode current; do
+        [[ -n "$id" ]] || continue
+        if [[ "$mode" == fullscreen || "$mode" == multi-window || "$mode" == pinned ]]; then
+            warn "Task $id is $mode, not a window, so it cannot move. Reopen DiPlay with: $0 launch $side"
+            continue
+        fi
+        dev_shell am task resize "$id" "$left" 0 "$right" "$SCREEN_H" >/dev/null
+        moved=$((moved + 1))
+    done <<<"$(diplay_tasks)"
+    (( moved > 0 )) || die "There is no DiPlay window to move. Open one with: $0 launch $side"
+    sleep 1
+    if diplay_tasks | awk -v left="$left" '$3 ~ /^[0-9]+$/ && $3 != left { wrong = 1 } END { exit !wrong }'; then
+        warn "A DiPlay window did not land at x=$left. Check it with: $0 status"
+    fi
+    say "DiPlay is on the $side half ([$left,0][$right,$SCREEN_H])."
+}
+
+current_side() {
+    local left
+    left="$(diplay_tasks | awk 'NR == 1 { print $3 }')"
+    if [[ "$left" =~ ^[0-9]+$ ]]; then
+        side_of_left "$left"
+    elif [[ "$(global_get "$KEY_FLY")" == 1 ]]; then
+        echo passenger
+    else
+        echo driver
+    fi
+}
+
+# --- Commands ------------------------------------------------------------------------------------
+
+cmd_create() {
+    local yes=0
+    [[ "${1:-}" != --yes ]] || yes=1
+    require_sdk
+    require_cmdline_tools
+    [[ "$ABI" != unknown ]] || die "Unsupported Mac processor: $(uname -m)."
+    ! avd_exists || die "$AVD_NAME already exists. Start it with '$0 start', or remove it with '$0 delete'."
+    if ! image_installed; then
+        say "This downloads Google's Android 14 emulator image ($IMAGE), about 1.6 GB, from dl.google.com."
+        say "With the emulator's own data it takes about 6-8 GB. Free disk space now: $(free_gb) GB."
+        (( yes )) || confirm "Download it now?" || die "Cancelled. Nothing was downloaded."
+        "$SDKMANAGER" --install "$IMAGE"
+        image_installed || die "The image did not install."
+    fi
+    say "Creating the $AVD_NAME emulator..."
+    printf 'no\n' | "$AVDMANAGER" create avd --name "$AVD_NAME" --package "$IMAGE" >/dev/null
+    avd_exists || die "avdmanager did not create $AVD_DIR."
+    apply_profile "$AVD_DIR/config.ini"
+    say "Created $AVD_DIR."
+    say "Next: '$0 start', then '$0 setup' (first time only)."
+}
+
+cmd_start() {
+    local log pid tries=0
+    require_sdk
+    avd_exists || die "There is no $AVD_NAME emulator yet. Create it with: $0 create"
+    if SERIAL="$(find_serial)"; then
+        say "$AVD_NAME is already running ($SERIAL)."
+        return 0
+    fi
+    log="$AVD_DIR/ez60-emulator.log"
+    say "Starting $AVD_NAME. It does a full start every time (about a minute)..."
+    # -writable-system keeps the J90K model name; it rules out Quick Boot snapshots.
+    nohup "$EMULATOR" -avd "$AVD_NAME" -writable-system -no-snapshot -no-boot-anim "$@" >"$log" 2>&1 &
+    pid=$!
+    until SERIAL="$(find_serial)"; do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            tail -n 20 "$log" >&2
+            die "The emulator quit. Full log: $log"
+        fi
+        tries=$((tries + 1))
+        (( tries <= 90 )) || die "The emulator did not come up within 3 minutes. Log: $log"
+        sleep 2
+    done
+    wait_boot
+    say "Android is up ($SERIAL)."
+    if [[ "$(prop ro.product.model)" != "$CAR_MODEL" ]]; then
+        say "Run '$0 setup' once to make it behave like the car."
+    fi
+}
+
+cmd_setup() {
+    local restart=0 key model
+    require_device
+    adb_root
+    if [[ "$(prop ro.product.model)" != "$CAR_MODEL" ]]; then
+        say "Giving the emulator the car's model name ($CAR_MODEL), so DiPlay uses its EZ-60 defaults..."
+        make_system_writable
+        set_car_model
+        restart=1
+    fi
+    if [[ "$(global_get enable_freeform_support)" != 1 || "$(global_get force_resizable_activities)" != 1 ]]; then
+        say "Turning on windows, so DiPlay can sit on one half of the screen like in the car..."
+        global_put enable_freeform_support 1
+        global_put force_resizable_activities 1
+        restart=1
+    fi
+    say "Setting the car's panel keys to their resting values..."
+    for key in $CAR_KEYS; do global_put "$key" 0; done
+    say "Keeping the screen on and the lock screen off, like the head unit..."
+    dev_shell svc power stayon true >/dev/null 2>&1 || true
+    dev_shell locksettings set-disabled true >/dev/null 2>&1 || true
+    if (( restart )); then
+        reboot_and_wait
+        adb_root
+    fi
+    model="$(prop ro.product.model)"
+    if [[ "$model" == "$CAR_MODEL" ]]; then
+        say "Model: $model. DiPlay will use its EZ-60 defaults."
+    else
+        warn "The model is still '$model', not $CAR_MODEL. DiPlay will act like a phone, not the car."
+    fi
+    ensure_hud_display
+    say "Setup done. Next: '$0 install <apk>' (or Run in Android Studio), then '$0 launch'."
+}
+
+cmd_install() {
+    [[ -n "${1:-}" ]] || die "Usage: $0 install <path to a DiPlay .apk>"
+    [[ -f "$1" ]] || die "No such file: $1"
+    require_device
+    say "Installing $(basename "$1")..."
+    adb_s install -r "$1"
+}
+
+cmd_launch() {
+    local side="${1:-driver}"
+    check_side "$side"
+    require_device
+    require_package
+    open_in_window
+    place "$side"
+}
+
+cmd_half() {
+    check_side "${1:-}"
+    require_device
+    require_package
+    place "$1"
+    if [[ "$1" == passenger ]]; then global_put "$KEY_FLY" 1; else global_put "$KEY_FLY" 2; fi
+}
+
+cmd_swipe() {
+    local from
+    require_device
+    require_package
+    from="$(current_side)"
+    if [[ "$from" == driver ]]; then cmd_half passenger; else cmd_half driver; fi
+}
+
+on_off() {
+    case "${1:-}" in
+        on) echo 1 ;;
+        off) echo 0 ;;
+        *) die "Say on or off." ;;
+    esac
+}
+
+cmd_panel() {
+    local value
+    value="$(on_off "${1:-}")"
+    require_device
+    global_put "$KEY_SCREEN_SHOW" "$value"
+    say "Vehicle panel ${1}: $KEY_SCREEN_SHOW=$value (narrows the driver half)."
+}
+
+cmd_assistant() {
+    local key value
+    check_side "${1:-}"
+    value="$(on_off "${2:-}")"
+    if [[ "$1" == driver ]]; then key=$KEY_VPA_LEFT; else key=$KEY_VPA_RIGHT; fi
+    require_device
+    global_put "$key" "$value"
+    say "Voice assistant panel on the $1 half ${2}: $key=$value."
+}
+
+cmd_bt_music() {
+    local value
+    value="$(on_off "${1:-}")"
+    require_device
+    global_put "$KEY_BT_FOCUS" "$value"
+    say "Car's Bluetooth music focus ${1}: $KEY_BT_FOCUS=$value."
+}
+
+cmd_key() {
+    local code
+    case "${1:-}" in
+        next) code=KEYCODE_MEDIA_NEXT ;;
+        prev | previous) code=KEYCODE_MEDIA_PREVIOUS ;;
+        play | pause) code=KEYCODE_MEDIA_PLAY_PAUSE ;;
+        voice) code=KEYCODE_VOICE_ASSIST ;;
+        back) code=KEYCODE_BACK ;;
+        home) code=KEYCODE_HOME ;;
+        "") die "Usage: $0 key next|prev|play|voice|back|home|<keycode>" ;;
+        *) code="$1" ;;
+    esac
+    require_device
+    dev_shell input keyevent "$code" >/dev/null
+    say "Pressed $code."
+}
+
+cmd_night() {
+    local mode
+    case "${1:-}" in
+        on) mode=yes ;;
+        off) mode=no ;;
+        auto) mode=auto ;;
+        *) die "Usage: $0 night on|off|auto" ;;
+    esac
+    require_device
+    dev_shell cmd uimode night "$mode" >/dev/null
+    say "Night mode: $1."
+}
+
+# AGENTS.md asks for Settings screenshots with a large font scale.
+cmd_font() {
+    [[ "${1:-}" =~ ^[0-9]+(\.[0-9]+)?$ ]] || die "Usage: $0 font <scale>, for example 1.0 or 1.3"
+    require_device
+    dev_shell settings put system font_scale "$1" >/dev/null
+    say "Font scale: $1."
+}
+
+cmd_status() {
+    local model id mode left key
+    require_device
+    model="$(prop ro.product.model)"
+    echo "Emulator:  $AVD_NAME ($SERIAL), Android $(prop ro.build.version.release) (API $(prop ro.build.version.sdk))"
+    if [[ "$model" == "$CAR_MODEL" ]]; then
+        echo "Model:     $model (DiPlay uses its EZ-60 defaults)"
+    else
+        echo "Model:     $model (not $CAR_MODEL; run '$0 setup', and start the emulator with '$0 start')"
+    fi
+    echo "Displays:"
+    dev_shell dumpsys display 2>/dev/null | grep 'DisplayInfo{' | awk '
+        match($0, /displayId [0-9]+/) {
+            id = substr($0, RSTART + 10, RLENGTH - 10)
+            if (seen[id]++) next
+            name = $0; sub(/^[^"]*"/, "", name); sub(/".*/, "", name)
+            size = "?"; if (match($0, /real [0-9]+ x [0-9]+/)) size = substr($0, RSTART + 5, RLENGTH - 5)
+            printf "  %s  %-22s %s%s\n", id, name, size, (index($0, "FLAG_PRESENTATION") ? "  presentation" : "")
+        }' || true
+    if PKG="$(diplay_package)"; then
+        echo "DiPlay:    $PKG $(dev_shell dumpsys package "$PKG" | sed -nE 's/^ *versionName=//p' | head -n 1 || true)"
+        while read -r id mode left; do
+            [[ -n "$id" ]] || continue
+            if [[ "$left" =~ ^[0-9]+$ ]]; then
+                echo "  task $id  $mode  x=$left  ($(side_of_left "$left") half)"
+            else
+                echo "  task $id  $mode"
+            fi
+        done <<<"$(diplay_tasks)"
+    else
+        echo "DiPlay:    not installed"
+    fi
+    echo "Car settings (Settings.Global):"
+    for key in $CAR_KEYS; do printf '  %-24s %s\n' "$key" "$(global_get "$key")"; done
+}
+
+cmd_screenshot() {
+    local file="${1:-ez60-screen-$(date +%Y%m%d-%H%M%S).png}"
+    require_device
+    adb_s exec-out screencap -p >"$file"
+    say "Saved $file ($SCREEN_W x $SCREEN_H)."
+}
+
+cmd_stop() {
+    require_device
+    adb_s emu kill >/dev/null
+    say "Stopped $AVD_NAME."
+}
+
+cmd_delete() {
+    local yes=0
+    [[ "${1:-}" != --yes ]] || yes=1
+    require_sdk
+    require_cmdline_tools
+    avd_exists || die "There is no $AVD_NAME emulator."
+    if SERIAL="$(find_serial)"; then die "Stop the emulator first: $0 stop"; fi
+    say "This deletes the $AVD_NAME emulator and everything installed in it. The downloaded Android image stays."
+    (( yes )) || confirm "Delete it?" || die "Cancelled."
+    "$AVDMANAGER" delete avd --name "$AVD_NAME"
+    say "Deleted. To free the image's space too, run: \"$SDKMANAGER\" --uninstall \"$IMAGE\""
+}
+
+cmd_doctor() {
+    require_sdk
+    echo "Mac:              macOS $(sw_vers -productVersion 2>/dev/null || echo '?'), $(uname -m)"
+    echo "Android SDK:      $SDK"
+    echo "Emulator:         $(sed -n 's/^Pkg.Revision=//p' "$SDK/emulator/source.properties" 2>/dev/null || echo '?')"
+    echo "Command-line tools: ${SDKMANAGER:-missing (Android Studio > SDK Manager > SDK Tools)}"
+    if image_installed; then
+        echo "Android 14 image: installed ($IMAGE)"
+    else
+        echo "Android 14 image: not downloaded (about 1.6 GB; '$0 create' downloads it)"
+    fi
+    if avd_exists; then echo "Emulator profile: $AVD_DIR"; else echo "Emulator profile: not created"; fi
+    if SERIAL="$(find_serial)"; then echo "Running:          yes ($SERIAL)"; else echo "Running:          no"; fi
+    echo "Free disk space:  $(free_gb) GB (the emulator needs about 6-8 GB)"
+}
+
+usage() {
+    cat <<EOF
+ez60-emu: an Android 14 emulator shaped like the Mazda EZ-60 head unit.
+Usage: $0 <command>
+
+First time:
+  ez60-emu create [--yes]        Download the Android 14 image (1.6 GB, asks first) and create $AVD_NAME
+  ez60-emu start                 Start it. Always start it this way, not from Android Studio's Device Manager.
+  ez60-emu setup                 Once: model J90K, windows, HUD display, the car's settings keys
+
+Using it:
+  ez60-emu install <apk>         Install a DiPlay APK (or press Run in Android Studio)
+  ez60-emu launch [driver|passenger]
+                                 Open DiPlay in a 2560x1440 window on one half (default: driver)
+  ez60-emu half driver|passenger Move DiPlay to that half
+  ez60-emu swipe                 Move DiPlay to the other half, like the car's two-finger swipe
+  ez60-emu panel on|off          The car's vehicle panel on the driver half ($KEY_SCREEN_SHOW)
+  ez60-emu assistant driver|passenger on|off
+                                 The car's voice assistant panel ($KEY_VPA_LEFT / $KEY_VPA_RIGHT)
+  ez60-emu bt-music on|off       Pretend the car's Bluetooth music player holds audio focus ($KEY_BT_FOCUS)
+  ez60-emu key next|prev|play|voice|back|home|<keycode>
+                                 Press a steering-wheel or system key
+  ez60-emu night on|off|auto     Night or day mode
+  ez60-emu font <scale>          Font scale, for example 1.3 for large-font screenshots
+  ez60-emu status                Model, displays, DiPlay windows and the car's settings keys
+  ez60-emu screenshot [file.png] Save the whole 5120x1440 screen
+
+Housekeeping:
+  ez60-emu doctor                Check this Mac's Android tools and disk space
+  ez60-emu stop                  Shut the emulator down
+  ez60-emu delete [--yes]        Delete the emulator (keeps the downloaded image)
+
+Environment: EZ60_PKG picks the DiPlay package; EZ60_AVD renames the emulator (default $AVD_NAME).
+EOF
+}
+
+main() {
+    local command="${1:-help}"
+    shift || true
+    case "$command" in
+        create) cmd_create "$@" ;;
+        start) cmd_start "$@" ;;
+        setup) cmd_setup ;;
+        install) cmd_install "$@" ;;
+        launch) cmd_launch "$@" ;;
+        half) cmd_half "$@" ;;
+        swipe) cmd_swipe ;;
+        panel) cmd_panel "$@" ;;
+        assistant) cmd_assistant "$@" ;;
+        bt-music) cmd_bt_music "$@" ;;
+        key) cmd_key "$@" ;;
+        night) cmd_night "$@" ;;
+        font) cmd_font "$@" ;;
+        status) cmd_status ;;
+        screenshot) cmd_screenshot "$@" ;;
+        stop) cmd_stop ;;
+        delete) cmd_delete "$@" ;;
+        doctor) cmd_doctor ;;
+        help | -h | --help) usage ;;
+        *)
+            usage >&2
+            exit 2
+            ;;
+    esac
+}
+
+main "$@"
