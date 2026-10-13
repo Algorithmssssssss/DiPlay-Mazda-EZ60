@@ -18,6 +18,7 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicBoolean
+import com.shilapi.xcertplay.telecom.PhoneAudioRoute
 
 /**
  * Captures one PCM microphone stream and sends it back to the phone as sealed CarPlay RTP.
@@ -95,7 +96,14 @@ internal class MicrophoneUplink(
             sources.isNotEmpty() -> sources.first()
             config.audioType == "telephony" && speakerphoneCall -> MediaRecorder.AudioSource.MIC
             config.audioType == "telephony" -> MediaRecorder.AudioSource.VOICE_COMMUNICATION
-            config.audioType == "speechrecognition" -> MediaRecorder.AudioSource.VOICE_RECOGNITION
+            // The Geely/Lynk head unit only opens the microphone for the voice-communication
+            // source; its voice-recognition source records silence, so Siri never hears.
+            config.audioType == "speechrecognition" ->
+                if (com.shilapi.xcertplay.network.GeelyHeadUnit.detected) {
+                    MediaRecorder.AudioSource.VOICE_COMMUNICATION
+                } else {
+                    MediaRecorder.AudioSource.VOICE_RECOGNITION
+                }
             else -> MediaRecorder.AudioSource.MIC
         }
         val plainCall = config.audioType == "telephony" && (speakerphoneCall || sources.isNotEmpty())
@@ -258,6 +266,12 @@ internal class MicrophoneUplink(
     }
 
     private fun voiceEffects(sessionId: Int): List<AudioEffect> {
+        if (PhoneAudioRoute.carPlayCallsUseCarAudio()) {
+            // In the car's phone audio state its own processing handles echo and noise, and was only measured
+            // with the platform effects off.
+            Log.i(TAG, "microphone effects left to the car's phone audio state")
+            return emptyList()
+        }
         var aec: AudioEffect? = null
         if (echoCanceller != null) {
             // VOICE_COMMUNICATION can enable AEC by default. Keep its controller alive and
@@ -337,6 +351,7 @@ internal class MicrophoneUplink(
         var nextSilenceCheckNs = System.nanoTime() + SILENCE_CHECK_NS
         val reference = canceller?.let { ShortArray(it.frameSamples) }
         var filled = 0
+        var readRestarts = 0
         try {
             while (running.get()) {
                 if (remainingSources.isNotEmpty() && System.nanoTime() >= nextSilenceCheckNs) {
@@ -358,14 +373,21 @@ internal class MicrophoneUplink(
                 stats.reading()
                 val count = recorder.read(readBuffer, 0, readBuffer.size, AudioRecord.READ_BLOCKING)
                 stats.read(count)
-                if (count > 0) {
-                    stats.level(readBuffer, count)
-                    clock?.read(recorder, count / 2)
-                }
+                if (count > 0) clock?.read(recorder, count / 2)
                 if (count < 0) {
                     if (running.get()) {
                         Log.e(TAG, "microphone read failed code=$count")
                         stats.failure(MicrophoneFailureStage.READ, code = count)
+                    }
+                    // The first read after a head unit enters call mode can fail with
+                    // ERROR_INVALID_OPERATION, and capture used to end there for the whole call
+                    // (#647). Restart recording a few times before giving up.
+                    if (running.get() && count != AudioRecord.ERROR_DEAD_OBJECT &&
+                        readRestarts < MAX_READ_RESTARTS && restartRecording(recorder)
+                    ) {
+                        readRestarts++
+                        stats.restarted(readRestarts)
+                        continue
                     }
                     return
                 }
@@ -397,6 +419,7 @@ internal class MicrophoneUplink(
                                 canceller = null
                             }
                         }
+                        stats.level(frame)
                         sendFrame(socket, counters, frame)
                         filled = 0
                     }
@@ -413,6 +436,15 @@ internal class MicrophoneUplink(
             running.set(false)
             release()
         }
+    }
+
+    private fun restartRecording(recorder: AudioRecord): Boolean = try {
+        runCatching { recorder.stop() }
+        Thread.sleep(READ_RESTART_PAUSE_MILLIS)
+        recorder.startRecording()
+        recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING
+    } catch (error: IllegalStateException) {
+        false
     }
 
     private fun sendFrame(socket: DatagramSocket, counters: MicrophoneCounters, frame: ByteArray) {
@@ -556,6 +588,8 @@ internal class MicrophoneUplink(
         fun platformSilenced(recorder: AudioRecord): Boolean? =
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) null
             else recorder.activeRecordingConfiguration?.isClientSilenced
+        const val MAX_READ_RESTARTS = 3
+        const val READ_RESTART_PAUSE_MILLIS = 50L
     }
 }
 

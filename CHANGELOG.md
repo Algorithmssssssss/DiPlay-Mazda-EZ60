@@ -1,4 +1,12 @@
-# DiPlay for Mazda EZ-60 0.2.17-ez60.1 — 2026-10-11 (pre-release)
+# DiPlay for Mazda EZ-60 0.2.19-ez60.1 — unreleased
+
+Moves the fork to DiPlay 0.2.19. See [release notes](docs/RELEASE-NOTES-EZ60.md).
+
+- Use upstream's MediaTek decoder tuning (#608) by default on the EZ-60: H.264 keeps `c2.mtk.avc.decoder.lowlatency`, HEVC uses `c2.mtk.hevc.decoder.lowlatency`, and a low-latency decoder that fails or stalls hands the session to the standard decoder. It can be turned off under Settings → Advanced → Video and audio.
+- From upstream 0.2.18–0.2.19: restart a call microphone whose first read fails, report the microphone level as `peakDbfs` (beside the fork's `silenced=` and `recordings=`), keep the right timing for 16 kHz calls, Siri and navigation prompts, show the last picture when a SurfaceView output comes back, allow the wired VPN over the car's approved network ADB when the VPN screen is missing, and get the diagnostic report on a phone by QR code.
+- Translate the EZ-60 settings and probe into Japanese.
+
+# DiPlay for Mazda EZ-60 0.2.17-ez60.1 — 2026-10-11 (pre-release, not published)
 
 First pre-release of the Mazda EZ-60 fork, based on DiPlay 0.2.17. See [release notes](docs/RELEASE-NOTES-EZ60.md).
 
@@ -15,6 +23,28 @@ First pre-release of the Mazda EZ-60 fork, based on DiPlay 0.2.17. See [release 
 - Experimental: let the car's ambient lights follow CarPlay music through the car's own music mode (off by default; stops and hands the lights back on any failure).
 
 # Upstream DiPlay history
+
+## DiPlay 0.2.19 — 2026-10-12
+
+- Start wired CarPlay several seconds sooner by not waiting 2 s on each refused USB network write, ask for CarPlay mode first on iOS 26, grant USB access through approved ADB on Android 7.1–9 head units without a USB permission page, and let Auto-confirm USB permission find the system dialog (#644, #689).
+- Report the playback position of 16 kHz calls, Siri and navigation prompts at their own rate instead of three times too fast, restart a microphone whose first read fails, and stop background music underruns from a 0.5 s audio wait (#644).
+- Keep CarPlay from restarting at the first touch with the DiLink 4 dashboard map on and from staying scaled down after the reversing camera, show the last picture when a SurfaceView output comes back, and redesign the in-CarPlay settings menu (#663, #674, #669, #642).
+- Japanese, complete Traditional Chinese with guides, and 67 more Arabic strings (#646, #691, #682, #681, #631).
+- Download the diagnostic report on a phone by QR code or a typed address and code, keep the phone page answering behind idle connections, show connection recovery tips and a Bluetooth-off message, and fix wireless CarPlay on MIUI 13 (#686, #687, #685, #677, #679, #673).
+- Set BYD navigation audio defaults on a first setup, add an optional album-artwork card on the dashboard map, record why the car hotspot could not be started, and fall back to the default Bluetooth adapter (#656, #660, #667, #641).
+
+See [0.2.19 release notes](https://github.com/shihabal3amri/DiPlay/blob/main/docs/RELEASE-NOTES-0.2.19.md) for contribution links and limits, and [validation](https://github.com/shihabal3amri/DiPlay/blob/main/docs/VALIDATION.md) for checks. Full-release vehicle acceptance is not claimed.
+
+## DiPlay 0.2.18 — 2026-10-11
+
+- Keep wired sessions running when a USB read finishes as DiPlay stops waiting for it, start wired CarPlay on Android 7.1 head units, when a head-unit USB audio driver holds the iPhone, and without a VPN dialog over approved network ADB (#625, #614, #618).
+- Stop discarding music packets after a 10 ms wait, and log the /feedback position against the received audio (#618, #625).
+- Show the real connection stage in every app language, stop with a clear cause when a head unit's Bluetooth cannot reach the iPhone, and find the connected iPhone through sink-role Bluetooth profiles (#624, #590, #585).
+- Wheel next/previous on the CarPlay screen without the wheel-key service, Geely/Lynk `geely_fx11` wheel keys and Siri, wheel-key service restore retries, and next/previous to answer or decline with CarPlay call keys (#600, #626, #622, #625).
+- Settings backup and restore from a phone, an installer choice for updates, and About inside Settings (#598, #593, #597).
+- Experimental, off-by-default options: Harman full screen with 32-bit x86 libraries, square corners, clearer navigation voice over USB, MediaTek low-latency decoding, a media-key audio focus opt-out, car phone audio for calls, a cluster speedometer and FCE cluster guidance (#613, #596, #622, #608, #615, #595, #607, #599).
+
+See [0.2.18 release notes](https://github.com/shihabal3amri/DiPlay/blob/main/docs/RELEASE-NOTES-0.2.18.md) for contribution links and limits, and [validation](https://github.com/shihabal3amri/DiPlay/blob/main/docs/VALIDATION.md) for checks. Full-release vehicle acceptance is not claimed.
 
 ## DiPlay 0.2.17 — 2026-10-10
 

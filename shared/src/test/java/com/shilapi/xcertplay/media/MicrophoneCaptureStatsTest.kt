@@ -53,9 +53,25 @@ class MicrophoneCaptureStatsTest {
         val stats = MicrophoneCaptureStats(config, reports::add) { now }
         now = 5_000_000_000
         stats.flush(captureState = { "silenced=true recordings=[VOICE_CALL,MIC(silenced)]" })
-        assertTrue(reports.last().endsWith("silenced=true recordings=[VOICE_CALL,MIC(silenced)] peak=0 ended=false"))
+        assertTrue(reports.last().endsWith("silenced=true recordings=[VOICE_CALL,MIC(silenced)] peakDbfs=silent ended=false"))
         stats.flush(ended = true, captureState = { throw IllegalStateException("no configuration") })
-        assertTrue(reports.last().contains("sendGapMaxMs=0 peak=0 ended=true"))
+        assertTrue(reports.last().contains("sendGapMaxMs=0 peakDbfs=silent ended=true"))
+    }
+
+    @Test fun reportsTheLoudestSampleSoSilentCaptureStandsOut() {
+        // #647: a silent microphone and a discarded uplink looked the same in a report.
+        var now = 0L
+        val reports = mutableListOf<String>()
+        val stats = MicrophoneCaptureStats(config, reports::add) { now }
+        stats.level(ByteArray(960))
+        now = 5_000_000_000
+        stats.flush()
+        assertTrue(reports.last().contains("peakDbfs=silent"))
+        // -16384 little-endian is half of full scale: -6 dBFS.
+        stats.level(byteArrayOf(0, 0, 0x00, 0xc0.toByte(), 0x10, 0x00))
+        stats.flush(ended = true)
+        assertTrue(reports.last().contains("peakDbfs=-6 ended=true"))
+        assertEquals("0", MicrophoneCaptureStats.peakDbfs(32768))
     }
 
     @Test fun sourcesAreNamedIncludingSystemOnes() {
@@ -136,19 +152,5 @@ class MicrophoneCaptureStatsTest {
         }
         assertEquals(4, reports.size)
         assertTrue(reports.all { it.length < 512 && '\n' !in it })
-    }
-
-    @Test fun reportsTheLoudestSampleSoASilentInputShows() {
-        val reports = mutableListOf<String>()
-        val stats = MicrophoneCaptureStats(config, reports::add) { 0L }
-        stats.level(byteArrayOf(0, 0, 1, 0), 4)
-        stats.flush(ended = true)
-        assertTrue(reports.last().contains("peak=1 ended=true"))
-        // Little-endian 16-bit: -32768 is the loudest a sample can be; the window resets after a report.
-        stats.level(byteArrayOf(0x10, 0x00, 0x00, 0x80.toByte(), 0x05, 0x00), 6)
-        stats.flush(ended = true)
-        assertTrue(reports.last().contains("peak=32768 ended=true"))
-        stats.flush(ended = true)
-        assertTrue(reports.last().contains("peak=0 ended=true"))
     }
 }

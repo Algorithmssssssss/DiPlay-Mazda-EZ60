@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">EZ-60プローブ</string>
+    <string name="settings_probe_description">DiPlayをマツダEZ-60向けに調整するため、この車の左右の画面・ビデオデコーダー・Wi-Fi・USB・オーディオ・キーを測定します。自動で送信されるものはありません。</string>
+    <string name="settings_probe_run">EZ-60プローブを実行</string>
+    <string name="settings_probe_running">プローブを実行中…</string>
+    <string name="settings_probe_record_start">イベントの記録を開始</string>
+    <string name="settings_probe_record_stop">イベントの記録を停止</string>
+    <string name="settings_probe_recording_hint">記録中です。DiPlayを画面の反対側にスワイプして戻し、音声アシスタントを起動し、ステアリングスイッチを1つずつ押し、昼と夜を切り替え、iPhoneを接続してください。その後、記録を停止してプローブを実行します。</string>
+    <string name="settings_probe_view">プローブレポートを表示</string>
+    <string name="settings_probe_share">iPhoneで開く</string>
+    <string name="settings_probe_share_url">車と同じWi-Fi（車のホットスポットまたはiPhoneのホットスポット）に接続したiPhoneのSafariで開いてください：\n%1$s</string>
+    <string name="settings_probe_share_unavailable">車がどのWi-Fiネットワークにも接続していません。車のホットスポットをオンにするか、iPhoneのホットスポットに接続してから再試行してください。</string>
+    <string name="settings_probe_window_test">CarPlayウィンドウをテスト</string>
+    <string name="settings_probe_window_test_body">CarPlayウィンドウのテスト\n\nCarPlayはここに開きます。タップすると閉じます。</string>
+    <string name="settings_probe_meter_test">メーター表示をテスト</string>
+    <string name="settings_probe_meter_card">DiPlayテスト\n%1$s</string>
+    <string name="settings_probe_meter_shown">ディスプレイ%1$sにテストカードを20秒間表示しました。メーターとHUDを確認してください。</string>
+    <string name="settings_probe_meter_failed">ディスプレイ%1$sにテストカードを表示できませんでした。</string>
+    <string name="settings_probe_meter_none">この車にはアプリ用の2つ目のディスプレイがありません。</string>
+</resources>

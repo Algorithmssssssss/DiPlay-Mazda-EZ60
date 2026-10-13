@@ -6,7 +6,7 @@ passenger half; a two-finger swipe moves an app between them.
 
 It installs next to upstream DiPlay as `com.reachkim.diplay.ez60` (debug builds add `.hudtest`). The
 update check in About and upstream's background update checks are off, because upstream releases are a
-different app. This fork includes upstream DiPlay through 0.2.17; BYD-only settings are hidden on the
+different app. This fork includes upstream DiPlay through 0.2.19; BYD-only settings are hidden on the
 EZ-60.
 
 ## Status
@@ -60,7 +60,9 @@ adb shell appops set com.reachkim.diplay.ez60.hudtest ACTIVATE_VPN allow
 ```
 
 Use `com.reachkim.diplay.ez60` for a release build. The permission lasts until the app is uninstalled;
-installing a new build over it keeps it.
+installing a new build over it keeps it. Since upstream 0.2.18, DiPlay runs this command itself when the
+VPN screen is missing, but only if the car's network ADB is on and DiPlay's ADB key was approved before;
+the session log then shows `VPN consent over adb access=READY granted=true`.
 
 ### Wireless: choose how the iPhone joins
 
@@ -76,7 +78,12 @@ car hotspot's name and password: without them **Connect** returns to Connection 
 - **Measure it:** **Settings → Diagnostics → FPS counter** (from upstream 0.2.17) shows the frame rate over
   the CarPlay picture.
 - **Video path:** **Low-latency decoding** starts on for the EZ-60: frames leave the decoder from their own
-  thread, and the main screen tries `c2.mtk.avc.decoder.lowlatency` first. **Direct video output**
+  thread, and the main screen tries `c2.mtk.avc.decoder.lowlatency` first. **MTK decoder low latency**
+  (upstream #608, Advanced) is also on by default on the EZ-60: it picks the same H.264 decoder, picks
+  `c2.mtk.hevc.decoder.lowlatency` for HEVC, and if the low-latency decoder fails or stalls mid-session it
+  moves to the standard decoder until the next connection (log: `MTK Codec2 low-latency decoder dropped`).
+  Its legacy `OMX.MTK` keys are never used here: on the EZ-60 those names are only aliases of the Codec2
+  decoders. **Direct video output**
   (Advanced, off by default) draws CarPlay through a SurfaceView instead of the app's TextureView, which
   saves a GPU copy on a 5120×1440 screen the car's 3D desktop also draws on; the panel's rounded corners
   may not clip it. Compare both with the FPS counter.

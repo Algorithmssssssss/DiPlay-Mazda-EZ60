@@ -39,7 +39,7 @@ class UpdateHomeAvailabilityTest {
         assertEquals(DiPlayPalette.DARK.warning, update.currentTextColor)
         update.performClick()
 
-        assertEquals("about", ReflectionHelpers.getField<String>(activity, "page"))
+        assertEquals(SettingsCategory.ABOUT, ReflectionHelpers.getField<SettingsCategory>(activity, "settingsCategory"))
         // The EZ-60 fork hides the download flow: upstream's releases are a different app.
         assertEquals(com.shilapi.xcertplay.update.UpdateClient.ENABLED,
             descendants(activity.window.decorView).filterIsInstance<TextView>().any {

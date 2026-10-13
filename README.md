@@ -6,16 +6,16 @@
 
 [Releases](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/releases) · [Install and connect](docs/INSTALL.md) · [Report a problem](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/issues/new/choose) · [中文](README.zh-CN.md)
 
-## What works in 0.2.17-ez60.1
+## What works in 0.2.19-ez60.1
 
 - **Wireless CarPlay** over the car's built-in hotspot (smoothest: 43–59 fps while in use, 4–5 ms per frame to decode, 21–60 ms from touch to picture) or Wi-Fi Direct on 5 GHz.
 - **Wired CarPlay** over USB, after one ADB command (the car has no VPN approval screen).
 - **Both screen halves.** CarPlay opens on the half you start it from, follows the car's two-finger swipe to the other half without reconnecting, and narrows when the car shows its vehicle panel or voice assistant.
 - **Windshield HUD.** While CarPlay navigation guides, the car's HUD draws its own turn arrow, distance and remaining route, and shows CarPlay's map in its map area, in a Far, Normal or Near view; it clears when you end the route or arrive. Confirmed with Google Maps. DiPlay only feeds the HUD's display: it never touches the car's own navigation or driving assistance.
-- **Picture tuned for the MT8676:** 60 fps and the MediaTek low-latency H.264 decoder by default.
+- **Picture tuned for the MT8676:** 60 fps and MediaTek's low-latency decoders by default, with a fallback to the standard decoder if one fails.
 - Steering-wheel previous, next and play/pause.
 - **Works beside the car's own Bluetooth music:** DiPlay leaves audio focus to the car's Bluetooth player, so the car no longer pauses the iPhone when CarPlay plays.
-- BYD-only settings are hidden; everything else from DiPlay 0.2.17 is included.
+- BYD-only settings are hidden; everything else from DiPlay 0.2.19 is included.
 
 ## Known issues
 

@@ -29,8 +29,8 @@ internal class MicrophoneCaptureStats(
     private var sendErrors = 0L
     private var lastSentNs: Long? = null
     private var sendGapMaxNs = 0L
+    private var peakSample = 0
     private var routedDeviceType: Int? = null
-    private var peak = 0
 
     fun started(routeType: Int?) {
         routedDeviceType = routeType
@@ -55,16 +55,17 @@ internal class MicrophoneCaptureStats(
         }
     }
 
-    /** The loudest 16-bit sample in [count] bytes of little-endian PCM: a muted or wrong input stays near 0. */
-    fun level(pcm: ByteArray, count: Int) {
-        var max = peak
-        var i = 0
-        while (i + 1 < count) {
-            val sample = (pcm[i].toInt() and 0xff) or (pcm[i + 1].toInt() shl 8)
-            if (sample > max) max = sample else if (-sample > max) max = -sample
-            i += 2
+    /**
+     * The loudest 16-bit little-endian sample sent in this window. Without it, a microphone that
+     * delivers silence and an uplink the iPhone discards looked the same in a report (#647).
+     */
+    fun level(pcm: ByteArray) {
+        var index = 0
+        while (index + 1 < pcm.size) {
+            val sample = (pcm[index].toInt() and 0xff) or (pcm[index + 1].toInt() shl 8)
+            peakSample = maxOf(peakSample, kotlin.math.abs(sample))
+            index += 2
         }
-        peak = max
     }
 
     fun encoded(frameCount: Int, emptyCount: Int) {
@@ -81,6 +82,8 @@ internal class MicrophoneCaptureStats(
 
     fun sendFailed() { sendErrors++ }
 
+    fun restarted(attempt: Int) { emit("Microphone: recording restarted $metadata attempt=$attempt") }
+
     fun failure(stage: MicrophoneFailureStage, error: Throwable? = null, code: Int? = null) {
         emit(failureMessage(metadata, stage, error, code))
     }
@@ -95,7 +98,7 @@ internal class MicrophoneCaptureStats(
             "captureBytes=$capturedBytes reads=$reads zeroReads=$zeroReads readErrors=$readErrors " +
             "readMaxMs=${readMaxNs / 1_000_000} encodedFrames=$encodedFrames " +
             "emptyEncodedFrames=$emptyEncodedFrames udpSent=$udpSent sendErrors=$sendErrors " +
-            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} ${state}peak=$peak ended=$ended")
+            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} ${state}peakDbfs=${peakDbfs(peakSample)} ended=$ended")
         windowStart = now
         capturedBytes = 0
         reads = 0
@@ -107,13 +110,17 @@ internal class MicrophoneCaptureStats(
         udpSent = 0
         sendErrors = 0
         sendGapMaxNs = 0
-        peak = 0
+        peakSample = 0
     }
 
     private fun emit(message: String) { runCatching { report(message) } }
 
     companion object {
         private const val REPORT_INTERVAL_NS = 5_000_000_000L
+
+        /** Whole dBFS of a 16-bit peak; "silent" when every sample was zero. */
+        internal fun peakDbfs(peak: Int): String =
+            if (peak <= 0) "silent" else Math.round(20 * kotlin.math.log10(peak / 32768.0)).toString()
 
         private fun typeAndSource(audioType: String): Pair<String, String> = when (audioType) {
             "telephony" -> "telephony" to "VOICE_COMMUNICATION"

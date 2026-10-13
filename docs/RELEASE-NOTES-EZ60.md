@@ -1,6 +1,6 @@
-# DiPlay for Mazda EZ-60 0.2.17-ez60.1 — pre-release
+# DiPlay for Mazda EZ-60 0.2.19-ez60.1 — pre-release
 
-First pre-release of the Mazda EZ-60 fork, based on [DiPlay 0.2.17](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.17). It was tested on one Chinese-market EZ-60 (CAMZD OS build 20250930150736) with an iPhone on iOS 27, using Google Maps for navigation. It is not an Apple-certified product.
+First pre-release of the Mazda EZ-60 fork, based on [DiPlay 0.2.19](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.19). It was tested on one Chinese-market EZ-60 (CAMZD OS build 20250930150736) with an iPhone on iOS 27, using Google Maps for navigation. It is not an Apple-certified product.
 
 ## What works
 
@@ -8,7 +8,7 @@ First pre-release of the Mazda EZ-60 fork, based on [DiPlay 0.2.17](https://gith
 - **Wired CarPlay** over USB, after allowing the VPN once over ADB.
 - **Both screen halves.** CarPlay opens on the half DiPlay was started from and follows the car's two-finger swipe without reconnecting. It narrows from 2496 to 1728 pixels wide when the car shows its left vehicle panel or voice assistant.
 - **Windshield HUD.** While CarPlay navigation guides, DiPlay feeds the car's navigation service the way the car's own navigation apps do. The HUD then draws its turn arrow, distance, remaining distance and time, and its 3D guidance chevrons, and shows CarPlay's map in its map area. **HUD map view** (Far, Normal, Near) sets how much map it shows. The HUD clears when you end the route or arrive, and DiPlay steps aside if another navigation app takes the HUD. DiPlay only feeds the HUD's display; it has no path to the car's own navigation or driving assistance. While using the car's own navigation, don't start CarPlay directions at the same time.
-- **Picture:** 60 fps and the MediaTek low-latency H.264 decoder by default; Wi-Fi Direct starts on 5 GHz and the slow software HEVC decoder is skipped.
+- **Picture:** 60 fps and MediaTek's low-latency decoders by default (`c2.mtk.avc.decoder.lowlatency`, and `c2.mtk.hevc.decoder.lowlatency` if HEVC is on), through upstream's MediaTek decoder tuning: if the low-latency decoder fails or stalls, the session continues on the standard one. Wi-Fi Direct starts on 5 GHz and the slow software HEVC decoder is skipped.
 - **Steering-wheel keys:** previous, next and play/pause.
 - **Beside the car's own Bluetooth music.** The car's Bluetooth player pauses the iPhone over Bluetooth whenever it loses audio focus, and DiPlay used to take focus back on each play or new track, so CarPlay music paused and resumed every few seconds. DiPlay now leaves focus to that player while it holds it; CarPlay audio plays without it and the wheel keys reach the iPhone through it.
 - **EZ-60 probe** under **Settings → Diagnostics**, for reports about the car's screens, windows and hardware.
@@ -19,7 +19,8 @@ BYD-only settings are hidden. Upstream's update check is off, because upstream r
 
 - **The HUD's music line** shows "暂无歌词" (no lyrics). It belongs to the car's media center, which shows only lyrics; CarPlay sends none.
 - **Wired CarPlay needs one ADB command**, because CAMZD OS has no VPN approval screen:
-  `adb shell appops set com.reachkim.diplay.ez60 ACTIVATE_VPN allow`
+  `adb shell appops set com.reachkim.diplay.ez60 ACTIVATE_VPN allow`.
+  DiPlay runs the same command itself if the car's network ADB is on and DiPlay's ADB key was approved before.
 - The passenger half's CarPlay panel is assumed to mirror the driver's; it has not been measured.
 - Tested only with Google Maps guidance and one iPhone.
 

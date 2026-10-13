@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_mazda_hud">HUDにターンバイターン表示（実験的機能）</string>
+    <string name="settings_mazda_hud_description">CarPlayのナビ案内中に、次の曲がり角・距離・道路名をフロントガラスのヘッドアップディスプレイに表示します。次の案内更新から反映されます。</string>
+    <string name="settings_mazda_hud_map_view">HUDの地図表示</string>
+    <string name="settings_mazda_hud_map_far">広域</string>
+    <string name="settings_mazda_hud_map_normal">標準</string>
+    <string name="settings_mazda_hud_map_near">詳細</string>
+    <string name="settings_mazda_hud_map_view_description">HUDに表示する地図の範囲です。「広域」はより多くの道路を小さく、「詳細」は少ない道路を大きく表示します。次回の接続から反映されます。</string>
+    <string name="settings_mazda_ambient_music">CarPlayの音楽に合わせる</string>
+    <string name="settings_mazda_ambient_music_description">車の音楽モードを使い、アンビエントライトをCarPlayの音楽に合わせて点滅させます。先に車側でアンビエントライトと音楽連動をオンにしてください。何か失敗した場合、DiPlayは停止してライトの制御を車に戻します。</string>
+    <string name="settings_mazda_ambient_effect">ライト効果</string>
+    <string name="settings_mazda_ambient_effect_beat">ビート</string>
+    <string name="settings_mazda_ambient_effect_rhythm">リズム</string>
+    <string name="settings_mazda_ambient_effect_description">「ビート」は低音のビートごとにライトを光らせ、次のビートまで徐々に暗くします。「リズム」は音楽に合わせて滑らかに明るさを上下させます。</string>
+    <string name="settings_mazda_ambient_smoothness">滑らかさ</string>
+    <string name="settings_mazda_ambient_depth">深さ</string>
+    <string name="settings_mazda_ambient_sensitivity">ビート感度</string>
+    <string name="settings_mazda_ambient_tuning_description">滑らかさ：1は速く、5はゆっくり変化します。深さ：ビートの合間にライトを暗くする度合いです。ビート感度：5ではより弱いビートも拾います。変更はすぐに反映されます。</string>
+</resources>
