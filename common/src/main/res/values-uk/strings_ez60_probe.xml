@@ -18,4 +18,7 @@
     <string name="settings_probe_meter_shown">Тестова картка на екрані %1$s на 20 секунд. Подивіться на панель приладів і HUD.</string>
     <string name="settings_probe_meter_failed">Не вдалося показати тестову картку на екрані %1$s.</string>
     <string name="settings_probe_meter_none">У цьому автомобілі немає другого екрана для застосунків.</string>
+    <string name="settings_probe_hud_practice">Тренувальний маршрут на HUD (емулятор)</string>
+    <string name="settings_probe_hud_practice_stop">Зупинити тренувальний маршрут на HUD</string>
+    <string name="settings_probe_hud_practice_started">Тренувальний маршрут на HUD: близько 90 секунд вигаданих поворотів. Дивіться на екран 800×480.</string>
 </resources>

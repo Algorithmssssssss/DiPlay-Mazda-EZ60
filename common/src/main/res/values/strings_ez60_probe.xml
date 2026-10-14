@@ -18,4 +18,7 @@
     <string name="settings_probe_meter_shown">Test card shown on display %1$s for 20 seconds. Look at the instrument cluster and the HUD.</string>
     <string name="settings_probe_meter_failed">Could not show the test card on display %1$s.</string>
     <string name="settings_probe_meter_none">This car has no second display for apps.</string>
+    <string name="settings_probe_hud_practice">HUD practice route (emulator)</string>
+    <string name="settings_probe_hud_practice_stop">Stop HUD practice route</string>
+    <string name="settings_probe_hud_practice_started">Practice route on the HUD: about 90 seconds of made-up turns. Watch the 800×480 display.</string>
 </resources>

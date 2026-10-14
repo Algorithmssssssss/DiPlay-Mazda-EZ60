@@ -190,6 +190,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     private var notificationTransport = true
     private var exportInProgress = false
     private var probeInProgress = false
+    private var hudPracticeDrive: MazdaHudPracticeDrive? = null
     private var usbPermissionOperation: UsbPermissionSetup.Operation? = null
     private var usbPermissionDialog: AlertDialog? = null
     internal var usbPermissionOperationFactory: (Context) -> UsbPermissionSetup.Operation = {
@@ -543,6 +544,8 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     override fun onDestroy() {
+        hudPracticeDrive?.stop()
+        hudPracticeDrive = null
         MazdaCockpitProbe.detach(this)
         settingsSearchPopup?.dismiss()
         if (openWindow?.get() === this) openWindow = null
@@ -5618,7 +5621,37 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             overridePendingTransition(0, 0)
         }, matchButton(10, 60))
         card.addView(button(getString(R.string.settings_probe_meter_test), false) { testInstrumentDisplay() }, matchButton(10, 60))
+        if (MazdaHudPracticeRoute.available) {
+            val practicing = hudPracticeDrive?.running == true
+            card.addView(button(getString(if (practicing) R.string.settings_probe_hud_practice_stop
+                else R.string.settings_probe_hud_practice), false) { toggleHudPracticeRoute() }, matchButton(10, 60))
+        }
         card.addView(button(getString(R.string.settings_probe_view), false) { showProbeReport() }, matchButton(10, 60))
+    }
+
+    // Emulator only: a made-up drive on the HUD, fed as CarPlay guidance feeds it (MazdaHudPracticeRoute).
+    private fun toggleHudPracticeRoute() {
+        hudPracticeDrive?.let { running ->
+            running.stop()
+            hudPracticeDrive = null
+            render()
+            return
+        }
+        MazdaCockpitProbe.setRecording(this, true)
+        val drive = MazdaHudPracticeDrive(this, { message ->
+            Log.i(MazdaHudPracticeRoute.LOG_TAG, message)
+            MazdaCockpitProbe.note(this, PROBE_TAG, message)
+        }) {
+            hudPracticeDrive = null
+            render()
+        }
+        if (!drive.start()) {
+            toast(getString(R.string.settings_probe_meter_none))
+            return
+        }
+        hudPracticeDrive = drive
+        toast(getString(R.string.settings_probe_hud_practice_started))
+        render()
     }
 
     /**

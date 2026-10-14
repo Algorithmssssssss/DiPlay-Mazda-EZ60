@@ -18,4 +18,7 @@
     <string name="settings_probe_meter_shown">Tarjeta de prueba en la pantalla %1$s durante 20 segundos. Mira el cuadro de instrumentos y el HUD.</string>
     <string name="settings_probe_meter_failed">No se pudo mostrar la tarjeta de prueba en la pantalla %1$s.</string>
     <string name="settings_probe_meter_none">Este coche no tiene una segunda pantalla para apps.</string>
+    <string name="settings_probe_hud_practice">Ruta de práctica en el HUD (emulador)</string>
+    <string name="settings_probe_hud_practice_stop">Detener la ruta de práctica del HUD</string>
+    <string name="settings_probe_hud_practice_started">Ruta de práctica en el HUD: unos 90 segundos de giros inventados. Mira la pantalla de 800×480.</string>
 </resources>

@@ -18,4 +18,7 @@
     <string name="settings_probe_meter_shown">ディスプレイ%1$sにテストカードを20秒間表示しました。メーターとHUDを確認してください。</string>
     <string name="settings_probe_meter_failed">ディスプレイ%1$sにテストカードを表示できませんでした。</string>
     <string name="settings_probe_meter_none">この車にはアプリ用の2つ目のディスプレイがありません。</string>
+    <string name="settings_probe_hud_practice">HUD練習ルート（エミュレーター）</string>
+    <string name="settings_probe_hud_practice_stop">HUD練習ルートを停止</string>
+    <string name="settings_probe_hud_practice_started">HUDで練習ルートを再生中：架空の曲がり角が約90秒続きます。800×480のディスプレイを見てください。</string>
 </resources>

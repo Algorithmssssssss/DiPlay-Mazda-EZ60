@@ -18,4 +18,7 @@
     <string name="settings_probe_meter_shown">تظهر بطاقة الاختبار على الشاشة %1$s لمدة 20 ثانية. انظر إلى لوحة العدادات وشاشة العرض الأمامية.</string>
     <string name="settings_probe_meter_failed">تعذّر عرض بطاقة الاختبار على الشاشة %1$s.</string>
     <string name="settings_probe_meter_none">لا تحتوي هذه السيارة على شاشة ثانية للتطبيقات.</string>
+    <string name="settings_probe_hud_practice">مسار تدريبي على شاشة العرض الأمامية (المحاكي)</string>
+    <string name="settings_probe_hud_practice_stop">إيقاف المسار التدريبي على شاشة العرض الأمامية</string>
+    <string name="settings_probe_hud_practice_started">مسار تدريبي على شاشة العرض الأمامية: نحو 90 ثانية من المنعطفات المتخيَّلة. انظر إلى الشاشة 800×480.</string>
 </resources>
