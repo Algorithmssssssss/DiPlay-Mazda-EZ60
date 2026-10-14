@@ -70,10 +70,14 @@ internal object MazdaCockpitProbe {
     private const val MAX_CRASH_LINES = 120
     private const val SESSION_LOG_LINES = 300
     private const val SETUP_LINES = 150
-    private const val VIDEO_STATS_LINES = 240
+    // Main screen and HUD map, one line each per 5 s: about 40 minutes of driving.
+    private const val VIDEO_STATS_LINES = 960
     private const val MICROPHONE_LINES = 120
+    private const val HUD_LINES = 300
     private val microphoneLine = Regex("Microphone: |Audio: mode |Audio: (starting|ready) .*audioType=(telephony|speechrecognition)")
-    private val setupLine = Regex("(?i)MHz|GHz|frequency|channel|P2P|Wi-Fi|hotspot|station|Starting CarPlay|decoder|fps|Display|transport|session|HUD")
+    private val setupLine = Regex("(?i)MHz|GHz|frequency|channel|P2P|Wi-Fi|hotspot|station|Starting CarPlay|decoder|fps|Display|transport|session")
+    private const val LOG_STARTED = "DiPlay log started"
+    private const val LOG_DIRECTORY = "logs"
     private val periodicLine = Regex("iAP tunnel|video stats|audio stats|decoder stats|Receive:|THEME_DIAGNOSTIC")
     private const val MAX_EVENT_LINES = 1500
     private const val MAX_SETTINGS_PER_TABLE = 200
@@ -343,8 +347,11 @@ internal object MazdaCockpitProbe {
         appendLine()
         appendLine("--- Last display negotiation ---")
         appendLine(DisplayDiagnosticSnapshot.report(context))
-        val log = File(context.filesDir, "logs/diplay.log")
-        val lines = if (log.isFile) log.readLines() else emptyList()
+        // Saved now; the session may have started with others.
+        appendLine("Video settings: mtkDecoderLowLatency=${AirPlayPersistence.loadMtkDecoderTuning(context)} " +
+            "lowLatencyDecoding=${AirPlayPersistence.loadLowLatencyDecoder(context)} " +
+            "smoothVideo=${AirPlayPersistence.loadSmoothVideo(context)} fps=${AirPlayPersistence.loadFps(context)}")
+        val lines = sessionLines(File(context.filesDir, LOG_DIRECTORY))
         appendLine()
         // The tail is mostly periodic stats; how the session started (picture, decoder, Wi-Fi channel) is earlier.
         appendLine("--- Session log: setup and Wi-Fi lines ---")
@@ -356,6 +363,11 @@ internal object MazdaCockpitProbe {
         lines.filter { "video stats" in it }.takeLast(VIDEO_STATS_LINES)
             .forEach { line -> DiagnosticRedactor.redact(line)?.let(::appendLine) }
         appendLine()
+        // Turn-by-turn and the map on the HUD: route states, focus, turns sent, through the whole drive.
+        appendLine("--- HUD (whole session) ---")
+        lines.filter { "HUD: " in it }.takeLast(HUD_LINES)
+            .forEach { line -> DiagnosticRedactor.redact(line)?.let(::appendLine) }
+        appendLine()
         // Calls and Siri: which microphone each recorded and how loud it was, which the tail rarely still holds.
         appendLine("--- Calls and microphone (whole session) ---")
         lines.filter { microphoneLine.containsMatchIn(it) }.takeLast(MICROPHONE_LINES)
@@ -364,6 +376,19 @@ internal object MazdaCockpitProbe {
         appendLine("--- Session log (last $SESSION_LOG_LINES lines) ---")
         if (lines.isEmpty()) appendLine("No session log.")
         else lines.takeLast(SESSION_LOG_LINES).forEach { line -> DiagnosticRedactor.redact(line)?.let(::appendLine) }
+    }
+
+    /**
+     * The current CarPlay session's log, from its "DiPlay log started" header. The log moves to previous.log,
+     * previous-2.log, … every 512 KB, about every 20 minutes of driving, so a drive spans several files; reading
+     * only diplay.log kept the last few minutes (EZ-60 probe report 2026-10-14).
+     */
+    internal fun sessionLines(directory: File): List<String> {
+        val all = SessionLogFile.REPORT_NAMES.flatMap { name ->
+            File(directory, name).takeIf { it.isFile }?.let { runCatching { it.readLines() }.getOrNull() }.orEmpty()
+        }
+        val start = all.indexOfLast { it.startsWith(LOG_STARTED) }
+        return if (start > 0) all.subList(start, all.size) else all
     }
 
     private fun StringBuilder.section(title: String, build: StringBuilder.() -> Unit) {

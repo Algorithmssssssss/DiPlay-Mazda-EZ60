@@ -20,6 +20,22 @@ class MazdaProbeTest {
         assertFalse(MazdaPlatform.detect(listOf("BYD", "DiLink3.0"), oemKeysPresent = false).likely)
     }
 
+    // EZ-60 probe report 2026-10-14: a 23-minute drive rolled over twice, and only its last minutes were reported.
+    @Test fun theSessionLogSpansTheFilesItRolledInto() {
+        val directory = java.nio.file.Files.createTempDirectory("diplay-logs").toFile()
+        try {
+            java.io.File(directory, "previous-3.log").writeText("DiPlay log started yesterday\n18:00:00.000  old session\n")
+            java.io.File(directory, "previous-2.log").writeText("DiPlay log started 07:04\n07:04:23.677  Host started\n")
+            java.io.File(directory, "previous.log").writeText("07:15:00.000  Video: video stats rx=31fps\n")
+            java.io.File(directory, "diplay.log").writeText("07:26:00.000  HUD: route state=1\n")
+            assertEquals(listOf("DiPlay log started 07:04", "07:04:23.677  Host started",
+                "07:15:00.000  Video: video stats rx=31fps", "07:26:00.000  HUD: route state=1"),
+                MazdaCockpitProbe.sessionLines(directory))
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
     @Test fun probeKeepsDisplayAndBuildPropertiesButNotIdentifiers() {
         assertTrue(MazdaCockpitProbe.interestingProperty("ro.product.model"))
         assertTrue(MazdaCockpitProbe.interestingProperty("ro.sf.lcd_density"))
