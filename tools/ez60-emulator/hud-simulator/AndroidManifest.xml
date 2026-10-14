@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EZ-60 HUD simulator for the emulator. Built and started by `ez60-emu hud start`; never installed in the car. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.reachkim.ez60.hudsim">
+
+    <!-- The overlay on the HUD display; ez60-emu grants it with appops. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application android:label="EZ-60 HUD simulator">
+        <service
+            android:name=".HudOverlayService"
+            android:exported="true" />
+    </application>
+</manifest>

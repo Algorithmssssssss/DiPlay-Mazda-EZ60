@@ -30,6 +30,16 @@ KEY_FLY=fly_to_right_status       # last two-finger swipe: 1 = to passenger, 2 =
 KEY_BT_FOCUS=bt_source_focus_key  # the car's Bluetooth music player holds audio focus
 CAR_KEYS="$KEY_SCREEN_SHOW $KEY_VPA_LEFT $KEY_VPA_RIGHT $KEY_FLY $KEY_BT_FOCUS"
 
+# The HUD simulator (hud-simulator/): a stand-in for the car's HUD service plus an overlay that draws the car's part.
+HUD_SRC="$HERE/hud-simulator"
+HUD_APK="$HUD_SRC/build/ez60-hud-simulator.apk"
+HUD_PKG=com.reachkim.ez60.hudsim
+HUD_PROCESS=ez60-hud-sim
+HUD_SERVICE=com.incall.SVR_MNG_SERVICE
+HUD_KEY=ez60_hud_sim
+HUD_CONTROL=/data/local/tmp/ez60-hud-control
+HUD_LOG=/data/local/tmp/ez60-hud.log
+
 case "$(uname -m)" in
     arm64) ABI=arm64-v8a ;;
     x86_64) ABI=x86_64 ;;
@@ -326,6 +336,160 @@ current_side() {
     else
         echo driver
     fi
+}
+
+# --- HUD simulator -------------------------------------------------------------------------------
+
+# The newest build-tools folder with everything the simulator build needs.
+build_tools_dir() {
+    local dir found=""
+    for dir in "$SDK"/build-tools/*/; do
+        dir="${dir%/}"
+        if [[ -x "$dir/d8" && -x "$dir/aapt2" && -x "$dir/zipalign" && -x "$dir/apksigner" ]]; then found="$dir"; fi
+    done
+    [[ -n "$found" ]] || return 1
+    echo "$found"
+}
+
+platform_jar() {
+    local jar
+    for jar in "$SDK/platforms/android-34/android.jar" "$SDK"/platforms/android-3*/android.jar; do
+        if [[ -f "$jar" ]]; then
+            echo "$jar"
+            return 0
+        fi
+    done
+    return 1
+}
+
+hud_service_running() { [[ "$(dev_shell service check "$HUD_SERVICE" 2>/dev/null || true)" == *": found"* ]]; }
+
+hud_stop_service() {
+    local pids
+    pids="$(dev_shell pidof "$HUD_PROCESS" 2>/dev/null || true)"
+    [[ -z "$pids" ]] || dev_shell kill $pids >/dev/null 2>&1 || true
+}
+
+# Builds the simulator APK with the SDK's own tools (javac, d8, aapt2, zipalign, apksigner); no Gradle.
+cmd_hud_build() {
+    local tools jar javac jar_tool keystore out
+    require_sdk
+    tools="$(build_tools_dir)" || die "No Android Build-Tools with d8, aapt2, zipalign and apksigner." \
+        "Install Build-Tools in Android Studio's SDK Manager."
+    jar="$(platform_jar)" || die "No Android SDK Platform 34 or newer. Install it in Android Studio's SDK Manager."
+    javac="${JAVA_HOME:-}/bin/javac"
+    jar_tool="${JAVA_HOME:-}/bin/jar"
+    [[ -x "$javac" && -x "$jar_tool" ]] || die "No JDK found. Set JAVA_HOME, or install Android Studio (its JDK is used)."
+    out="$HUD_SRC/build"
+    rm -rf "$out"
+    mkdir -p "$out/classes"
+    say "Building the HUD simulator..."
+    "$javac" --release 11 -nowarn -classpath "$jar" -d "$out/classes" "$HUD_SRC"/src/com/reachkim/ez60/hudsim/*.java
+    "$jar_tool" cf "$out/classes.jar" -C "$out/classes" .
+    "$tools/d8" --min-api 30 --lib "$jar" --output "$out" "$out/classes.jar"
+    "$tools/aapt2" link -o "$out/unaligned.apk" -I "$jar" --manifest "$HUD_SRC/AndroidManifest.xml" \
+        --min-sdk-version 30 --target-sdk-version 33 --version-code 1 --version-name 1.0
+    (cd "$out" && zip -q unaligned.apk classes.dex)
+    "$tools/zipalign" -f 4 "$out/unaligned.apk" "$out/aligned.apk"
+    # Android Studio's debug key, or a new one made the same way.
+    keystore="$HOME/.android/debug.keystore"
+    if [[ ! -f "$keystore" ]]; then
+        keystore="$out/debug.keystore"
+        "${JAVA_HOME}/bin/keytool" -genkeypair -keystore "$keystore" -storepass android -keypass android \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" >/dev/null
+    fi
+    "$tools/apksigner" sign --ks "$keystore" --ks-pass pass:android --key-pass pass:android \
+        --ks-key-alias androiddebugkey --out "$HUD_APK" "$out/aligned.apk"
+    say "Built $HUD_APK"
+}
+
+cmd_hud_start() {
+    local apk_path tries=0
+    require_device
+    adb_root
+    if [[ ! -f "$HUD_APK" || -n "$(find "$HUD_SRC/src" "$HUD_SRC/AndroidManifest.xml" -newer "$HUD_APK" 2>/dev/null)" ]]; then
+        cmd_hud_build
+    fi
+    say "Installing the HUD simulator..."
+    adb_s install -r "$HUD_APK" >/dev/null
+    dev_shell appops set "$HUD_PKG" SYSTEM_ALERT_WINDOW allow >/dev/null
+    dev_shell pm grant "$HUD_PKG" android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
+    # The car's policy lets DiPlay reach the car's service. Here the stand-in is added from a root shell, which
+    # SELinux keeps apps away from, so it is relaxed until Android restarts.
+    say "Relaxing SELinux until the next restart, so DiPlay can reach the simulated service..."
+    dev_shell setenforce 0 >/dev/null
+    hud_stop_service
+    apk_path="$(dev_shell pm path "$HUD_PKG" | sed -n 's/^package://p' | head -n 1)"
+    [[ -n "$apk_path" ]] || die "The HUD simulator did not install."
+    say "Starting the simulated car HUD service ($HUD_SERVICE)..."
+    dev_shell "CLASSPATH=$apk_path nohup app_process / --nice-name=$HUD_PROCESS" \
+        "com.reachkim.ez60.hudsim.FakeCarHudService </dev/null >$HUD_LOG 2>&1 &"
+    until hud_service_running; do
+        tries=$((tries + 1))
+        if (( tries > 10 )); then
+            dev_shell cat "$HUD_LOG" >&2 || true
+            die "The simulated service did not register. Its log is above."
+        fi
+        sleep 1
+    done
+    dev_shell am start-foreground-service -n "$HUD_PKG/.HudOverlayService" >/dev/null
+    say "The HUD simulator draws on the 800x480 display."
+    say "Next, in DiPlay: Settings > Diagnostics > HUD practice route (emulator). Watch the calls with: $0 hud log"
+}
+
+cmd_hud_stop() {
+    require_device
+    adb_root
+    dev_shell am stopservice -n "$HUD_PKG/.HudOverlayService" >/dev/null 2>&1 || true
+    hud_stop_service
+    dev_shell settings delete global "$HUD_KEY" >/dev/null 2>&1 || true
+    say "HUD simulator stopped. SELinux stays relaxed until the emulator restarts."
+}
+
+# Pretends the car's own navigation takes the HUD from DiPlay, or gives it back.
+cmd_hud_car_nav() {
+    local command
+    case "${1:-}" in
+        on) command=car ;;
+        off) command=release ;;
+        *) die "Usage: $0 hud car-nav on|off" ;;
+    esac
+    require_device
+    adb_root
+    hud_service_running || die "The HUD simulator is not running. Start it with: $0 hud start"
+    dev_shell "echo $command > $HUD_CONTROL"
+    if [[ "$command" == car ]]; then
+        say "The car's navigation took the HUD (simulated). DiPlay should stop sending."
+    else
+        say "The car's navigation gave the HUD back (simulated). DiPlay should send again."
+    fi
+}
+
+cmd_hud_log() {
+    require_device
+    say "What DiPlay sends and what the simulated service receives (Ctrl-C to stop):"
+    adb_s logcat -v time -s EZ60HudSim:I DiPlayHud:I
+}
+
+cmd_hud_status() {
+    require_device
+    if hud_service_running; then echo "Simulated car service: running"; else echo "Simulated car service: not running"; fi
+    echo "SELinux:               $(dev_shell getenforce 2>/dev/null || echo '?')"
+    echo "Last HUD state:        $(global_get "$HUD_KEY")"
+}
+
+cmd_hud() {
+    local action="${1:-}"
+    shift || true
+    case "$action" in
+        start) cmd_hud_start ;;
+        stop) cmd_hud_stop ;;
+        car-nav) cmd_hud_car_nav "$@" ;;
+        log) cmd_hud_log ;;
+        status) cmd_hud_status ;;
+        build) cmd_hud_build ;;
+        *) die "Usage: $0 hud start|stop|car-nav on|off|log|status|build" ;;
+    esac
 }
 
 # --- Commands ------------------------------------------------------------------------------------
@@ -626,6 +790,13 @@ Using it:
   ez60-emu status                Model, displays, DiPlay windows and the car's settings keys
   ez60-emu screenshot [file.png] Save the whole 5120x1440 screen
 
+HUD simulator (the car's HUD service and its drawing, on the 800x480 display):
+  ez60-emu hud start             Build if needed, install and start it
+  ez60-emu hud log               Follow what DiPlay sends and what the car service receives
+  ez60-emu hud car-nav on|off    Pretend the car's own navigation takes the HUD, or gives it back
+  ez60-emu hud status            Whether it runs, and the last HUD state
+  ez60-emu hud stop              Stop it
+
 Housekeeping:
   ez60-emu doctor                Check this Mac's Android tools and disk space
   ez60-emu stop                  Shut the emulator down
@@ -652,6 +823,7 @@ main() {
         key) cmd_key "$@" ;;
         night) cmd_night "$@" ;;
         font) cmd_font "$@" ;;
+        hud) cmd_hud "$@" ;;
         status) cmd_status ;;
         screenshot) cmd_screenshot "$@" ;;
         stop) cmd_stop ;;

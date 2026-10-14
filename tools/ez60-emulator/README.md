@@ -7,8 +7,8 @@ It does not copy the whole car. The car's own system (CAMZD OS) is not available
 The script then changes that system to match what the EZ-60 probe measured.
 **CarPlay cannot connect to it** (see [What it can't do](#what-it-cant-do)).
 
-> Status: `ez60-emu` was written on 2026-10-13 and tested against a simulated `adb` only.
-> It has not booted a real emulator yet. If a step fails, the error says which one; please report it.
+> Status: `ez60-emu` was written on 2026-10-13 and the HUD simulator on 2026-10-14. Both were tested against a simulated `adb` only.
+> Neither has booted a real emulator yet. If a step fails, the error says which one; please report it.
 
 ## What it copies
 
@@ -18,7 +18,8 @@ The script then changes that system to match what the EZ-60 probe measured.
 | Model | `J90K` | `J90K`, set by `setup`, so DiPlay turns on its EZ-60 defaults |
 | Screen | 5120×1440, density 160, driver and passenger halves | same size and density, with DiPlay in a 2560×1440 window on one half |
 | Two-finger swipe | moves DiPlay's window to the other half | `ez60-emu swipe` moves the window |
-| HUD | 800×480 presentation display; the car projects only (573,167)–(800,355) | 800×480 second display, shown whole |
+| HUD display | 800×480 presentation display; the car projects only (573,167)–(800,355) | 800×480 second display, shown whole |
+| HUD service and drawing | the car draws the arrow, distance, road and time left from DiPlay's navigation calls | `hud start` adds a stand-in service and draws an approximation of them |
 | Vehicle panel, voice assistant | the car writes `key_screen_show`, `key_vpa_cui_show_left/right` | `panel` and `assistant` write the same keys |
 | Steering-wheel keys | media previous, next, play/pause | `key prev`, `key next`, `key play` |
 | System bars | 160 px top bar, 136 px bottom gesture area | Android's own thinner bars |
@@ -29,8 +30,9 @@ The script then changes that system to match what the EZ-60 probe measured.
   - Wired CarPlay needs the iPhone's USB connection, and the Mac emulator cannot pass a USB device through.
   - Wireless CarPlay needs the car's Bluetooth and Wi-Fi, and the emulator only simulates both.
 - **Speed.** The car's MediaTek video decoders are missing, and the Mac is much faster than the car. Measure lag and frame rate in the car.
-- **The car's services.** The HUD feed (`com.incall.SVR_MNG_SERVICE`) and the ambient lights (`virtualcar_service`, `wt.atom`) are missing.
+- **The car's services.** The ambient lights (`virtualcar_service`, `wt.atom`) are missing, and so is the HUD service until you run `ez60-emu hud start`.
   DiPlay logs that they are unavailable and continues.
+- **The car's real HUD graphics.** The [HUD simulator](#hud-simulator) draws its own version of the car's arrow and numbers, and Google Maps' small CarPlay map cannot be shown.
 - **The car's own apps.** The car's launcher, its split-screen tasks and its native CarPlay app are missing.
 
 ## What it is good for
@@ -40,6 +42,7 @@ The script then changes that system to match what the EZ-60 probe measured.
 - EZ-60-only options and defaults, which appear because the model is `J90K`.
 - DiPlay's cockpit frame on the driver and passenger halves, and how it narrows when the vehicle panel or voice assistant opens.
 - Diagnostics → EZ-60 probe: **Test CarPlay window**, the HUD test card, and the probe report (which describes the emulator, not the car).
+- DiPlay's HUD code during a made-up drive, with the [HUD simulator](#hud-simulator).
 - Crashes and broken screens, before you install a build in the car.
 
 ## Before you start
@@ -110,12 +113,57 @@ Then install DiPlay and open it on the driver half:
 | `font <scale>` | Sets the font scale, for example `1.3` |
 | `status` | Shows the model, the displays, DiPlay's windows and the car's settings keys |
 | `screenshot [file.png]` | Saves the whole 5120×1440 screen |
+| `hud start` | Builds if needed, installs and starts the [HUD simulator](#hud-simulator) |
+| `hud log` | Follows what DiPlay sends and what the simulated service receives |
+| `hud car-nav on\|off` | Pretends the car's own navigation takes the HUD, or gives it back |
+| `hud status` | Shows whether the simulator runs, and the last HUD state |
+| `hud stop` | Stops the HUD simulator |
 | `doctor` | Checks the Android tools and the free disk space |
 | `stop` | Shuts the emulator down |
 | `delete [--yes]` | Deletes the emulator. The downloaded image stays. |
 
 `EZ60_PKG` chooses the DiPlay package when more than one is installed.
 By default the script uses the first installed package in this order: `.next`, `.hudtest`, release.
+
+## HUD simulator
+
+On the windshield, the car draws the turn arrow, distance, road, progress and time left itself.
+It draws them from the navigation calls DiPlay sends to its HUD service. Only DiPlay's 227×188 area of the 800×480 display (the map, or DiPlay's turn card) is DiPlay's own drawing.
+The HUD simulator stands in for the car's part:
+
+- **A stand-in for the car's HUD service** (`com.incall.SVR_MNG_SERVICE`). It accepts the same calls as the car, gives DiPlay navigation focus, and logs every call.
+- **An overlay on the 800×480 display.** It draws an approximation of the car's arrow and numbers from those calls.
+  DiPlay's area shows through only while DiPlay holds navigation focus, as in the car.
+
+Without CarPlay, nothing sends directions. The branch `ez60-hud-practice-route` adds a test button that plays a made-up 90-second drive through DiPlay's real HUD code.
+The button only appears in the emulator.
+
+1. Build DiPlay from `ez60-hud-practice-route` (for example `./gradlew :mobile:assembleDebug`) and install it with `./ez60-emu install <apk>`.
+2. Start the simulator:
+
+   ```bash
+   ./ez60-emu hud start
+   ```
+
+3. In DiPlay, open Settings → Diagnostics → **HUD practice route (emulator)**, and watch the emulator's 800×480 display.
+4. To see each call that DiPlay sends and the service receives, run:
+
+   ```bash
+   ./ez60-emu hud log
+   ```
+
+5. To test what happens when the car's own navigation takes the HUD, run `./ez60-emu hud car-nav on`. DiPlay should stop sending.
+   `./ez60-emu hud car-nav off` gives the HUD back.
+
+`hud start` relaxes SELinux (`setenforce 0`) until the emulator restarts. The car's own security rules let DiPlay reach the car's service.
+In the emulator, SELinux would block DiPlay from reaching a service started from a root shell.
+Run `hud start` again after each emulator start. `hud stop` stops the simulator.
+
+Limits:
+
+- The arrow, fonts and layout are approximations, not the car's graphics. Photos of the real HUD would make them closer.
+- Google Maps' small CarPlay map needs an iPhone, so DiPlay shows its turn card in that area.
+- The practice route skips the CarPlay message handling that turns the iPhone's directions into guidance. Test that part in the car.
 
 ## When something looks wrong
 
@@ -156,3 +204,6 @@ Nothing in DiPlay changes. The script uses only Android's own tools:
   The emulator's second display uses flag 75 (public, presentation, own content only, touch).
   If that doesn't produce a presentation display, `setup` falls back to an overlay display.
 - **The car's settings keys.** These are the `Settings.Global` values that DiPlay reads on the car, written with `adb shell settings put global`.
+- **HUD simulator.** [hud-simulator/](hud-simulator) is a small app that `hud start` builds with the SDK's own tools (no Gradle).
+  Its `FakeCarHudService` runs as root through `app_process`, registers `com.incall.SVR_MNG_SERVICE`, and answers like the car (EZ-60 findings).
+  It publishes each state to `Settings.Global ez60_hud_sim`. Its `HudOverlayService` reads that state and draws the car's part as an overlay window on the 800×480 display.
