@@ -194,7 +194,21 @@ Both trims use the same `IDouInteractiveManager` call numbers that DiPlay uses. 
 
 The session log starts with a "Car features:" line, and the EZ-60 probe adds a "Car features (read-only)"
 section: HUD type, screen, Ethernet, audio architecture, speakers, cameras and the other per-trim switches, so
-reports from different trims can be compared. What else differs between trims is not known yet.
+reports from different trims can be compared.
+
+First AR-HUD report (an "Option 3" car, 2026-10-16): `car_feature_hud_type=3`, and DiPlay took the AR-HUD path
+at every connection with no crash. Compared with the 2D HUD test car:
+
+| | 2D HUD test car | AR-HUD car |
+| --- | --- | --- |
+| Firmware | SWD.83.9 (build of 2025-09-30) | SWD.26.8 (build of 2025-12-31) |
+| `MeterDisplay#0` | 800×480 | 4032×845 |
+| Extra Ethernet links | — | `eth1`, `eth2` (`car_feature_ethernet=1`) |
+| Bluetooth stack | `BT_MT8676_v0.0.27SZ` | `BT_J90K_v0.0.34SZ` |
+
+Screen, decoders, audio buses, inputs and the hotspot interface (`ap0`) are the same. On that car the AirPlay
+Bonjour service took 10–20 s to start: JmDNS reverse-resolved each hotspot address over a network that did
+not answer. DiPlay now names the addresses itself, so nothing is resolved.
 
 ## Ambient lights following CarPlay music (experimental)
 

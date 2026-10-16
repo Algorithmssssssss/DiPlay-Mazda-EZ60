@@ -1395,7 +1395,8 @@ class CarPlayHostActivity : ComponentActivity() {
         // EZ-60: CarPlay's cluster map for the HUD area. Normal asks for the area's own size; Far asks for a larger
         // stream that the window scales down (more streets, smaller), Near for a smaller one it scales up.
         if (MazdaPlatform.isEz60) {
-            appendLog("Car features: ${MazdaCarFeatures.summary()}")
+            // Masked, not redacted: redact() drops a line that says "pass", as passenger_screen does.
+            appendFileLog(DiagnosticRedactor.mask("Car features: ${MazdaCarFeatures.summary()}"))
             if (!MazdaHudSettings.enabled(this)) return null
             // The AR-HUD shows the car's own picture over a video link only its navigation switches: a map window
             // there is never seen and could cover the car's guidance, and its decoder would only add load.

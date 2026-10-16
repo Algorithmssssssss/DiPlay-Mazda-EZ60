@@ -42,6 +42,7 @@ class MazdaProbeTest {
         assertTrue(MazdaCockpitProbe.interestingProperty("persist.vendor.camzd.dual_screen"))
         assertFalse(MazdaCockpitProbe.interestingProperty("ro.serialno"))
         assertFalse(MazdaCockpitProbe.interestingProperty("ro.boot.wifimacaddr"))
+        assertFalse(MazdaCockpitProbe.interestingProperty("persist.adb.wifi.guid"))
         assertFalse(MazdaCockpitProbe.interestingProperty("persist.sys.timezone"))
     }
 

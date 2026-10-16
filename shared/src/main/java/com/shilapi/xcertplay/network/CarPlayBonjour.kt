@@ -126,6 +126,22 @@ object CarPlayBonjourProtocol {
             "Connection: close\r\n" +
             "\r\n"
     }
+
+    /**
+     * [address] already named [hostName]. JmDNS.create compares its host name with the address's own, and
+     * [InetAddress.getHostName] reverse-resolves an unnamed address over the car's default network: on a head unit
+     * whose network does not answer, each address waited out a 5 s DNS timeout before the AirPlay service went out
+     * (10-20 s on an EZ-60). JmDNS keeps [hostName] either way.
+     */
+    internal fun namedAddress(address: InetAddress, hostName: String): InetAddress {
+        if (address !is Inet6Address) return InetAddress.getByAddress(hostName, address.address)
+        val scope = address.scopedInterface
+        return when {
+            scope != null -> Inet6Address.getByAddress(hostName, address.address, scope)
+            address.scopeId > 0 -> Inet6Address.getByAddress(hostName, address.address, address.scopeId)
+            else -> InetAddress.getByAddress(hostName, address.address)
+        }
+    }
 }
 
 /**
@@ -279,8 +295,9 @@ class CarPlayBonjour(
                         "Interface mDNS requires a local advertised address"
                     }
                     // A JmDNS instance joins only its address family's multicast group.
+                    val hostName = "carplay-${config.deviceId.replace(":", "")}"
                     for (address in advertisedAddresses) {
-                        val dns = JmDNS.create(address, "carplay-${config.deviceId.replace(":", "")}")
+                        val dns = JmDNS.create(CarPlayBonjourProtocol.namedAddress(address, hostName), hostName)
                         interfaceMdns.add(dns)
                         dns.addServiceListener("$CARPLAY_CONTROL_SERVICE_TYPE.local.", interfaceListener)
                         dns.registerService(ServiceInfo.create(

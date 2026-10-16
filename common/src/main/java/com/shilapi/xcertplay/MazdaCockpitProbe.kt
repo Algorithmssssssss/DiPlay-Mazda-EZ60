@@ -103,7 +103,8 @@ internal object MazdaCockpitProbe {
         "(?i)display|lcd|screen|panel|dual|split|multi|hwc|surface|vehicle|mazda|changan|camzd|wtcl|j90|ivi|cockpit|" +
             "carplay|carlink|hicar|projection|codec|video|wifi|wlan|p2p|bluetooth|usb|audio",
     )
-    private val privateProperty = Regex("(?i)serial|imei|meid|iccid|mac|addr|ssid|pass|key|token|secret|cert|sign|uuid|ether|\\.id$")
+    // persist.adb.wifi.guid names the head unit's serial ("adb-<serial> -<suffix>").
+    private val privateProperty = Regex("(?i)serial|imei|meid|iccid|mac|addr|ssid|pass|key|token|secret|cert|sign|uuid|guid|ether|\\.id$")
     private val propertyLine = Regex("^\\[([^]]+)]: \\[(.*)]$")
     private val windowConfiguration = Regex("winConfig=\\{[^}]*\\}|mWindowingMode=\\w+")
 
