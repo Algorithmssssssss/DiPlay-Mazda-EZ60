@@ -332,7 +332,9 @@ internal object MazdaCockpitProbe {
         appendLine()
         appendLine("--- EZ-60 probe events (recording=${isRecording(context)}) ---")
         val events = File(directory, EVENTS_FILE)
-        append(if (events.isFile) events.readText() else "No recorded events.\n")
+        // Masked again: events recorded before a masking rule existed keep what it now hides.
+        append(if (events.isFile) events.readLines().joinToString("\n", postfix = "\n") { DiagnosticRedactor.mask(it) }
+            else "No recorded events.\n")
         appendLine()
         appendLine("--- EZ-60 probe crashes (most recent last) ---")
         val crashes = File(directory, CRASH_FILE)

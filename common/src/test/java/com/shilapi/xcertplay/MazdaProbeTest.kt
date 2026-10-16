@@ -45,6 +45,18 @@ class MazdaProbeTest {
         assertFalse(MazdaCockpitProbe.interestingProperty("persist.sys.timezone"))
     }
 
+    // The voice assistant's session id carries the car's VIN; reports go to other people. (A made-up VIN.)
+    @Test fun aVinIsMaskedButBuildAndDecoderNamesStay() {
+        assertEquals("[settings] global.speech_id=TSpeechID_vin[vin]_1791801487547",
+            DiagnosticRedactor.mask("[settings] global.speech_id=TSpeechID_vinLVRHDTEST0N123456_1791801487547"))
+        assertEquals("vin=[vin]", DiagnosticRedactor.redact("vin=LVRHDTEST0N123456"))
+        for (kept in listOf("ro.build.version.incremental=20250930150736", "decoder=c2.mtk.avc.decoder.lowlatency",
+            "fingerprint=TINNOVE/vext_wt_car/auto8676p1_64_bsp:14/UP1A.231005.007", "C281_MIDDLE_EAST_AND_NORTH_AFRICA",
+            "12345678901234567")) {
+            assertEquals(kept, DiagnosticRedactor.mask(kept))
+        }
+    }
+
     @Test fun maskKeepsTheLineButHidesAddresses() {
         val line = "usb device name=/dev/bus/usb/001/002 mac=02:11:22:33:44:55 ip=192.168.43.1"
         assertEquals("usb device name=/dev/bus/usb/001/002 mac=[address] ip=[ip]", DiagnosticRedactor.mask(line))
