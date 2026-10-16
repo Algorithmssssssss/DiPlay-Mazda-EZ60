@@ -313,6 +313,10 @@ internal object MazdaCockpitProbe {
                 section("Day/night and input") { dayNightAndInput(app, this) }
                 section("Apps") { apps(app, this) }
                 if (MazdaPlatform.isEz60) section("Ambient lighting (read-only)") { MazdaAmbientProbe.section(app, this) }
+                if (MazdaPlatform.isEz60) section("Car features (read-only)") {
+                    for (key in MazdaCarFeatures.REPORTED) appendLine("$key=${MazdaCarFeatures.value(key) ?: "unset"}")
+                    appendLine("HUD as DiPlay treats it: ${MazdaCarFeatures.hud()}")
+                }
             }.lineSequence().joinToString("\n") { DiagnosticRedactor.mask(it) }
             runCatching { File(directory(app), SNAPSHOT_FILE).writeText(text) }
             main.post { done() }

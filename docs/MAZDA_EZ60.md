@@ -171,6 +171,31 @@ read CarPlay's lane guidance yet.
 The HUD's music line (top left, "暂无歌词" when there are no lyrics) belongs to the car's media center. It
 shows only lyrics, which CarPlay does not send, so DiPlay leaves it alone in this release.
 
+### Trims: 2D HUD and AR-HUD
+
+The car's own navigation (WT_TinnoveNavigation, J90K build of 2025-09-29) supports two HUDs and tells them
+apart by the car's feature configuration: service `tinnove_config`, `IConfigInterface.getValue`
+(call 3), key `car_feature_hud_type`. A value of 3 is the 3D AR-HUD; any other value, or none, is the 2D HUD.
+
+| | 2D HUD (the test car) | AR-HUD (`car_feature_hud_type=3`) |
+| --- | --- | --- |
+| HUD picture | the projected part of `MeterDisplay#0`, while an app holds navigation focus | a video link the head unit switches: `setVideoStatus(5)` to show, `6` to hide (calls 72–74), confirmed by `onRequestLVDS(19)` / `onIPStatus(6)` and `sendSwitchLVDSFinishEvent` |
+| Car's own map on the HUD | shown when its guidance starts | shown only while driving (not in P), in one of five layouts the car's HUD settings choose |
+| Turn, road and remaining distance | the navigation calls in the table above | the same calls |
+
+Both trims use the same `IDouInteractiveManager` call numbers that DiPlay uses. DiPlay reads the HUD type
+(read-only) at each connection and follows the same rule:
+
+- 2D HUD: as described above.
+- AR-HUD: turn-by-turn only. DiPlay opens no window on `MeterDisplay#0` and does not ask the iPhone for the map
+  stream. Its window could never reach the AR-HUD, because DiPlay never switches the video link, and it could
+  cover the car's own guidance when the car switches it. One video decoder fewer also leaves more of the
+  MediaTek video hardware to the car's cameras and DVR.
+
+The session log starts with a "Car features:" line, and the EZ-60 probe adds a "Car features (read-only)"
+section: HUD type, screen, Ethernet, audio architecture, speakers, cameras and the other per-trim switches, so
+reports from different trims can be compared. What else differs between trims is not known yet.
+
 ## Ambient lights following CarPlay music (experimental)
 
 **Settings → Advanced → Ambient lighting → Follow CarPlay music** (EZ-60 only, off by default). The car's own

@@ -1175,7 +1175,9 @@ class CarPlayHostActivity : ComponentActivity() {
     private fun ensureClusterPresentation() {
         // The EZ-60 has no instrument cluster: the cluster stream goes to the HUD window instead.
         if (MazdaPlatform.isEz60) {
-            if (MazdaHudSettings.enabled(this)) ensureMazdaHudScreen() else dismissMazdaHudScreen()
+            if (MazdaHudSettings.enabled(this) && MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.STANDARD) {
+                ensureMazdaHudScreen()
+            } else dismissMazdaHudScreen()
             return
         }
         if (!AirPlayPersistence.loadClusterMapEnabled(this)) {
@@ -1393,7 +1395,14 @@ class CarPlayHostActivity : ComponentActivity() {
         // EZ-60: CarPlay's cluster map for the HUD area. Normal asks for the area's own size; Far asks for a larger
         // stream that the window scales down (more streets, smaller), Near for a smaller one it scales up.
         if (MazdaPlatform.isEz60) {
+            appendLog("Car features: ${MazdaCarFeatures.summary()}")
             if (!MazdaHudSettings.enabled(this)) return null
+            // The AR-HUD shows the car's own picture over a video link only its navigation switches: a map window
+            // there is never seen and could cover the car's guidance, and its decoder would only add load.
+            if (MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.AUGMENTED_REALITY) {
+                appendLog("HUD: AR-HUD (car_feature_hud_type=3): turn-by-turn only, no map stream or window")
+                return null
+            }
             clusterStreamOnDisplay = true
             val view = MazdaHudSettings.mapView(this)
             return CarPlayClusterDisplay.config(MazdaHudScreen.AREA_WIDTH, MazdaHudScreen.AREA_HEIGHT,

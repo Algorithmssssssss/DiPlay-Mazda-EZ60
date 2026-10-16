@@ -7,6 +7,7 @@ Moves the fork to DiPlay 0.2.19. See [release notes](docs/RELEASE-NOTES-EZ60.md)
 - Translate the EZ-60 settings and probe into Japanese.
 - Add Download probe report to the phone page (QR code, or the car's address and a 6-digit code) under Diagnostics → Get the report on a phone, beside the diagnostic report. The probe's own Open on iPhone page stays.
 - The probe report covers the whole CarPlay session, not only the newest 512 KB log file (about the last 20 minutes of a drive), adds a HUD section, and names the saved video settings.
+- Detect the car's HUD from its feature configuration (`car_feature_hud_type`), as the car's own navigation does. On the AR-HUD trim, keep turn-by-turn but open no HUD map window and request no HUD map stream. Report the car's per-trim features in the session log and the probe.
 - Keep the HUD's guidance and map when CarPlay connects mid-drive: Google Maps resumes its route with brief "no route" updates, which ended the HUD's guidance for up to two minutes. The HUD now clears 5 s after "no route" unless a route follows (arrival still clears it at once).
 
 # DiPlay for Mazda EZ-60 0.2.17-ez60.1 — 2026-10-11 (pre-release, not published)
