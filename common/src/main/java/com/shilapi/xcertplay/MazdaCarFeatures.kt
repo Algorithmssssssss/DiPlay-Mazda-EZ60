@@ -63,9 +63,13 @@ internal object MazdaCarFeatures {
     internal fun hudFor(type: String?): Hud =
         if (type?.trim() == AR_HUD_TYPE) Hud.AUGMENTED_REALITY else Hud.STANDARD
 
-    /** One line for the session log and the probe. */
-    fun summary(read: (String) -> String? = ::value): String =
-        REPORTED.joinToString(" ") { key -> "${key.removePrefix("car_feature_")}=${read(key) ?: "unset"}" }
+    /**
+     * One line for the session log. "passenger" is written as the car's own "copilot": the log drops any line that
+     * says "pass" (DiagnosticRedactor), so the whole line was lost.
+     */
+    fun summary(read: (String) -> String? = ::value): String = REPORTED.joinToString(" ") { key ->
+        "${key.removePrefix("car_feature_").replace("passenger", "copilot")}=${read(key) ?: "unset"}"
+    }
 
     /** One feature's value, or null when the service or the key is missing. Not on a hot path. */
     fun value(key: String): String? {

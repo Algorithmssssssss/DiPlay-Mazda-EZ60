@@ -210,6 +210,11 @@ Screen, decoders, audio buses, inputs and the hotspot interface (`ap0`) are the 
 Bonjour service took 10–20 s to start: JmDNS reverse-resolved each hotspot address over a network that did
 not answer. DiPlay now names the addresses itself, so nothing is resolved.
 
+Second AR-HUD report (2026-10-17): the Bonjour service started at once. After failed attempts in which the
+iPhone did not connect, a new connection succeeded within 1.4 s of the start request and ran for 11 minutes or
+more, at about 32 fps with 0.3–0.5 s arrival gaps. With a Google Maps route, the AR-HUD car granted DiPlay
+navigation focus and accepted the turn call. Whether the AR-HUD drew anything has not been reported yet.
+
 ## Ambient lights following CarPlay music (experimental)
 
 **Settings → Advanced → Ambient lighting → Follow CarPlay music** (EZ-60 only, off by default). The car's own

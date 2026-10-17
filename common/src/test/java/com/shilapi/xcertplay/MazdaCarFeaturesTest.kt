@@ -1,7 +1,6 @@
 package com.shilapi.xcertplay
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -33,11 +32,11 @@ class MazdaCarFeaturesTest {
         assertEquals(MazdaCarFeatures.REPORTED.size, summary.split(' ').size)
     }
 
-    // An Option 3 report had no "Car features:" line: redact() drops any line with "pass" (passenger_screen).
-    @Test fun theSessionLogLineSurvivesMasking() {
+    // Option 3 reports had no "Car features:" line: the session log drops any line that says "pass" (passenger_screen).
+    @Test fun theSessionLogKeepsTheWholeLine() {
         val line = "Car features: " + MazdaCarFeatures.summary { "31" }
-        assertNull(DiagnosticRedactor.redact(line))
-        assertEquals(line, DiagnosticRedactor.mask(line))
+        assertEquals(line, DiagnosticRedactor.redact(line))
+        assertTrue(line, line.contains("copilot_screen=31"))
     }
 
     private fun resetCache() {
