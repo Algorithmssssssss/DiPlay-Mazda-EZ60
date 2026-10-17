@@ -188,11 +188,19 @@ AR-HUD video link back, and starts nothing on the HUD again until the car is on.
 still guiding at switch-off left DiPlay's navigation state and focus on the car's HUD service, held by a process
 that no longer existed.
 
-Why it matters: another developer saw the 360 camera app (`com.tinnove.evs`) crash on an AR-HUD car after
-leaving navigation on the HUD and locking the car for 5 minutes. The same car service (`IDouInteractiveManager`)
-also carries the camera calls (`notifyUseCamera`, `registerCameraCallback` → `onCameraUse`, `send360trigEvent`)
-and, on the AR-HUD, the video link. The camera app and the service are not decompiled, so the exact cause is
-not confirmed; leaving no stale navigation state behind is what the car's own navigation does.
+Why it matters: another developer saw the 360 camera app crash on an AR-HUD car after leaving navigation on
+the HUD and locking the car for 5 minutes. Leaving no stale navigation state behind is what the car's own
+navigation does, but it is not shown to be the cause. The decompiled 360 camera (`com.tinnove.evs` 3.3.1) and
+dash camera (`com.incall.dvr`, build of 2025-12-04) apps never call the HUD service's navigation, focus,
+video-link or camera calls, and never look at `MeterDisplay#0`. The dash camera bundles the service's SDK but
+uses it only for phone-call state, the network, power and the telematics box (sentinel mode). The 360 camera
+app ends its own process in three cases, which can look like a crash:
+
+- the car service is not ready when it connects (`CarSignalManager`), for example just after waking;
+- the previous camera screen takes more than 2 s to close when the camera opens again (`AvmDisPlayController`);
+- its configuration (car model, camera features) changes while it runs (`ConfigurationManager`).
+
+Finding the cause needs the crash itself from the car: the crash log buffer and the system's crash records.
 
 The session log shows "Car power: switched off …" and the HUD lines that follow. If a run is ever stopped while
 it guides on the HUD, the next run logs "HUD: the last run was stopped while guiding on the HUD".
