@@ -176,10 +176,12 @@ shows only lyrics, which CarPlay does not send, so DiPlay leaves it alone in thi
 
 ### When the car is switched off
 
-The head unit writes `vehicle_acc_status=2` (Settings.Global) when the car is switched off, then force-stops
-DiPlay within about a second and sleeps (report of 2026-10-14: the flag at 17:27:00.2, DiPlay's last log line at
-17:27:01.0, a `user_requested` process exit, a new process after the car started at 17:33). Nothing DiPlay runs
-at the end of a session gets the chance to run.
+The head unit writes `vehicle_acc_status=2` (Settings.Global) when the car is switched off, with
+`VEHICLE_SETTING_OFF_TIME_KEY` about 20 ms earlier and `vs_power_status_feedback_value=2`. A few seconds later it
+freezes DiPlay and sleeps, and it force-stops DiPlay (`user_requested`) when the car starts again. On 2026-10-14 the
+flag came at 17:27:00.2 and DiPlay's last log line 0.8 s later. On an AR-HUD car on 2026-10-17 the flag came at
+18:55:20.6, the last line 2.7 s later, and the force-stop at the next start (18:57:35). Nothing DiPlay runs at the
+end of a session gets the chance to run.
 
 The car's own navigation ends its guidance on that change (`AccObserver.exitGuide`, "exit guidance caused by an
 ACC change"), which also takes it off the HUD. DiPlay now does the same from its own thread
@@ -202,7 +204,10 @@ app ends its own process in three cases, which can look like a crash:
 
 Finding the cause needs the crash itself from the car: the crash log buffer and the system's crash records.
 
-The session log shows "Car power: switched off …" and the HUD lines that follow. If a run is ever stopped while
+The watch listens to every global setting and filters for those three, as the EZ-60 probe does: on the AR-HUD
+car an observer of `vehicle_acc_status`'s own URI never heard the change that the probe's observer recorded. The
+session log shows "Car power: watching vehicle_acc_status=…" when the CarPlay screen starts and "Car power:
+switched off …" with the HUD lines that follow. If a run is ever stopped while
 it guides on the HUD, the next run logs "HUD: the last run was stopped while guiding on the HUD".
 
 Test on an AR-HUD car: start a CarPlay route so DiPlay guides on the HUD, switch the car off and lock it with

@@ -752,7 +752,9 @@ class CarPlayHostActivity : ComponentActivity() {
         locationPermissionAvailable = hasFineLocationPermission()
         setContentView(MzdCarAppLayout(this, carPlayProjection = true).apply { setPanelContent(buildContentView()) })
         MazdaCockpitProbe.attach(this, PROBE_TAG, savedInstanceState != null)
-        if (MazdaPlatform.isEz60) mazdaPower = MazdaPowerWatch(applicationContext, ::onCarPower).also { it.start() }
+        if (MazdaPlatform.isEz60) mazdaPower = MazdaPowerWatch(applicationContext, ::onCarPower).also {
+            appendLog("Car power: watching vehicle_acc_status=${it.start()}")
+        }
         applyFullscreenMode()
         onBackPressedDispatcher.addCallback(
             this,
