@@ -125,7 +125,9 @@ own values (`layout_arhud_presentation`), and the EZNav developers confirmed the
 DiPlay's window on `MeterDisplay#0` exists only while DiPlay guides on the HUD, on both trims, and is removed when
 the car is switched off. The car's HUD display service reads every window on that display about once a second,
 painted or not. EZNav measured that a window left there across a deep sleep (about 5 minutes after the screen
-goes off) broke the surround-view and reverse camera on a 100" AR-HUD car, even without the video link.
+goes off) broke the surround-view and reverse camera on a 100" AR-HUD car, even without the video link. On our
+tester's AR-HUD car, where DiPlay's window already existed only while it held the video link and was gone in
+Park, the test builds of 2026-10-17 showed no 360-camera or dash-camera fault.
 
 The EZ-60's own switches are together on **Settings → Mazda EZ-60** (shown on the EZ-60 only, first in the
 list), so they are quick to find and turn off.
@@ -199,9 +201,9 @@ still guiding at switch-off left DiPlay's navigation state and focus on the car'
 that no longer existed.
 
 Why it matters: another developer saw the 360 camera app crash on an AR-HUD car after leaving navigation on
-the HUD and locking the car for 5 minutes. The EZNav developers traced the same fault to a window left on
+the HUD and locking the car for 5 minutes. The EZNav developers trace that fault to a window left on
 `MeterDisplay#0` across the deep sleep (see "Windshield HUD"); DiPlay now removes its HUD window at switch-off and
-keeps it only while guiding. Leaving no stale navigation state behind is what the car's own navigation does. The decompiled 360 camera (`com.tinnove.evs` 3.3.1) and
+keeps it only while guiding. Our testers saw no camera fault with DiPlay's AR-HUD map. Leaving no stale navigation state behind is what the car's own navigation does. The decompiled 360 camera (`com.tinnove.evs` 3.3.1) and
 dash camera (`com.incall.dvr`, build of 2025-12-04) apps never call the HUD service's navigation, focus,
 video-link or camera calls, and never look at `MeterDisplay#0`. The dash camera bundles the service's SDK but
 uses it only for phone-call state, the network, power and the telematics box (sentinel mode). The 360 camera
@@ -264,7 +266,9 @@ Both trims use the same `IDouInteractiveManager` call numbers that DiPlay uses. 
   about 1 ms before the gear reads P (EZNav). Requests made in P answer busy (20), and a new request is granted
   about 60 ms after leaving P. DiPlay confirms that 6, keeps its window, and reads the gear at once and 300 ms
   later, so even a short P is seen: in P it removes the window and gives the link back, and out of Park it asks
-  again at its next reading (first tester report: the map stayed off after D → P → D; fixed and confirmed).
+  again at its next reading (first tester report: the map stayed off after D → P → D. The fix that removed the
+  window on that 6 and asked again out of Park was confirmed on the car; this gear-reading version is not yet
+  driven).
   Whether this connection asked for the AR-HUD map, and at which size, belongs to the running CarPlay session: when
   CarPlay opens the car's home screen, DiPlay's CarPlay screen closes, and the next one adopts the session and
   shows the map again (first tester report: the map did not come back). The same goes for which output stream 111
