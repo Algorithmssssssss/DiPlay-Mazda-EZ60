@@ -247,13 +247,17 @@ internal class MazdaHud(
     }
 
     internal companion object {
-        // The HUD's 800x480 display and the part the car's own apps draw into (probe test card only).
+        // The 2D HUD's 800x480 display and the car's own map box on it (WT_TinnoveNavigation layout_arhud_presentation:
+        // dm_178 at dm_584, dm_179; at dm_38 when the driver swaps the HUD panels and map layout 826279579 reads 1),
+        // confirmed at the glass with labelled grids by the EZNav developers (2026-10-17). The 227x188 at (573,167)
+        // used before is the Deepal S05's box: on the EZ-60 its edges are cropped.
         const val WIDTH = 800
         const val HEIGHT = 480
-        const val VISIBLE_LEFT = 573
-        const val VISIBLE_TOP = 167
-        const val VISIBLE_RIGHT = 800
-        const val VISIBLE_BOTTOM = 355
+        const val VISIBLE_LEFT = 584
+        const val VISIBLE_TOP = 179
+        const val VISIBLE_RIGHT = 762
+        const val VISIBLE_BOTTOM = 357
+        const val VISIBLE_LEFT_SWAPPED = 38
 
         private const val SERVICE_MANAGER = "com.incall.SVR_MNG_SERVICE"
         private const val SERVICE_MANAGER_INTERFACE = "com.incall.serversdk.server.ISvrManager"
@@ -382,7 +386,7 @@ internal object MazdaHudSettings {
     }
 
     /** The AR-HUD map at the car's own size, or larger ([MazdaArHudLayout.box]). */
-    enum class ArMapSize(val percent: Int) { CAR(100), LARGE(125), LARGEST(145) }
+    enum class ArMapSize { CAR, LARGE, LARGEST }
 
     fun arMapSize(context: Context): ArMapSize = runCatching {
         ArMapSize.valueOf(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

@@ -26,5 +26,5 @@
     <string name="settings_mazda_ar_map_size_car">Як у машини</string>
     <string name="settings_mazda_ar_map_size_large">Великий</string>
     <string name="settings_mazda_ar_map_size_largest">Найбільший</string>
-    <string name="settings_mazda_ar_map_size_description">«Як у машини» — розмір карти штатної навігації. Більші карти ростуть угору й до середини HUD, нижній край лишається над швидкістю та передачею на HUD. Діє з наступного підключення.</string>
+    <string name="settings_mazda_ar_map_size_description">«Як у машини» — розмір карти штатної навігації. «Великий» і «Найбільший» займають більше зображення AR-HUD, праворуч від швидкості та передачі на HUD; «Найбільший» найкраще читався на склі в машинах зі 100-дюймовим AR-HUD. Коли карта ліворуч, зберігається розмір машини. Діє з наступного підключення.</string>
 </resources>

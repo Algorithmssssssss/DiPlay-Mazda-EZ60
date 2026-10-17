@@ -60,8 +60,9 @@ class MazdaHudTest {
         fun size(view: MazdaHudSettings.MapView) = com.shilapi.xcertplay.airplay.CarPlayClusterDisplay.config(
             MazdaHudScreen.AREA_WIDTH, MazdaHudScreen.AREA_HEIGHT, scalePercent = view.scalePercent,
         ).let { it.widthPixels to it.heightPixels }
-        assertEquals(176 to 144, size(MazdaHudSettings.MapView.NEAR))
-        assertEquals(232 to 192, size(MazdaHudSettings.MapView.NORMAL))
-        assertEquals(336 to 280, size(MazdaHudSettings.MapView.FAR))
+        // The car's own 178x178 box (EZNav, 2026-10-17); the map views ask for less or more.
+        assertEquals(136 to 136, size(MazdaHudSettings.MapView.NEAR))
+        assertEquals(176 to 176, size(MazdaHudSettings.MapView.NORMAL))
+        assertEquals(264 to 264, size(MazdaHudSettings.MapView.FAR))
     }
 }

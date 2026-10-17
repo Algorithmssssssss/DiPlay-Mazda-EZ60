@@ -26,5 +26,5 @@
     <string name="settings_mazda_ar_map_size_car">Como el coche</string>
     <string name="settings_mazda_ar_map_size_large">Grande</string>
     <string name="settings_mazda_ar_map_size_largest">Máximo</string>
-    <string name="settings_mazda_ar_map_size_description">«Como el coche» es el tamaño del mapa de la navegación propia del coche. Los mapas más grandes crecen hacia arriba y hacia el centro del HUD, con el borde inferior por encima de la velocidad y la marcha del HUD. Se aplica en la próxima conexión.</string>
+    <string name="settings_mazda_ar_map_size_description">«Como el coche» es el tamaño del mapa de la navegación propia del coche. «Grande» y «Máximo» usan más imagen del AR-HUD, a la derecha de la velocidad y la marcha del HUD; «Máximo» es el tamaño que mejor se leía en el parabrisas en coches con AR-HUD de 100 pulgadas. Con el mapa a la izquierda se mantiene el tamaño del coche. Se aplica en la próxima conexión.</string>
 </resources>

@@ -26,5 +26,5 @@
     <string name="settings_mazda_ar_map_size_car">与车辆一致</string>
     <string name="settings_mazda_ar_map_size_large">大</string>
     <string name="settings_mazda_ar_map_size_largest">最大</string>
-    <string name="settings_mazda_ar_map_size_description">“与车辆一致”与车辆自带导航的地图相同。更大的地图会向上并朝 HUD 中间扩展，底边保持在 HUD 的车速和挡位上方。在下次连接时生效。</string>
+    <string name="settings_mazda_ar_map_size_description">“与车辆一致”与车辆自带导航的地图相同。“大”和“最大”会使用更多 AR-HUD 画面，位于 HUD 车速和挡位的右侧；“最大”是在 100 英寸 AR-HUD 车型的挡风玻璃上看起来最清楚的大小。地图在左侧时保持车辆的大小。在下次连接时生效。</string>
 </resources>

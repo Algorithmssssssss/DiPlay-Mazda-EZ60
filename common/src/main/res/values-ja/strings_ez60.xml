@@ -26,5 +26,5 @@
     <string name="settings_mazda_ar_map_size_car">車と同じ</string>
     <string name="settings_mazda_ar_map_size_large">大</string>
     <string name="settings_mazda_ar_map_size_largest">最大</string>
-    <string name="settings_mazda_ar_map_size_description">「車と同じ」は純正ナビの地図と同じ大きさです。大きくすると上とHUDの中央に向かって広がり、下端はHUDの速度とシフト位置の上に保たれます。次回の接続から有効になります。</string>
+    <string name="settings_mazda_ar_map_size_description">「車と同じ」は純正ナビの地図と同じ大きさです。「大」と「最大」はAR-HUDの映像をより広く使い、HUDの速度とシフト位置の右側に表示します。「最大」は100インチAR-HUD車のフロントガラスで最も見やすかった大きさです。地図が左側のときは車と同じ大きさのままです。次回の接続から有効になります。</string>
 </resources>

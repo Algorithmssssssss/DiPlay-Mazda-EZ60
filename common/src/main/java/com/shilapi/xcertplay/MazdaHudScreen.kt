@@ -22,10 +22,11 @@ import androidx.core.content.ContextCompat
 import com.shilapi.xcertplay.hud.ClusterTurnGuidance
 
 /**
- * DiPlay's window on the EZ-60 HUD display ("MeterDisplay#0"). On the 2D HUD (800x480) the HUD projects only the
- * [MazdaHud.VISIBLE_LEFT]..[MazdaHud.VISIBLE_BOTTOM] part of it, and only while DiPlay holds navigation focus
- * ([MazdaHud]); black is not projected. On the AR-HUD the window exists only while DiPlay holds the video link
- * ([MazdaArHud]) and fills the car's own map box ([arArea]). In the area: CarPlay's instrument-cluster map while
+ * DiPlay's window on the EZ-60 HUD display ("MeterDisplay#0"). On the 2D HUD (800x480) the HUD projects the car's
+ * map box ([MazdaHud.VISIBLE_LEFT]..[MazdaHud.VISIBLE_BOTTOM], or on the left when the panels are swapped) while an
+ * app holds navigation focus; black is not projected. On the AR-HUD it fills the car's map box ([arArea]). On both
+ * the window exists only while DiPlay guides on the HUD: the car's HUD service reads every window on that display
+ * about once a second, and a window left there across a deep sleep broke the 360 camera on an AR-HUD car (EZNav). In the area: CarPlay's instrument-cluster map while
  * the iPhone streams it, or a turn card when there is no map. The 2D HUD draws the arrow and distance itself.
  */
 internal class MazdaHudScreen(
@@ -86,10 +87,15 @@ internal class MazdaHudScreen(
         })
     }
 
-    /** The AR-HUD's driver changed the map's side: move the area, keeping the map stream's surface. */
-    fun moveTo(left: Int) {
+    /** The AR-HUD's driver changed the map's side: move (and size) the area, keeping the map stream's surface. */
+    fun moveTo(box: MazdaArHudLayout.Box) {
         val view = areaView ?: return
-        view.layoutParams = (view.layoutParams as FrameLayout.LayoutParams).apply { leftMargin = left }
+        view.layoutParams = (view.layoutParams as FrameLayout.LayoutParams).apply {
+            leftMargin = box.left
+            topMargin = box.top
+            width = box.width
+            height = box.height
+        }
     }
 
     /** The cluster map stream started or stopped: the turn card shows only without it. */
@@ -102,6 +108,10 @@ internal class MazdaHudScreen(
         const val AREA_WIDTH = MazdaHud.VISIBLE_RIGHT - MazdaHud.VISIBLE_LEFT
         const val AREA_HEIGHT = MazdaHud.VISIBLE_BOTTOM - MazdaHud.VISIBLE_TOP
         val STANDARD_AREA = Area(MazdaHud.VISIBLE_LEFT, MazdaHud.VISIBLE_TOP, AREA_WIDTH, AREA_HEIGHT, Color.BLACK)
+
+        /** The 2D HUD's box: on the left when the driver swapped the HUD panels (map layout 1). */
+        fun standardArea(panelsSwapped: Boolean) =
+            if (panelsSwapped) STANDARD_AREA.copy(left = MazdaHud.VISIBLE_LEFT_SWAPPED) else STANDARD_AREA
 
         /** The car's own AR-HUD map box at the chosen size; transparent around it, as the car's navigation draws it. */
         fun arArea(box: MazdaArHudLayout.Box) = Area(box.left, box.top, box.width, box.height, Color.TRANSPARENT)

@@ -26,5 +26,5 @@
     <string name="settings_mazda_ar_map_size_car">The car’s size</string>
     <string name="settings_mazda_ar_map_size_large">Large</string>
     <string name="settings_mazda_ar_map_size_largest">Largest</string>
-    <string name="settings_mazda_ar_map_size_description">The car’s size matches its own navigation map. Larger maps grow upwards and towards the middle of the HUD, keeping the bottom edge above the HUD’s speed and gear. Applies at the next connection.</string>
+    <string name="settings_mazda_ar_map_size_description">The car’s size matches its own navigation map. Large and Largest use more of the AR-HUD picture, to the right of the HUD’s speed and gear; Largest is the size that read best at the glass on 100-inch AR-HUD cars. With the map on the left, the car’s size is kept. Applies at the next connection.</string>
 </resources>

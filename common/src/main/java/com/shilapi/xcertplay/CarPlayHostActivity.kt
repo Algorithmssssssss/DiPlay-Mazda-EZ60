@@ -401,7 +401,7 @@ class CarPlayHostActivity : ComponentActivity() {
         override fun available() = MazdaHudScreen.findArDisplay(this@CarPlayHostActivity) != null
         override fun show(side: MazdaArHudLayout.Side) = runOnUiThread { showArHudScreen(side) }
         override fun move(side: MazdaArHudLayout.Side) = runOnUiThread {
-            mazdaHudScreen?.moveTo(MazdaArHudLayout.box(side, MazdaArHudConnection.sizePercent).left)
+            mazdaHudScreen?.moveTo(MazdaArHudLayout.box(side, MazdaArHudConnection.size))
         }
         override fun hide() = runOnUiThread { dismissMazdaHudScreen() }
     }
@@ -1192,8 +1192,8 @@ class CarPlayHostActivity : ComponentActivity() {
         // The EZ-60 has no instrument cluster: the cluster stream goes to the HUD window instead.
         if (MazdaPlatform.isEz60) {
             when {
-                MazdaHudSettings.enabled(this) && MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.STANDARD ->
-                    ensureMazdaHudScreen()
+                // The 2D HUD's window follows DiPlay's guidance (onMazdaHudGuiding).
+                MazdaHudSettings.enabled(this) && MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.STANDARD -> Unit
                 // On the AR-HUD the window exists only while DiPlay holds the video link (MazdaArHud).
                 MazdaHudSettings.arMap(this) && mazdaArHud != null -> Unit
                 else -> {
@@ -1432,8 +1432,8 @@ class CarPlayHostActivity : ComponentActivity() {
                 CarPlaySessionCluster.streamOnDisplay = true
                 val view = MazdaHudSettings.mapView(this)
                 val size = MazdaHudSettings.arMapSize(this)
-                MazdaArHudConnection.sizePercent = size.percent
-                val box = MazdaArHudLayout.box(MazdaArHudLayout.Side.RIGHT, size.percent)
+                MazdaArHudConnection.size = size
+                val box = MazdaArHudLayout.box(MazdaArHudLayout.Side.RIGHT, size)
                 // Google Maps sent the 2D HUD's map at about 16 fps when asked for 30; ask for more here.
                 return CarPlayClusterDisplay.config(box.width, box.height,
                     scalePercent = view.scalePercent, content = CarPlayClusterDisplay.Content.MAP,
@@ -5833,8 +5833,10 @@ class CarPlayHostActivity : ComponentActivity() {
         val newArHud = MazdaArHudConnection.mapRequested && !carOff && MazdaHudSettings.arMap(this) && synchronized(mazdaArHudLock) {
             (mazdaArHud == null).also { if (it) mazdaArHud = MazdaArHud(::appendLog, mazdaArWindow) }
         }
-        val hud = mazdaHud ?: MazdaHud(applicationContext, ::appendLog) { guiding -> mazdaArHud?.setGuiding(guiding) }
-            .also { mazdaHud = it; it.setCarOff(carOff) }
+        val hud = mazdaHud ?: MazdaHud(applicationContext, ::appendLog) { guiding ->
+            mazdaArHud?.setGuiding(guiding)
+            runOnUiThread { onMazdaHudGuiding(guiding) }
+        }.also { mazdaHud = it; it.setCarOff(carOff) }
         // A reconnect mid-route: the HUD may already be guiding.
         if (newArHud) hud.republishGuiding()
         hud.update(guidance)
@@ -5855,8 +5857,16 @@ class CarPlayHostActivity : ComponentActivity() {
         mazdaHud?.setCarOff(off)
         if (off) {
             closeMazdaArHud()
-            runOnUiThread { if (MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.AUGMENTED_REALITY) dismissMazdaHudScreen() }
+            // No HUD window may survive into the head unit's sleep (EZNav: it broke the 360 camera across one).
+            runOnUiThread { dismissMazdaHudScreen() }
         }
+    }
+
+    // EZ-60 2D HUD: the window exists only while DiPlay guides on the HUD, as on the AR-HUD.
+    private fun onMazdaHudGuiding(guiding: Boolean) {
+        if (isDestroyed || MazdaCarFeatures.hud() != MazdaCarFeatures.Hud.STANDARD) return
+        if (guiding && MazdaHudSettings.enabled(this) && mazdaPower?.off != true) ensureMazdaHudScreen()
+        else dismissMazdaHudScreen()
     }
 
     // EZ-60: the cluster map stream and the turn card go to DiPlay's window on the HUD display.
@@ -5866,14 +5876,15 @@ class CarPlayHostActivity : ComponentActivity() {
             appendLog("HUD: map window: no 800x480 HUD display")
             return
         }
-        showMazdaHudScreen(display, MazdaHudScreen.STANDARD_AREA)
+        val swapped = MazdaAmbientProbe.intValue(MazdaArHudLayout.MAP_LAYOUT, 0) == 1
+        showMazdaHudScreen(display, MazdaHudScreen.standardArea(swapped))
     }
 
     // EZ-60 AR-HUD: the car switched the video link for DiPlay; fill the car's own map box.
     private fun showArHudScreen(side: MazdaArHudLayout.Side) {
         if (isDestroyed || mazdaArHud == null) return
-        val box = MazdaArHudLayout.box(side, MazdaArHudConnection.sizePercent)
-        mazdaHudScreen?.takeIf { it.isShowing }?.let { it.moveTo(box.left); return }
+        val box = MazdaArHudLayout.box(side, MazdaArHudConnection.size)
+        mazdaHudScreen?.takeIf { it.isShowing }?.let { it.moveTo(box); return }
         val display = MazdaHudScreen.findArDisplay(this) ?: run {
             appendLog("HUD: AR map: no ${MazdaArHudLayout.DISPLAY_NAME} display")
             return

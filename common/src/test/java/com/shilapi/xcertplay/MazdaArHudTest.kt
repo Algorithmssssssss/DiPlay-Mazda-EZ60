@@ -36,10 +36,11 @@ class MazdaArHudTest {
         assertEquals(State.SHOWN, car.link.state)
         assertEquals(listOf("register", "status 5", "show", "finish"), car.calls)
         car.link.hide()
+        assertEquals("the window goes first", listOf("hide", "status 6"), car.calls.takeLast(2))
         assertEquals(State.HIDING, car.link.state)
         car.link.onIpStatus(MazdaArHudLink.IP_HIDDEN)
         assertEquals(State.IDLE, car.link.state)
-        assertEquals(listOf("status 6", "hide", "finish"), car.calls.takeLast(3))
+        assertEquals("finish", car.calls.last())
     }
 
     @Test fun aDeclinedRequestIsRetriedEightTimesThenTheMapStaysOff() {
@@ -64,18 +65,18 @@ class MazdaArHudTest {
         assertEquals("status 6", car.calls.last { it.startsWith("status") })
     }
 
-    @Test fun anotherAppsLinkChangeMakesDiPlayStepAsideWithoutHidingIt() {
+    @Test fun anotherAppsGrantMakesDiPlayStepAsideWithoutHidingIt() {
         val car = FakeCar()
         car.link.show()
         car.link.onRequestLvds(MazdaArHudLink.READY)
-        // The car's navigation retries alongside DiPlay: a late duplicate reply is still DiPlay's.
+        // The car's navigation retries alongside DiPlay: a late duplicate grant is still DiPlay's.
         car.advance(500)
         car.link.onRequestLvds(MazdaArHudLink.READY)
         assertEquals(State.SHOWN, car.link.state)
         car.advance(MazdaArHudLink.REPLY_GRACE_MILLIS)
         car.link.onRequestLvds(MazdaArHudLink.READY)
         assertEquals(State.STOOD_DOWN, car.link.state)
-        assertEquals("hide", car.calls.last())
+        assertEquals("every grant is confirmed, as the car's navigation does", listOf("hide", "finish"), car.calls.takeLast(2))
         assertTrue("never hides another app's link", "status 6" !in car.calls)
         car.link.show()
         assertEquals(State.STOOD_DOWN, car.link.state)
@@ -84,51 +85,45 @@ class MazdaArHudTest {
         assertTrue("status 6" !in car.calls)
     }
 
-    // Tester, 2026-10-17: after D > P > D the map stayed off. The car's own navigation hides the link on every shift
-    // into Park, before DiPlay sees the gear; that hide must not end the map for the route.
-    @Test fun theCarHidingTheLinkInParkRemovesTheWindowAndTheMapComesBack() {
+    // EZNav (2026-10-17): 100" AR-HUD panels send onIPStatus(6) about 5 s after every grant, in D, with no hide; the
+    // panel also sends one when it revokes the grant for Park. The car's navigation confirms every 6 and keeps its
+    // window unless its own hide is pending.
+    @Test fun aSixDiPlayDidNotAskForIsConfirmedKeepsTheMapAndReadsTheCarAgain() {
         val car = FakeCar()
         car.link.show()
         car.link.onRequestLvds(MazdaArHudLink.READY)
-        car.advance(MazdaArHudLink.REPLY_GRACE_MILLIS + 1)
+        car.advance(5_000)
         car.link.onIpStatus(MazdaArHudLink.IP_HIDDEN)
-        assertEquals(State.IDLE, car.link.state)
-        assertEquals("hide", car.calls.last())
-        assertTrue("never hides a link that is already off", "status 6" !in car.calls)
+        assertEquals(State.SHOWN, car.link.state)
+        assertEquals("finish", car.calls.last())
+        assertTrue("the window stays", car.calls.count { it == "hide" } == 0)
+        assertEquals(1, car.rechecks)
+    }
+
+    // Tester, 2026-10-17: after D > P > D the map came back. In Park the controller hides; out of Park it asks again.
+    @Test fun afterParkTheMapIsAskedForAgain() {
+        val car = FakeCar()
         car.link.show()
-        assertEquals("waits before asking again", State.IDLE, car.link.state)
-        car.advance(MazdaArHudLink.REQUEST_AGAIN_MILLIS)
+        car.link.onRequestLvds(MazdaArHudLink.READY)
+        car.link.hide()
+        car.advance(MazdaArHudLink.HIDE_TIMEOUT_MILLIS)
+        assertEquals("no reply needed once the panel revoked the grant", State.IDLE, car.link.state)
         car.link.show()
         assertEquals(State.REQUESTING, car.link.state)
         car.link.onRequestLvds(MazdaArHudLink.READY)
         assertEquals(State.SHOWN, car.link.state)
     }
 
-    @Test fun aLinkSwitchedOffAgainAndAgainEndsTheMapForTheRoute() {
-        val car = FakeCar()
-        repeat(MazdaArHudLink.MAX_OUTSIDE_HIDES + 1) {
-            car.advance(MazdaArHudLink.REQUEST_AGAIN_MILLIS)
-            car.link.show()
-            car.link.onRequestLvds(MazdaArHudLink.READY)
-            car.advance(MazdaArHudLink.REPLY_GRACE_MILLIS + 1)
-            car.link.onIpStatus(MazdaArHudLink.IP_HIDDEN)
+    @Test fun largerMapsStayRightOfTheSpeedAndInsideTheProjectedArea() {
+        val sizes = MazdaHudSettings.ArMapSize.entries
+        assertEquals(MazdaArHudLayout.Box(1640, 161, 390, 350), MazdaArHudLayout.box(Side.RIGHT, MazdaHudSettings.ArMapSize.CAR))
+        assertEquals(MazdaArHudLayout.Box(1285, 60, 735, 560), MazdaArHudLayout.box(Side.RIGHT, MazdaHudSettings.ArMapSize.LARGEST))
+        for (size in sizes) {
+            val box = MazdaArHudLayout.box(Side.RIGHT, size)
+            assertTrue("$size", box.left >= 1285 && box.left + box.width <= 2030 && box.top >= 0 && box.top + box.height <= 630)
+            assertEquals("the left layout keeps the car's size", MazdaArHudLayout.Box(70, 161, 390, 350),
+                MazdaArHudLayout.box(Side.LEFT, size))
         }
-        assertEquals(State.STOOD_DOWN, car.link.state)
-        car.link.routeEnded()
-        assertEquals(State.IDLE, car.link.state)
-    }
-
-    @Test fun largerMapsKeepTheBottomAndOuterEdgeAndStayOnTheDisplay() {
-        assertEquals(MazdaArHudLayout.Box(1640, 161, 390, 350), MazdaArHudLayout.box(Side.RIGHT, 100))
-        assertEquals(MazdaArHudLayout.Box(70, 161, 390, 350), MazdaArHudLayout.box(Side.LEFT, 100))
-        for (side in Side.entries) for (size in MazdaHudSettings.ArMapSize.entries) {
-            val box = MazdaArHudLayout.box(side, size.percent)
-            assertEquals("$side $size", 511, box.top + box.height)
-            assertTrue("$side $size", box.top >= 0 && box.width >= 390)
-            if (side == Side.RIGHT) assertEquals("$side $size", 2030, box.left + box.width)
-            else assertEquals("$side $size", 70, box.left)
-        }
-        assertTrue(MazdaArHudLayout.box(Side.RIGHT, 145).height > 500)
     }
 
     @Test fun closingGivesTheLinkBackAndStopsListening() {
@@ -142,6 +137,7 @@ class MazdaArHudTest {
 
     private class FakeCar {
         val calls = mutableListOf<String>()
+        var rechecks = 0
         private var clock = 0L
         private val timers = mutableListOf<Pair<Long, () -> Unit>>()
         val link = MazdaArHudLink(
@@ -158,6 +154,7 @@ class MazdaArHudTest {
             log = {},
             now = { clock },
             schedule = { delay, action -> timers += clock + delay to action },
+            recheck = { rechecks++ },
         )
 
         fun advance(millis: Long) {

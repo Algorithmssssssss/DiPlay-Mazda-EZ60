@@ -116,8 +116,16 @@ car hotspot's name and password: without them **Connect** returns to Connection 
 The EZ-60 has no instrument cluster; the windshield HUD is the driver's only other display. Its navigation
 comes from the head unit's navigation service, `com.incall.double.INTERACTIVE_SERVICE`
 (`IDouInteractiveManager`, reached through `com.incall.SVR_MNG_SERVICE`), which the car's navigation apps
-feed. A window on its 800×480 presentation display (`MeterDisplay#0`) is projected only while an app holds
-that service's navigation focus.
+feed. On the 2D HUD, a window on its 800×480 presentation display (`MeterDisplay#0`) is projected only while an
+app holds that service's navigation focus, and only the car's own map box shows: 178×178 at (584,179), or at
+(38,179) when the driver swaps the HUD panels and map layout `826279579` reads 1. Those are the car navigation's
+own values (`layout_arhud_presentation`), and the EZNav developers confirmed them at the glass with labelled grids
+(2026-10-17). The 227×188 at (573,167) DiPlay used until then is the Deepal S05's box, so its edges were cropped.
+
+DiPlay's window on `MeterDisplay#0` exists only while DiPlay guides on the HUD, on both trims, and is removed when
+the car is switched off. The car's HUD display service reads every window on that display about once a second,
+painted or not. EZNav measured that a window left there across a deep sleep (about 5 minutes after the screen
+goes off) broke the surround-view and reverse camera on a 100" AR-HUD car, even without the video link.
 
 The EZ-60's own switches are together on **Settings → Mazda EZ-60** (shown on the EZ-60 only, first in the
 list), so they are quick to find and turn off.
@@ -191,8 +199,9 @@ still guiding at switch-off left DiPlay's navigation state and focus on the car'
 that no longer existed.
 
 Why it matters: another developer saw the 360 camera app crash on an AR-HUD car after leaving navigation on
-the HUD and locking the car for 5 minutes. Leaving no stale navigation state behind is what the car's own
-navigation does, but it is not shown to be the cause. The decompiled 360 camera (`com.tinnove.evs` 3.3.1) and
+the HUD and locking the car for 5 minutes. The EZNav developers traced the same fault to a window left on
+`MeterDisplay#0` across the deep sleep (see "Windshield HUD"); DiPlay now removes its HUD window at switch-off and
+keeps it only while guiding. Leaving no stale navigation state behind is what the car's own navigation does. The decompiled 360 camera (`com.tinnove.evs` 3.3.1) and
 dash camera (`com.incall.dvr`, build of 2025-12-04) apps never call the HUD service's navigation, focus,
 video-link or camera calls, and never look at `MeterDisplay#0`. The dash camera bundles the service's SDK but
 uses it only for phone-call state, the network, power and the telematics box (sentinel mode). The 360 camera
@@ -243,17 +252,19 @@ Both trims use the same `IDouInteractiveManager` call numbers that DiPlay uses. 
   |---|---|---|
   | When | guiding, not in Park, HUD mode with a map | CarPlay guiding with the HUD's navigation focus, not in Park, HUD mode with a map |
   | Readings (read-only VirtualCar properties) | gear `826278449` (4 = P; 8 and 2 seen while driving and reversing), HUD mode `826279576`, map layout `826279579` | the same, once a second while guiding; a failed reading counts as Park |
-  | HUD mode → map | 3 (custom) becomes 5 with map layout 1, else 4; then 0 off and 2 easy show no map, 5 shows it left, 1 (classic), 4, 6 and any other value show it right (`ARHudManager.x`, `.u`) | the same (a tester's car started in mode 5) |
-  | Map box on `MeterDisplay#0` (4032×845) | 390×350 at (1640,161); at (70,161) in custom mode with the left layout; none in easy mode | the same, or larger with **AR-HUD map size** (Large 125 %, Largest 145 %): the bottom edge and the outer edge stay, the box grows upwards and towards the middle; the stream is asked for at the box size (× the HUD map view), at 60 fps (Google Maps sent the 2D HUD's map at about 16 fps when asked for 30) |
-  | Show | `setVideoStatus(5)`; on `onRequestLVDS(19)` show the window and `sendSwitchLVDSFinishEvent(0)`; on `20` ask again after 200 ms, at most 8 times | the same, with its own `IDoubleVideoCallback` (calls 72, 73, 74 and 1 only) |
-  | Hide | `setVideoStatus(6)`; on `onIPStatus(6)` remove the window and confirm | the same, when the route ends, in Park, in a mode without a map, or when the connection closes |
+  | HUD mode → map | Vehicle Centre writes Classic 1, Minimalist 2, Custom 3, Beyond-Class 3D 5. 3 becomes 5 with map layout 1, else 4; then 0 (off) and 2 show no map, 5 shows it left, 1, 4, 6 and any other value show it right (`ARHudManager.x`, `.u`). Beyond-Class 3D hides the HUD's own cards (EZNav) | the same (a tester's car started in mode 5) |
+  | Map box on `MeterDisplay#0` (4032×845) | 390×350 at (1640,161); at (70,161) with the left layout; none in mode 2 | the same, or larger with **AR-HUD map size**: Large 560×455 at (1460,110), Largest 735×560 at (1285,60). The AR-HUD projects about the top-left 2016×630 and the car draws its speed and gear left of x 1285; 735×560 at (1285,60) read best at the glass (EZNav). The left layout keeps the car's size. The stream is asked for at the box size (× the HUD map view), at 60 fps (about 32 fps arrived; 16–20 when asked for 30) |
+  | Show | `setVideoStatus(5)`; on `onRequestLVDS(19)` show the window; every 19 is answered with `sendSwitchLVDSFinishEvent(0)`; on `20` ask again after 200 ms, at most 8 times | the same, with its own `IDoubleVideoCallback` (calls 72, 73, 74 and 1 only) |
+  | Hide | `setVideoStatus(6)`; on `onIPStatus(6)` remove the window if its own hide is pending; every 6 is answered with the finish event | the same, but DiPlay removes its window at once when it hides: when the route ends, in Park, in a mode without a map, or when the connection closes |
 
-  DiPlay only hides a link it switched on itself. A "link on" reply it did not ask for (more than 2 s after its
-  own request) means another app took the link, such as a HUD video player or the car's own navigation guiding:
-  DiPlay removes its window, leaves the link alone and waits for the next route. A "link off" it did not ask for
-  only means the link is off: the car's own navigation hides it on every shift into Park, guiding or not, usually
-  before DiPlay's once-a-second reading sees the gear (first tester report: the map stayed off after D → P → D).
-  DiPlay removes its window and asks again 3 s later once the car is out of Park, at most 6 times a route.
+  DiPlay only hides a link it switched on itself. A grant it did not ask for (more than 2 s after its own request)
+  means another app took the link, such as a HUD video player or the car's own navigation guiding: DiPlay removes
+  its window, leaves the link alone and waits for the next route. An `onIPStatus(6)` arrives without any hide too:
+  about 5 s after every grant in D on 100" AR-HUD cars, and when the panel revokes the grant on entering Park,
+  about 1 ms before the gear reads P (EZNav). Requests made in P answer busy (20), and a new request is granted
+  about 60 ms after leaving P. DiPlay confirms that 6, keeps its window, and reads the gear at once and 300 ms
+  later, so even a short P is seen: in P it removes the window and gives the link back, and out of Park it asks
+  again at its next reading (first tester report: the map stayed off after D → P → D; fixed and confirmed).
   Whether this connection asked for the AR-HUD map, and at which size, belongs to the running CarPlay session: when
   CarPlay opens the car's home screen, DiPlay's CarPlay screen closes, and the next one adopts the session and
   shows the map again (first tester report: the map did not come back). The same goes for which output stream 111
@@ -285,6 +296,20 @@ Second AR-HUD report (2026-10-17): the Bonjour service started at once. After fa
 iPhone did not connect, a new connection succeeded within 1.4 s of the start request and ran for 11 minutes or
 more, at about 32 fps with 0.3–0.5 s arrival gaps. With a Google Maps route, the AR-HUD car granted DiPlay
 navigation focus and accepted the turn call. Whether the AR-HUD drew anything has not been reported yet.
+
+### Other `IDouInteractiveManager` calls
+
+From the EZNav developers, read from the same SDK in the Deepal+ (a sister car), and not used by DiPlay:
+23 `sendNavigateCrossRoad(int)`, 25 `sendNavigateLaneInfo(String)`, 28 `sendNavigateCameraInfo(String)`,
+49 `sendNavigateBackStatus(int)`, 8 `sendLVDSACKResponse(int, int)`, 13 `sendLocationInfo(String)`,
+14 `sendWeatherAndTimeInfo(String)`, and 29/30 `register`/`unRegisterNavigateCallback(INavigateCallback)`
+(`onIPNavigateStatus(int)`, `onRequestLVDS(int)`). On the 2D EZ-60, 23, 50 and 75 were accepted and drew nothing.
+On the 100" AR-HUD, turn calls do draw: a turn 20 drew a right arrow beside the distance in Custom mode.
+
+Open question, for a joint test with EZNav: DiPlay sends roundabout exits 42–51 for counter-clockwise roundabouts
+(right-hand traffic, as in China and Cambodia) and 74–83 for clockwise ones, from the car navigation's
+converter. EZNav sends 74–83. Nobody has photographed the glyphs yet. With guidance active, sending 42, 43, 74 and
+75 and noting which way each glyph circulates would settle it.
 
 ## Ambient lights following CarPlay music (experimental)
 
