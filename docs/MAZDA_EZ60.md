@@ -238,13 +238,16 @@ Both trims use the same `IDouInteractiveManager` call numbers that DiPlay uses. 
   |---|---|---|
   | When | guiding, not in Park, HUD mode with a map | CarPlay guiding with the HUD's navigation focus, not in Park, HUD mode with a map |
   | Readings (read-only VirtualCar properties) | gear `826278449` (4 = P), HUD mode `826279576` (0 off, 1 classic, 2 easy, 3 custom), map layout `826279579` (1 = left) | the same, once a second while guiding; a failed reading counts as Park |
-  | Map box on `MeterDisplay#0` (4032×845) | 390×350 at (1640,161); at (70,161) in custom mode with the left layout; none in easy mode | the same; the stream is asked for at 390×350 (× the HUD map view) |
+  | Map box on `MeterDisplay#0` (4032×845) | 390×350 at (1640,161); at (70,161) in custom mode with the left layout; none in easy mode | the same, or larger with **AR-HUD map size** (Large 125 %, Largest 145 %): the bottom edge and the outer edge stay, the box grows upwards and towards the middle; the stream is asked for at the box size (× the HUD map view), at 60 fps (Google Maps sent the 2D HUD's map at about 16 fps when asked for 30) |
   | Show | `setVideoStatus(5)`; on `onRequestLVDS(19)` show the window and `sendSwitchLVDSFinishEvent(0)`; on `20` ask again after 200 ms, at most 8 times | the same, with its own `IDoubleVideoCallback` (calls 72, 73, 74 and 1 only) |
   | Hide | `setVideoStatus(6)`; on `onIPStatus(6)` remove the window and confirm | the same, when the route ends, in Park, in a mode without a map, or when the connection closes |
 
-  DiPlay only hides a link it switched on itself. A link reply it did not ask for (more than 2 s after its own
-  request) means another app is using the link: the car's own navigation, or a HUD video player such as Migu
-  Video. DiPlay then removes its window, leaves the link alone and waits for the next route. No reply within 3 s,
+  DiPlay only hides a link it switched on itself. A "link on" reply it did not ask for (more than 2 s after its
+  own request) means another app took the link, such as a HUD video player or the car's own navigation guiding:
+  DiPlay removes its window, leaves the link alone and waits for the next route. A "link off" it did not ask for
+  only means the link is off: the car's own navigation hides it on every shift into Park, guiding or not, usually
+  before DiPlay's once-a-second reading sees the gear (first tester report: the map stayed off after D → P → D).
+  DiPlay removes its window and asks again 3 s later once the car is out of Park, at most 6 times a route. No reply within 3 s,
   or 8 declined requests, turns the map off until the next connection. DiPlay cannot tell when the car's own
   navigation was already guiding before CarPlay's route started: do not use both at once. Each step is logged
   as "HUD: AR map …" and "HUD: AR-HUD state gear=… hudMode=… mapLayout=…", and the probe's "Car features"

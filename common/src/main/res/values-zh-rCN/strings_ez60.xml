@@ -22,4 +22,9 @@
     <string name="settings_mazda_hud_card">挡风玻璃 HUD</string>
     <string name="settings_mazda_ar_map">AR-HUD 地图（实验性）</string>
     <string name="settings_mazda_ar_map_description">在 CarPlay 导航引导中且车辆不在 P 挡时，于 AR-HUD 自带的地图区域显示 CarPlay 地图（没有地图时显示下一个转向）。DiPlay 会为此切换车辆的 HUD 画面，并在路线结束或出现任何故障时交还。车辆自带导航正在引导时请勿使用。开启后在下次连接时生效；关闭后地图会立即移除。</string>
+    <string name="settings_mazda_ar_map_size">AR-HUD 地图大小</string>
+    <string name="settings_mazda_ar_map_size_car">与车辆一致</string>
+    <string name="settings_mazda_ar_map_size_large">大</string>
+    <string name="settings_mazda_ar_map_size_largest">最大</string>
+    <string name="settings_mazda_ar_map_size_description">“与车辆一致”与车辆自带导航的地图相同。更大的地图会向上并朝 HUD 中间扩展，底边保持在 HUD 的车速和挡位上方。在下次连接时生效。</string>
 </resources>

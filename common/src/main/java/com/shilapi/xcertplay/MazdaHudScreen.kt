@@ -103,9 +103,8 @@ internal class MazdaHudScreen(
         const val AREA_HEIGHT = MazdaHud.VISIBLE_BOTTOM - MazdaHud.VISIBLE_TOP
         val STANDARD_AREA = Area(MazdaHud.VISIBLE_LEFT, MazdaHud.VISIBLE_TOP, AREA_WIDTH, AREA_HEIGHT, Color.BLACK)
 
-        /** The car's own AR-HUD map box; transparent around it, as the car's navigation draws it. */
-        fun arArea(side: MazdaArHudLayout.Side) = Area(side.left, MazdaArHudLayout.MAP_TOP,
-            MazdaArHudLayout.MAP_WIDTH, MazdaArHudLayout.MAP_HEIGHT, Color.TRANSPARENT)
+        /** The car's own AR-HUD map box at the chosen size; transparent around it, as the car's navigation draws it. */
+        fun arArea(box: MazdaArHudLayout.Box) = Area(box.left, box.top, box.width, box.height, Color.TRANSPARENT)
 
         @Suppress("DEPRECATION")
         fun findDisplay(context: Context): Display? = context.getSystemService(DisplayManager::class.java)

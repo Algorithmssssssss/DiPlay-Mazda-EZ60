@@ -81,14 +81,51 @@ class MazdaArHudTest {
         assertTrue("status 6" !in car.calls)
     }
 
-    @Test fun anotherAppHidingTheLinkRemovesTheWindow() {
+    // Tester, 2026-10-17: after D > P > D the map stayed off. The car's own navigation hides the link on every shift
+    // into Park, before DiPlay sees the gear; that hide must not end the map for the route.
+    @Test fun theCarHidingTheLinkInParkRemovesTheWindowAndTheMapComesBack() {
         val car = FakeCar()
         car.link.show()
         car.link.onRequestLvds(MazdaArHudLink.READY)
         car.advance(MazdaArHudLink.REPLY_GRACE_MILLIS + 1)
         car.link.onIpStatus(MazdaArHudLink.IP_HIDDEN)
-        assertEquals(State.STOOD_DOWN, car.link.state)
+        assertEquals(State.IDLE, car.link.state)
         assertEquals("hide", car.calls.last())
+        assertTrue("never hides a link that is already off", "status 6" !in car.calls)
+        car.link.show()
+        assertEquals("waits before asking again", State.IDLE, car.link.state)
+        car.advance(MazdaArHudLink.REQUEST_AGAIN_MILLIS)
+        car.link.show()
+        assertEquals(State.REQUESTING, car.link.state)
+        car.link.onRequestLvds(MazdaArHudLink.READY)
+        assertEquals(State.SHOWN, car.link.state)
+    }
+
+    @Test fun aLinkSwitchedOffAgainAndAgainEndsTheMapForTheRoute() {
+        val car = FakeCar()
+        repeat(MazdaArHudLink.MAX_OUTSIDE_HIDES + 1) {
+            car.advance(MazdaArHudLink.REQUEST_AGAIN_MILLIS)
+            car.link.show()
+            car.link.onRequestLvds(MazdaArHudLink.READY)
+            car.advance(MazdaArHudLink.REPLY_GRACE_MILLIS + 1)
+            car.link.onIpStatus(MazdaArHudLink.IP_HIDDEN)
+        }
+        assertEquals(State.STOOD_DOWN, car.link.state)
+        car.link.routeEnded()
+        assertEquals(State.IDLE, car.link.state)
+    }
+
+    @Test fun largerMapsKeepTheBottomAndOuterEdgeAndStayOnTheDisplay() {
+        assertEquals(MazdaArHudLayout.Box(1640, 161, 390, 350), MazdaArHudLayout.box(Side.RIGHT, 100))
+        assertEquals(MazdaArHudLayout.Box(70, 161, 390, 350), MazdaArHudLayout.box(Side.LEFT, 100))
+        for (side in Side.entries) for (size in MazdaHudSettings.ArMapSize.entries) {
+            val box = MazdaArHudLayout.box(side, size.percent)
+            assertEquals("$side $size", 511, box.top + box.height)
+            assertTrue("$side $size", box.top >= 0 && box.width >= 390)
+            if (side == Side.RIGHT) assertEquals("$side $size", 2030, box.left + box.width)
+            else assertEquals("$side $size", 70, box.left)
+        }
+        assertTrue(MazdaArHudLayout.box(Side.RIGHT, 145).height > 500)
     }
 
     @Test fun closingGivesTheLinkBackAndStopsListening() {

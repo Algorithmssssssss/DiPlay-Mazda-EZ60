@@ -395,13 +395,17 @@ class CarPlayHostActivity : ComponentActivity() {
     // EZ-60 AR-HUD map (experimental): one per connection; read on MazdaHud's and the power watch's threads.
     @Volatile private var mazdaArHud: MazdaArHud? = null
     private val mazdaArHudLock = Any()
+    // The AR-HUD map size the connection's stream was asked for.
+    private var arMapSizePercent = MazdaHudSettings.ArMapSize.CAR.percent
     // EZ-60: the car switched off ends DiPlay's HUD state before the head unit force-stops DiPlay.
     private var mazdaPower: MazdaPowerWatch? = null
     private var arMapThisConnection = false
     private val mazdaArWindow = object : MazdaArHud.Window {
         override fun available() = MazdaHudScreen.findArDisplay(this@CarPlayHostActivity) != null
         override fun show(side: MazdaArHudLayout.Side) = runOnUiThread { showArHudScreen(side) }
-        override fun move(side: MazdaArHudLayout.Side) = runOnUiThread { mazdaHudScreen?.moveTo(side.left) }
+        override fun move(side: MazdaArHudLayout.Side) = runOnUiThread {
+            mazdaHudScreen?.moveTo(MazdaArHudLayout.box(side, arMapSizePercent).left)
+        }
         override fun hide() = runOnUiThread { dismissMazdaHudScreen() }
     }
     private val clusterTurnOverlayListener: (com.shilapi.xcertplay.hud.ClusterTurnGuidance?) -> Unit = { guidance ->
@@ -1430,12 +1434,17 @@ class CarPlayHostActivity : ComponentActivity() {
                 arMapThisConnection = true
                 clusterStreamOnDisplay = true
                 val view = MazdaHudSettings.mapView(this)
-                return CarPlayClusterDisplay.config(MazdaArHudLayout.MAP_WIDTH, MazdaArHudLayout.MAP_HEIGHT,
+                val size = MazdaHudSettings.arMapSize(this)
+                arMapSizePercent = size.percent
+                val box = MazdaArHudLayout.box(MazdaArHudLayout.Side.RIGHT, size.percent)
+                // Google Maps sent the 2D HUD's map at about 16 fps when asked for 30; ask for more here.
+                return CarPlayClusterDisplay.config(box.width, box.height,
                     scalePercent = view.scalePercent, content = CarPlayClusterDisplay.Content.MAP,
-                    baseSafeArea = CarPlayClusterDisplay.VIRTUAL_SAFE_AREA_PERCENT).also {
+                    baseSafeArea = CarPlayClusterDisplay.VIRTUAL_SAFE_AREA_PERCENT, fps = AR_MAP_FPS).also {
                     MapMirrors.streamAspect = it.widthPixels.toDouble() / it.heightPixels
                     appendLog("HUD: AR-HUD map on (experimental): requesting the CarPlay cluster map at " +
-                        "${it.widthPixels}x${it.heightPixels} view=$view; shown while guiding out of Park")
+                        "${it.widthPixels}x${it.heightPixels}@${it.fps} view=$view size=$size; " +
+                        "shown while guiding out of Park")
                 }
             }
             clusterStreamOnDisplay = true
@@ -5866,12 +5875,13 @@ class CarPlayHostActivity : ComponentActivity() {
     // EZ-60 AR-HUD: the car switched the video link for DiPlay; fill the car's own map box.
     private fun showArHudScreen(side: MazdaArHudLayout.Side) {
         if (isDestroyed || mazdaArHud == null) return
-        mazdaHudScreen?.takeIf { it.isShowing }?.let { it.moveTo(side.left); return }
+        val box = MazdaArHudLayout.box(side, arMapSizePercent)
+        mazdaHudScreen?.takeIf { it.isShowing }?.let { it.moveTo(box.left); return }
         val display = MazdaHudScreen.findArDisplay(this) ?: run {
             appendLog("HUD: AR map: no ${MazdaArHudLayout.DISPLAY_NAME} display")
             return
         }
-        showMazdaHudScreen(display, MazdaHudScreen.arArea(side))
+        showMazdaHudScreen(display, MazdaHudScreen.arArea(box))
     }
 
     private fun showMazdaHudScreen(display: android.view.Display, area: MazdaHudScreen.Area) {
@@ -6544,6 +6554,8 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private companion object {
+        // The EZ-60 AR-HUD map stream (experimental): asks the iPhone for more than the 30 fps of other cluster maps.
+        const val AR_MAP_FPS = 60
         const val PROBE_TAG = "carplay"
         const val CLUSTER_SMALL_WINDOW_ON = 1
         const val CLUSTER_SMALL_WINDOW_AUTO = 2

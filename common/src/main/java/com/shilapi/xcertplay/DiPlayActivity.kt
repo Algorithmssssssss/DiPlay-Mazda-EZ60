@@ -4880,6 +4880,14 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 MazdaHudSettings.arMap(this)) {
                 MazdaHudSettings.saveArMap(this, it)
                 if (it) markReconnectNeeded()
+                render()
+            }
+            if (MazdaHudSettings.arMap(this)) {
+                card.addView(button("${getString(R.string.settings_mazda_ar_map_size)} · " +
+                    getString(mazdaArMapSizeName(MazdaHudSettings.arMapSize(this))), false) {
+                    showMazdaArMapSizePicker()
+                }, matchButton(12, 60))
+                card.addView(label(getString(R.string.settings_mazda_ar_map_size_description), 14, MUTED))
             }
         }
         card.addView(button("${getString(R.string.settings_mazda_hud_map_view)} · " +
@@ -4901,6 +4909,27 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     // EZ-60: how much map the HUD shows; the stream size is set when CarPlay connects.
+    private fun mazdaArMapSizeName(size: MazdaHudSettings.ArMapSize): Int = when (size) {
+        MazdaHudSettings.ArMapSize.CAR -> R.string.settings_mazda_ar_map_size_car
+        MazdaHudSettings.ArMapSize.LARGE -> R.string.settings_mazda_ar_map_size_large
+        MazdaHudSettings.ArMapSize.LARGEST -> R.string.settings_mazda_ar_map_size_largest
+    }
+
+    private fun showMazdaArMapSizePicker() {
+        val sizes = MazdaHudSettings.ArMapSize.entries
+        val current = sizes.indexOf(MazdaHudSettings.arMapSize(this))
+        appDialogBuilder().setTitle(getString(R.string.settings_mazda_ar_map_size))
+            .setSingleChoiceItems(sizes.map { getString(mazdaArMapSizeName(it)) }.toTypedArray(), current) { dialog, which ->
+                dialog.dismiss()
+                if (which == current) return@setSingleChoiceItems
+                MazdaHudSettings.saveArMapSize(this, sizes[which])
+                markReconnectNeeded()
+                render()
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
     private fun showMazdaHudMapViewPicker() {
         val views = listOf(MazdaHudSettings.MapView.FAR, MazdaHudSettings.MapView.NORMAL, MazdaHudSettings.MapView.NEAR)
         val current = views.indexOf(MazdaHudSettings.mapView(this))

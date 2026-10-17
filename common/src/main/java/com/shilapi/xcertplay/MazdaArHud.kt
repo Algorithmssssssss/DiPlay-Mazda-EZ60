@@ -31,6 +31,22 @@ internal object MazdaArHudLayout {
 
     enum class Side(val left: Int) { RIGHT(MAP_LEFT_ON_RIGHT), LEFT(MAP_LEFT_ON_LEFT) }
 
+    /** Where the map goes on the display, in its pixels. */
+    data class Box(val left: Int, val top: Int, val width: Int, val height: Int)
+
+    /**
+     * The car's map box at [sizePercent] of its own size. A larger box keeps the car's bottom edge (the HUD draws its
+     * speed and gear below it) and its outer edge, and grows upwards and towards the middle; it never leaves the
+     * display's top.
+     */
+    fun box(side: Side, sizePercent: Int): Box {
+        val bottom = MAP_TOP + MAP_HEIGHT
+        val height = (MAP_HEIGHT * sizePercent / 100).coerceIn(MAP_HEIGHT, bottom)
+        val width = MAP_WIDTH * height / MAP_HEIGHT
+        val left = if (side == Side.LEFT) MAP_LEFT_ON_LEFT else MAP_LEFT_ON_RIGHT + MAP_WIDTH - width
+        return Box(left, bottom - height, width, height)
+    }
+
     /**
      * The map's side as the car's navigation picks it, or null when the car shows no map: in Park, with the HUD off
      * (mode 0) or in its "easy" mode (2), and whenever a reading fails (the car's navigation also takes a failed
@@ -57,9 +73,12 @@ internal object MazdaArHudLayout {
  * (setVideoStatus 5); on onRequestLVDS(19) show the window and confirm (sendSwitchLVDSFinishEvent 0); on 20 ask
  * again after 200 ms, at most 8 times. Hide with setVideoStatus(6); on onIPStatus(6) remove the window and confirm.
  *
- * DiPlay only hides a link it switched on itself. A reply it did not ask for means another app (the car's own
- * navigation, a HUD video player) switched the link: DiPlay removes its window, leaves the link alone and waits for
- * the next route ([routeEnded]). Any failure turns the map off until [MazdaArHud] is created again (next connection).
+ * DiPlay only hides a link it switched on itself. A show it did not ask for means another app (a HUD video player,
+ * the car's own navigation guiding) took the link: DiPlay removes its window, leaves the link alone and waits for
+ * the next route ([routeEnded]). A hide it did not ask for only means the link is off: the car's own navigation
+ * hides it whenever the car shifts into Park, guiding or not. DiPlay removes its window and asks again when the car
+ * allows, after [REQUEST_AGAIN_MILLIS] and at most [MAX_OUTSIDE_HIDES] times a route. Any failure turns the map off
+ * until [MazdaArHud] is created again (next connection).
  * One thread only: the caller's worker.
  */
 internal class MazdaArHudLink(
@@ -89,10 +108,12 @@ internal class MazdaArHudLink(
     private var attempts = 0
     private var lastRequestAt = Long.MIN_VALUE / 2
     private var timer = 0
+    private var outsideHides = 0
+    private var quietUntil = Long.MIN_VALUE / 2
 
     /** Ask for the link and show the window once the car switches it. Only from [State.IDLE]. */
     fun show() {
-        if (state != State.IDLE) return
+        if (state != State.IDLE || now() < quietUntil) return
         if (!registered) {
             registered = calls.register()
             if (!registered) return fail("the car refused the video callback", undo = false)
@@ -114,6 +135,7 @@ internal class MazdaArHudLink(
     /** A new route may try again after another app took the link. */
     fun routeEnded() {
         hide()
+        outsideHides = 0
         if (state == State.STOOD_DOWN) state = State.IDLE
     }
 
@@ -156,8 +178,17 @@ internal class MazdaArHudLink(
         when {
             state == State.HIDING -> hidden(confirm = true, reason = null)
             now() - lastRequestAt <= REPLY_GRACE_MILLIS -> Unit
-            state == State.SHOWN || state == State.REQUESTING -> standDown("another app switched the HUD link off")
+            state == State.SHOWN || state == State.REQUESTING -> switchedOffOutside()
         }
+    }
+
+    private fun switchedOffOutside() {
+        if (++outsideHides > MAX_OUTSIDE_HIDES) return standDown("the HUD link was switched off $outsideHides times")
+        disarm()
+        ui.hide()
+        state = State.IDLE
+        quietUntil = now() + REQUEST_AGAIN_MILLIS
+        log("HUD: AR map link switched off by the car (Park or HUD setting); map removed, asked again when allowed")
     }
 
     private fun request() {
@@ -212,6 +243,8 @@ internal class MazdaArHudLink(
         const val REPLY_TIMEOUT_MILLIS = 3_000L
         const val HIDE_TIMEOUT_MILLIS = 2_000L
         const val REPLY_GRACE_MILLIS = 2_000L
+        const val REQUEST_AGAIN_MILLIS = 3_000L
+        const val MAX_OUTSIDE_HIDES = 6
     }
 }
 

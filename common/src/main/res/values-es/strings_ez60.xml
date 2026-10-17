@@ -22,4 +22,9 @@
     <string name="settings_mazda_hud_card">HUD del parabrisas</string>
     <string name="settings_mazda_ar_map">Mapa en el AR-HUD (experimental)</string>
     <string name="settings_mazda_ar_map_description">Muestra el mapa de CarPlay, o el siguiente giro si no hay mapa, en el recuadro de mapa propio del AR-HUD mientras la navegación de CarPlay guía y el coche no está en P. Para ello DiPlay cambia la imagen del HUD del coche y la devuelve al terminar la ruta o si algo falla. No lo uses mientras guía la navegación propia del coche. Al activarlo se aplica en la próxima conexión; al desactivarlo el mapa desaparece al instante.</string>
+    <string name="settings_mazda_ar_map_size">Tamaño del mapa en el AR-HUD</string>
+    <string name="settings_mazda_ar_map_size_car">Como el coche</string>
+    <string name="settings_mazda_ar_map_size_large">Grande</string>
+    <string name="settings_mazda_ar_map_size_largest">Máximo</string>
+    <string name="settings_mazda_ar_map_size_description">«Como el coche» es el tamaño del mapa de la navegación propia del coche. Los mapas más grandes crecen hacia arriba y hacia el centro del HUD, con el borde inferior por encima de la velocidad y la marcha del HUD. Se aplica en la próxima conexión.</string>
 </resources>

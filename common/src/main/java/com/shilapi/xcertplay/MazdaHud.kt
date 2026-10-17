@@ -381,5 +381,18 @@ internal object MazdaHudSettings {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_AR_MAP, enabled).apply()
     }
 
+    /** The AR-HUD map at the car's own size, or larger ([MazdaArHudLayout.box]). */
+    enum class ArMapSize(val percent: Int) { CAR(100), LARGE(125), LARGEST(145) }
+
+    fun arMapSize(context: Context): ArMapSize = runCatching {
+        ArMapSize.valueOf(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_AR_MAP_SIZE, null) ?: ArMapSize.CAR.name)
+    }.getOrDefault(ArMapSize.CAR)
+
+    fun saveArMapSize(context: Context, size: ArMapSize) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_AR_MAP_SIZE, size.name).apply()
+    }
+
     private const val KEY_AR_MAP = "ar_hud_map"
+    private const val KEY_AR_MAP_SIZE = "ar_hud_map_size"
 }

@@ -22,4 +22,9 @@
     <string name="settings_mazda_hud_card">フロントガラスHUD</string>
     <string name="settings_mazda_ar_map">AR-HUDの地図（実験的機能）</string>
     <string name="settings_mazda_ar_map_description">CarPlayのナビが案内中で、車がP以外のとき、AR-HUD本来の地図枠にCarPlayの地図（地図がないときは次の曲がり角）を表示します。DiPlayはこのために車のHUD映像を切り替え、ルートの終了時や不具合が起きたときに元に戻します。車の純正ナビが案内中のときは使わないでください。オンにすると次回の接続から有効になり、オフにするとすぐに地図が消えます。</string>
+    <string name="settings_mazda_ar_map_size">AR-HUDの地図の大きさ</string>
+    <string name="settings_mazda_ar_map_size_car">車と同じ</string>
+    <string name="settings_mazda_ar_map_size_large">大</string>
+    <string name="settings_mazda_ar_map_size_largest">最大</string>
+    <string name="settings_mazda_ar_map_size_description">「車と同じ」は純正ナビの地図と同じ大きさです。大きくすると上とHUDの中央に向かって広がり、下端はHUDの速度とシフト位置の上に保たれます。次回の接続から有効になります。</string>
 </resources>

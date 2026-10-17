@@ -86,6 +86,7 @@ object CarPlayClusterDisplay {
         markerXPercent: Int? = null,
         markerYPercent: Int? = null,
         baseSafeArea: AirPlayInsets = SAFE_AREA_PERCENT,
+        fps: Int = FPS,
     ): AirPlayDisplayConfig {
         // Height rounds to a multiple of 8 and width follows it, so the panel's aspect is kept
         // (83 % of 1920x720 gives exactly 1600x600). The cluster scales the stream to the panel.
@@ -97,7 +98,7 @@ object CarPlayClusterDisplay {
             heightPixels = height,
             widthPhysicalMm = WIDTH_PHYSICAL_MM,
             heightPhysicalMm = Math.round(WIDTH_PHYSICAL_MM * height.toDouble() / width).toInt(),
-            fps = FPS,
+            fps = fps,
             primaryInputDevice = 0,
             features = 0,
             initialUrl = content.url,
