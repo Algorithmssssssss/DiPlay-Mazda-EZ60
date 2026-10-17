@@ -39,6 +39,13 @@ internal class MazdaHud(
     private var holdsFocus = true
     private var unavailableLogged = false
     private var guidingPublished = false
+    // The car is switched off: HUD navigation stays ended until it is on again ([setCarOff]).
+    @Volatile private var carOff = false
+    private val state = context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
+
+    init {
+        runCatching { worker.execute(::reportUnclearedOnWorker) }
+    }
 
     /** One HUD update, in the car's vocabulary. */
     internal data class Frame(
@@ -62,12 +69,30 @@ internal class MazdaHud(
         worker.shutdown()
     }
 
+    /**
+     * The car was switched off (true) or on again (false). Off ends HUD navigation at once, as the car's own
+     * navigation does: the head unit force-stops DiPlay about a second later, and nothing DiPlay set on the HUD
+     * service may outlive it ([MazdaPowerWatch]). Updates queued before it are skipped. Any thread.
+     */
+    fun setCarOff(off: Boolean) {
+        if (carOff == off) return
+        carOff = off
+        if (!off) return
+        runCatching {
+            worker.execute {
+                if (active) log("HUD: car switched off; ending HUD navigation as the car's navigation does")
+                stopOnWorker()
+            }
+        }
+    }
+
     /** Tells [onGuiding] the current state again, in order with later changes (a listener joined late). */
     fun republishGuiding() {
         runCatching { worker.execute { runCatching { onGuiding(guidingPublished) } } }
     }
 
     private fun sendOnWorker(frame: Frame) {
+        if (carOff) return
         val binder = service() ?: return
         if (!active) {
             val focus = call(binder, REQUEST_FOCUS) { writeString(context.packageName); writeStrongBinder(callback) }
@@ -78,6 +103,8 @@ internal class MazdaHud(
             routeLongestMeters = 0
             sentPercent = -1
             log("HUD: navigation started on the car's service focus=$focus status=$status")
+            // Cleared when guidance ends; still set at the next start means DiPlay was stopped while guiding.
+            state.edit().putLong(KEY_GUIDING_SINCE, System.currentTimeMillis()).commit()
             publishGuiding()
         }
         // Another navigation app (the car's own included) took the HUD: never overwrite its guidance.
@@ -122,8 +149,18 @@ internal class MazdaHud(
             call(binder, STATUS) { writeInt(STATUS_IDLE) }
         }
         call(binder, ABANDON_FOCUS) { writeString(context.packageName); writeStrongBinder(callback) }
+        state.edit().remove(KEY_GUIDING_SINCE).commit()
         log(if (holdsFocus) "HUD: guidance ended; HUD cleared" else "HUD: guidance ended; HUD left to the other app")
         publishGuiding()
+    }
+
+    private fun reportUnclearedOnWorker() {
+        val since = state.getLong(KEY_GUIDING_SINCE, 0L)
+        if (since == 0L) return
+        log("HUD: the last run was stopped while guiding on the HUD (started " +
+            java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date(since)) +
+            ") before it could clear the HUD")
+        state.edit().remove(KEY_GUIDING_SINCE).commit()
     }
 
     private fun onFocusOnWorker(value: Int?) {
@@ -235,6 +272,9 @@ internal class MazdaHud(
         private const val REQUEST_FOCUS = 63 // requestNaviFocus(String package, INaviFocusCallback)
         private const val ABANDON_FOCUS = 64 // abandonNaviFocus(String package, INaviFocusCallback)
         val ALLOWED = setOf(STATUS, TURN, ROAD, REMAIN, PERCENT, REQUEST_FOCUS, ABANDON_FOCUS)
+
+        private const val STATE_PREFS = "diplay_mazda_hud_state"
+        private const val KEY_GUIDING_SINCE = "guiding_since"
 
         // The car's own navigation (WT_TinnoveNavigation): 1 not navigating, 2 navigating, 3 simulating.
         private const val STATUS_NAVIGATING = 2

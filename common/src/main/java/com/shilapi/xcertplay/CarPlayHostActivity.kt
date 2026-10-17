@@ -390,10 +390,13 @@ class CarPlayHostActivity : ComponentActivity() {
     // Keep one surface per layer alive, including while its map card is hidden.
     private val clusterLayers = mutableMapOf<Boolean, ClusterMapPresentation>()
     private var clusterTurnGuidance: com.shilapi.xcertplay.hud.ClusterTurnGuidance? = null
-    private var mazdaHud: MazdaHud? = null
+    @Volatile private var mazdaHud: MazdaHud? = null
     private var mazdaHudScreen: MazdaHudScreen? = null
-    // EZ-60 AR-HUD map (experimental): one per connection; read on MazdaHud's worker thread.
+    // EZ-60 AR-HUD map (experimental): one per connection; read on MazdaHud's and the power watch's threads.
     @Volatile private var mazdaArHud: MazdaArHud? = null
+    private val mazdaArHudLock = Any()
+    // EZ-60: the car switched off ends DiPlay's HUD state before the head unit force-stops DiPlay.
+    private var mazdaPower: MazdaPowerWatch? = null
     private var arMapThisConnection = false
     private val mazdaArWindow = object : MazdaArHud.Window {
         override fun available() = MazdaHudScreen.findArDisplay(this@CarPlayHostActivity) != null
@@ -748,6 +751,7 @@ class CarPlayHostActivity : ComponentActivity() {
         locationPermissionAvailable = hasFineLocationPermission()
         setContentView(MzdCarAppLayout(this, carPlayProjection = true).apply { setPanelContent(buildContentView()) })
         MazdaCockpitProbe.attach(this, PROBE_TAG, savedInstanceState != null)
+        if (MazdaPlatform.isEz60) mazdaPower = MazdaPowerWatch(applicationContext, ::onCarPower).also { it.start() }
         applyFullscreenMode()
         onBackPressedDispatcher.addCallback(
             this,
@@ -1738,6 +1742,8 @@ class CarPlayHostActivity : ComponentActivity() {
         mazdaHud = null
         closeMazdaArHud()
         dismissMazdaHudScreen()
+        mazdaPower?.stop()
+        mazdaPower = null
         if (MazdaAmbientLights.log === mazdaAmbientLog) MazdaAmbientLights.log = null
         discardLastPicture()
         if (pictureCopyThreadStarted) pictureCopyThread.quitSafely()
@@ -5817,10 +5823,12 @@ class CarPlayHostActivity : ComponentActivity() {
             dismissMazdaHudScreen()
             return
         }
-        val newArHud = arMapThisConnection && mazdaArHud == null && MazdaHudSettings.arMap(this)
-        if (newArHud) mazdaArHud = MazdaArHud(::appendLog, mazdaArWindow)
+        val carOff = mazdaPower?.off == true
+        val newArHud = arMapThisConnection && !carOff && MazdaHudSettings.arMap(this) && synchronized(mazdaArHudLock) {
+            (mazdaArHud == null).also { if (it) mazdaArHud = MazdaArHud(::appendLog, mazdaArWindow) }
+        }
         val hud = mazdaHud ?: MazdaHud(applicationContext, ::appendLog) { guiding -> mazdaArHud?.setGuiding(guiding) }
-            .also { mazdaHud = it }
+            .also { mazdaHud = it; it.setCarOff(carOff) }
         // A reconnect mid-route: the HUD may already be guiding.
         if (newArHud) hud.republishGuiding()
         hud.update(guidance)
@@ -5828,9 +5836,21 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun closeMazdaArHud() {
-        val arHud = mazdaArHud ?: return
-        mazdaArHud = null
+        val arHud = synchronized(mazdaArHudLock) { mazdaArHud.also { mazdaArHud = null } } ?: return
         arHud.close()
+    }
+
+    /**
+     * EZ-60 power watch thread. Switched off: end HUD navigation and give the AR-HUD video link back at once, as the
+     * car's own navigation does, before the head unit force-stops DiPlay (about a second later).
+     */
+    private fun onCarPower(off: Boolean) {
+        appendLog(if (off) "Car power: switched off (vehicle_acc_status=2); ending DiPlay's HUD state" else "Car power: on")
+        mazdaHud?.setCarOff(off)
+        if (off) {
+            closeMazdaArHud()
+            runOnUiThread { if (MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.AUGMENTED_REALITY) dismissMazdaHudScreen() }
+        }
     }
 
     // EZ-60: the cluster map stream and the turn card go to DiPlay's window on the HUD display.

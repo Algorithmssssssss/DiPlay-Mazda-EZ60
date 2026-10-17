@@ -174,6 +174,33 @@ read CarPlay's lane guidance yet.
 The HUD's music line (top left, "暂无歌词" when there are no lyrics) belongs to the car's media center. It
 shows only lyrics, which CarPlay does not send, so DiPlay leaves it alone in this release.
 
+### When the car is switched off
+
+The head unit writes `vehicle_acc_status=2` (Settings.Global) when the car is switched off, then force-stops
+DiPlay within about a second and sleeps (report of 2026-10-14: the flag at 17:27:00.2, DiPlay's last log line at
+17:27:01.0, a `user_requested` process exit, a new process after the car started at 17:33). Nothing DiPlay runs
+at the end of a session gets the chance to run.
+
+The car's own navigation ends its guidance on that change (`AccObserver.exitGuide`, "exit guidance caused by an
+ACC change"), which also takes it off the HUD. DiPlay now does the same from its own thread
+(`MazdaPowerWatch`): it clears the HUD, sends "not navigating", gives the navigation focus back and gives the
+AR-HUD video link back, and starts nothing on the HUD again until the car is on. Before this, a CarPlay route
+still guiding at switch-off left DiPlay's navigation state and focus on the car's HUD service, held by a process
+that no longer existed.
+
+Why it matters: another developer saw the 360 camera app (`com.tinnove.evs`) crash on an AR-HUD car after
+leaving navigation on the HUD and locking the car for 5 minutes. The same car service (`IDouInteractiveManager`)
+also carries the camera calls (`notifyUseCamera`, `registerCameraCallback` → `onCameraUse`, `send360trigEvent`)
+and, on the AR-HUD, the video link. The camera app and the service are not decompiled, so the exact cause is
+not confirmed; leaving no stale navigation state behind is what the car's own navigation does.
+
+The session log shows "Car power: switched off …" and the HUD lines that follow. If a run is ever stopped while
+it guides on the HUD, the next run logs "HUD: the last run was stopped while guiding on the HUD".
+
+Test on an AR-HUD car: start a CarPlay route so DiPlay guides on the HUD, switch the car off and lock it with
+the iPhone still in the car, wait 5 minutes, unlock, start the car and check the 360 camera (camera button), then
+send the probe report.
+
 ### Trims: 2D HUD and AR-HUD
 
 The car's own navigation (WT_TinnoveNavigation, J90K build of 2025-09-29) supports two HUDs and tells them
