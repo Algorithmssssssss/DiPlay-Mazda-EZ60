@@ -15,6 +15,9 @@ class MazdaArHudTest {
         assertEquals(Side.RIGHT, MazdaArHudLayout.side(Readings(gear = 1, hudMode = 3, mapLayout = 0)))
         assertEquals(Side.LEFT, MazdaArHudLayout.side(Readings(gear = 1, hudMode = 3, mapLayout = 1)))
         assertEquals(Side.RIGHT, MazdaArHudLayout.side(Readings(gear = 1, hudMode = 3, mapLayout = null)))
+        // An AR-HUD car reported mode 5 (2026-10-17): the car's navigation puts its map left there.
+        assertEquals(Side.LEFT, MazdaArHudLayout.side(Readings(gear = 8, hudMode = 5, mapLayout = 2)))
+        for (mode in listOf(4, 6, 7)) assertEquals("$mode", Side.RIGHT, MazdaArHudLayout.side(Readings(8, mode, 1)))
         assertEquals(1640, Side.RIGHT.left)
         assertEquals(70, Side.LEFT.left)
     }
@@ -22,7 +25,7 @@ class MazdaArHudTest {
     @Test fun noMapInParkWithTheHudOffInEasyModeOrWithoutAReading() {
         assertNull(MazdaArHudLayout.side(Readings(gear = MazdaArHudLayout.GEAR_PARK, hudMode = 1, mapLayout = 0)))
         assertNull(MazdaArHudLayout.side(Readings(gear = null, hudMode = 1, mapLayout = 0)))
-        for (mode in listOf(0, 2, 4, null)) assertNull("$mode", MazdaArHudLayout.side(Readings(1, mode, 0)))
+        for (mode in listOf(0, 2, null)) assertNull("$mode", MazdaArHudLayout.side(Readings(1, mode, 0)))
     }
 
     @Test fun theCarSwitchesTheLinkThenTheWindowShowsAndIsConfirmed() {

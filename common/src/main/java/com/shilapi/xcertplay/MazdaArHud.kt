@@ -48,16 +48,18 @@ internal object MazdaArHudLayout {
     }
 
     /**
-     * The map's side as the car's navigation picks it, or null when the car shows no map: in Park, with the HUD off
-     * (mode 0) or in its "easy" mode (2), and whenever a reading fails (the car's navigation also takes a failed
-     * gear reading as Park). Mode 1 is the classic layout (map right); mode 3 is custom, left when its layout is 1.
+     * The map's side as the car's navigation picks it (ARHudManager.x and .u), or null when the car shows no map: in
+     * Park, with the HUD off (mode 0) or in its "easy" mode (2), and whenever a reading fails (the car's navigation
+     * also takes a failed gear reading as Park). Mode 3 means custom: 5 with map layout 1, else 4. Then 5 puts the map
+     * left; 1 (classic), 4, 6 and any other mode put it right. An AR-HUD car reported mode 5 (2026-10-17).
      */
     fun side(readings: Readings): Side? {
         if (readings.gear == null || readings.gear == GEAR_PARK) return null
-        return when (readings.hudMode) {
-            1 -> Side.RIGHT
-            3 -> if (readings.mapLayout == 1) Side.LEFT else Side.RIGHT
-            else -> null
+        val mode = readings.hudMode ?: return null
+        return when (if (mode == 3) (if (readings.mapLayout == 1) 5 else 4) else mode) {
+            0, 2 -> null
+            5 -> Side.LEFT
+            else -> Side.RIGHT
         }
     }
 
@@ -66,6 +68,24 @@ internal object MazdaArHudLayout {
         hudMode = MazdaAmbientProbe.intValue(HUD_MODE, 0),
         mapLayout = MazdaAmbientProbe.intValue(MAP_LAYOUT, 0),
     )
+}
+
+/**
+ * Whether the running session's stream 111 was sized for a display of its own (a cluster, the EZ-60 HUD). Kept per
+ * session, not per CarPlay screen: a screen that adopts the running session (after the car's home screen) would
+ * otherwise hand stream 111 the main surface, and two decoders on one surface freeze the picture (EZ-60 report 19).
+ */
+internal object CarPlaySessionCluster {
+    @JvmField @Volatile var streamOnDisplay = false
+}
+
+/**
+ * What this CarPlay connection asked the iPhone for. It outlives the CarPlay screen: opening the car's home screen
+ * from CarPlay closes the screen, and the next one adopts the running session without asking again.
+ */
+internal object MazdaArHudConnection {
+    @Volatile var mapRequested = false
+    @Volatile var sizePercent = MazdaHudSettings.ArMapSize.CAR.percent
 }
 
 /**
