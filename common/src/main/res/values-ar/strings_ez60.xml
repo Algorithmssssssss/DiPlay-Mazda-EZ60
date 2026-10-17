@@ -17,4 +17,9 @@
     <string name="settings_mazda_ambient_depth">العمق</string>
     <string name="settings_mazda_ambient_sensitivity">حساسية النبض</string>
     <string name="settings_mazda_ambient_tuning_description">النعومة: 1 تتغير بسرعة و5 ببطء. العمق: مدى خفوت الإضاءة بين الضربات. حساسية النبض: 5 تلتقط الضربات الأخف. تُطبَّق التغييرات فورًا.</string>
+    <string name="settings_ez60">مازدا EZ-60</string>
+    <string name="settings_ez60_summary">شاشة العرض الأمامية والإضاءة المحيطة في السيارة. يمكنك إيقاف أي منها من هنا.</string>
+    <string name="settings_mazda_hud_card">شاشة العرض على الزجاج الأمامي</string>
+    <string name="settings_mazda_ar_map">خريطة على شاشة AR-HUD (تجريبي)</string>
+    <string name="settings_mazda_ar_map_description">تعرض خريطة CarPlay، أو المنعطف التالي عند عدم توفر خريطة، في إطار الخريطة الخاص بشاشة AR-HUD أثناء توجيه ملاحة CarPlay وعندما لا تكون السيارة على وضع P. لذلك يبدّل DiPlay صورة شاشة العرض في السيارة ويعيدها عند انتهاء المسار أو عند حدوث أي خلل. لا تستخدمها أثناء توجيه نظام الملاحة الخاص بالسيارة. يُطبَّق التفعيل عند الاتصال التالي، ويزيل الإيقاف الخريطة فورًا.</string>
 </resources>

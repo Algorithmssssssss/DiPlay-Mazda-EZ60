@@ -17,4 +17,9 @@
     <string name="settings_mazda_ambient_depth">Глибина</string>
     <string name="settings_mazda_ambient_sensitivity">Чутливість до біту</string>
     <string name="settings_mazda_ambient_tuning_description">Плавність: 1 — швидкі зміни, 5 — повільні. Глибина: наскільки підсвічування згасає між ударами. Чутливість до біту: 5 ловить тихіші удари. Зміни застосовуються одразу.</string>
+    <string name="settings_ez60">Mazda EZ-60</string>
+    <string name="settings_ez60_summary">HUD та підсвітка салону. Тут можна швидко вимкнути будь-яку з функцій.</string>
+    <string name="settings_mazda_hud_card">HUD на лобовому склі</string>
+    <string name="settings_mazda_ar_map">Карта на AR-HUD (експериментально)</string>
+    <string name="settings_mazda_ar_map_description">Показує карту CarPlay (або наступний поворот, якщо карти немає) у власному вікні карти AR-HUD, поки навігація CarPlay веде маршрутом і авто не на P. Для цього DiPlay перемикає зображення HUD і повертає його, коли маршрут закінчується або щось іде не так. Не вмикайте, коли веде штатна навігація. Увімкнення діє з наступного підключення, вимкнення прибирає карту одразу.</string>
 </resources>

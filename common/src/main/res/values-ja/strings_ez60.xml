@@ -17,4 +17,9 @@
     <string name="settings_mazda_ambient_depth">深さ</string>
     <string name="settings_mazda_ambient_sensitivity">ビート感度</string>
     <string name="settings_mazda_ambient_tuning_description">滑らかさ：1は速く、5はゆっくり変化します。深さ：ビートの合間にライトを暗くする度合いです。ビート感度：5ではより弱いビートも拾います。変更はすぐに反映されます。</string>
+    <string name="settings_ez60">マツダ EZ-60</string>
+    <string name="settings_ez60_summary">車のHUDとアンビエントライト。ここでどれでもオフにできます。</string>
+    <string name="settings_mazda_hud_card">フロントガラスHUD</string>
+    <string name="settings_mazda_ar_map">AR-HUDの地図（実験的機能）</string>
+    <string name="settings_mazda_ar_map_description">CarPlayのナビが案内中で、車がP以外のとき、AR-HUD本来の地図枠にCarPlayの地図（地図がないときは次の曲がり角）を表示します。DiPlayはこのために車のHUD映像を切り替え、ルートの終了時や不具合が起きたときに元に戻します。車の純正ナビが案内中のときは使わないでください。オンにすると次回の接続から有効になり、オフにするとすぐに地図が消えます。</string>
 </resources>

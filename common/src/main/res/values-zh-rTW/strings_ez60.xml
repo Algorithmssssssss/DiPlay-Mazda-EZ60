@@ -17,4 +17,9 @@
     <string name="settings_mazda_ambient_depth">深度</string>
     <string name="settings_mazda_ambient_sensitivity">節拍靈敏度</string>
     <string name="settings_mazda_ambient_tuning_description">平滑度：1 變化快，5 變化慢。深度：鼓點之間燈光變暗的程度。節拍靈敏度：5 能捕捉較輕的鼓點。變更立即生效。</string>
+    <string name="settings_ez60">馬自達 EZ-60</string>
+    <string name="settings_ez60_summary">車輛的 HUD 與氛圍燈。可在此關閉其中任何一項。</string>
+    <string name="settings_mazda_hud_card">擋風玻璃 HUD</string>
+    <string name="settings_mazda_ar_map">AR-HUD 地圖（實驗性）</string>
+    <string name="settings_mazda_ar_map_description">在 CarPlay 導航引導中且車輛不在 P 檔時，於 AR-HUD 本身的地圖區域顯示 CarPlay 地圖（沒有地圖時顯示下一個轉向）。DiPlay 會為此切換車輛的 HUD 畫面，並在路線結束或發生任何故障時交還。車輛內建導航正在引導時請勿使用。開啟後於下次連線時生效；關閉後地圖會立即移除。</string>
 </resources>

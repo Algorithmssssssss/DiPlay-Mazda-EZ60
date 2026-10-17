@@ -17,4 +17,9 @@
     <string name="settings_mazda_ambient_depth">Depth</string>
     <string name="settings_mazda_ambient_sensitivity">Beat sensitivity</string>
     <string name="settings_mazda_ambient_tuning_description">Smoothness: 1 changes quickly, 5 changes slowly. Depth: how far the lights dim between beats. Beat sensitivity: 5 catches softer beats. Changes apply at once.</string>
+    <string name="settings_ez60">Mazda EZ-60</string>
+    <string name="settings_ez60_summary">The car’s HUD and ambient lights. Turn any of them off here.</string>
+    <string name="settings_mazda_hud_card">Windshield HUD</string>
+    <string name="settings_mazda_ar_map">AR-HUD map (experimental)</string>
+    <string name="settings_mazda_ar_map_description">Shows CarPlay’s map, or the next turn when there is no map, in the AR-HUD’s own map box while CarPlay navigation is guiding and the car is out of Park. DiPlay switches the car’s HUD picture for this and gives it back when the route ends or anything fails. Do not use it while the car’s own navigation is guiding. Turning it on applies at the next connection; turning it off removes the map at once.</string>
 </resources>

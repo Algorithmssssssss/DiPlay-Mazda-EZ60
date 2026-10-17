@@ -17,7 +17,12 @@ import java.util.concurrent.Executors
  * the next turn, the road names and what is left of the route. Nothing else on that service, and no vehicle
  * properties. Calls run on one background thread; [log] gets each step that matters.
  */
-internal class MazdaHud(private val context: Context, private val log: (String) -> Unit) {
+internal class MazdaHud(
+    private val context: Context,
+    private val log: (String) -> Unit,
+    /** Whether DiPlay guides on the HUD now: navigation started and the focus is DiPlay's. Worker thread. */
+    private val onGuiding: (Boolean) -> Unit = {},
+) {
     private val worker = Executors.newSingleThreadExecutor { Thread(it, "diplay-mazda-hud").apply { isDaemon = true } }
     private val callback = FocusCallback { value ->
         log("HUD: navigation focus changed value=$value")
@@ -33,6 +38,7 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
     // The car's service says who shows navigation on the HUD; assumed granted on request until it says otherwise.
     private var holdsFocus = true
     private var unavailableLogged = false
+    private var guidingPublished = false
 
     /** One HUD update, in the car's vocabulary. */
     internal data class Frame(
@@ -56,6 +62,11 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         worker.shutdown()
     }
 
+    /** Tells [onGuiding] the current state again, in order with later changes (a listener joined late). */
+    fun republishGuiding() {
+        runCatching { worker.execute { runCatching { onGuiding(guidingPublished) } } }
+    }
+
     private fun sendOnWorker(frame: Frame) {
         val binder = service() ?: return
         if (!active) {
@@ -67,6 +78,7 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             routeLongestMeters = 0
             sentPercent = -1
             log("HUD: navigation started on the car's service focus=$focus status=$status")
+            publishGuiding()
         }
         // Another navigation app (the car's own included) took the HUD: never overwrite its guidance.
         if (!holdsFocus) return
@@ -100,7 +112,7 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         val binder = service()
         active = false
         sent = null
-        if (binder == null) return
+        if (binder == null) return publishGuiding()
         // The car's navigation apps clear in this order, then give focus back. Only the focus holder clears:
         // after another app took the HUD, its guidance stays.
         if (holdsFocus) {
@@ -111,6 +123,7 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         }
         call(binder, ABANDON_FOCUS) { writeString(context.packageName); writeStrongBinder(callback) }
         log(if (holdsFocus) "HUD: guidance ended; HUD cleared" else "HUD: guidance ended; HUD left to the other app")
+        publishGuiding()
     }
 
     private fun onFocusOnWorker(value: Int?) {
@@ -120,6 +133,14 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         holdsFocus = holds
         if (holds) sent = null // resend everything to the HUD now it is ours again
         else log("HUD: another navigation app took the HUD; DiPlay stops sending until it is returned")
+        publishGuiding()
+    }
+
+    private fun publishGuiding() {
+        val guiding = active && holdsFocus
+        if (guiding == guidingPublished) return
+        guidingPublished = guiding
+        runCatching { onGuiding(guiding) }
     }
 
     private fun service(): IBinder? {
@@ -201,7 +222,7 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         private const val SERVICE_MANAGER_INTERFACE = "com.incall.serversdk.server.ISvrManager"
         private const val GET_SERVER = 6
         private const val NAVIGATION_SERVICE = "com.incall.double.INTERACTIVE_SERVICE"
-        private const val NAVIGATION_INTERFACE = "com.incall.serversdk.interactive.IDouInteractiveManager"
+        const val NAVIGATION_INTERFACE = "com.incall.serversdk.interactive.IDouInteractiveManager"
         private const val FOCUS_CALLBACK_INTERFACE = "com.incall.serversdk.interactive.callback.INaviFocusCallback"
         private const val ON_FOCUS_CHANGE = 3
         private const val FOCUS_GAINED = 1
@@ -258,6 +279,25 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             else -> 0 // no maneuver: no arrow
         }
 
+        /** The car's navigation service ([NAVIGATION_INTERFACE]), or null; no logging. Not on the main thread. */
+        fun navigationService(): IBinder? {
+            val manager = serviceManager(SERVICE_MANAGER) ?: return null
+            val request = Parcel.obtain()
+            val reply = Parcel.obtain()
+            return try {
+                request.writeInterfaceToken(SERVICE_MANAGER_INTERFACE)
+                request.writeString(NAVIGATION_SERVICE)
+                manager.transact(GET_SERVER, request, reply, 0)
+                reply.readException()
+                reply.readStrongBinder()
+            } catch (_: Exception) {
+                null
+            } finally {
+                request.recycle()
+                reply.recycle()
+            }
+        }
+
         @Suppress("DiscouragedPrivateApi", "PrivateApi")
         private fun serviceManager(name: String): IBinder? = runCatching {
             val manager = Class.forName("android.os.ServiceManager")
@@ -292,4 +332,14 @@ internal object MazdaHudSettings {
     fun save(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_ENABLED, enabled).apply()
     }
+
+    /** CarPlay's map on the AR-HUD ([MazdaArHud]); off by default: it switches the car's HUD video link. */
+    fun arMap(context: Context): Boolean = enabled(context) &&
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_AR_MAP, false)
+
+    fun saveArMap(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_AR_MAP, enabled).apply()
+    }
+
+    private const val KEY_AR_MAP = "ar_hud_map"
 }

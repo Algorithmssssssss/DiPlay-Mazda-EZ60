@@ -17,4 +17,9 @@
     <string name="settings_mazda_ambient_depth">Profundidad</string>
     <string name="settings_mazda_ambient_sensitivity">Sensibilidad al pulso</string>
     <string name="settings_mazda_ambient_tuning_description">Suavidad: 1 cambia rápido y 5 despacio. Profundidad: cuánto se atenúan las luces entre golpes. Sensibilidad al pulso: 5 detecta golpes más suaves. Los cambios se aplican al instante.</string>
+    <string name="settings_ez60">Mazda EZ-60</string>
+    <string name="settings_ez60_summary">El HUD y la iluminación ambiental del coche. Desactiva aquí cualquiera de ellos.</string>
+    <string name="settings_mazda_hud_card">HUD del parabrisas</string>
+    <string name="settings_mazda_ar_map">Mapa en el AR-HUD (experimental)</string>
+    <string name="settings_mazda_ar_map_description">Muestra el mapa de CarPlay, o el siguiente giro si no hay mapa, en el recuadro de mapa propio del AR-HUD mientras la navegación de CarPlay guía y el coche no está en P. Para ello DiPlay cambia la imagen del HUD del coche y la devuelve al terminar la ruta o si algo falla. No lo uses mientras guía la navegación propia del coche. Al activarlo se aplica en la próxima conexión; al desactivarlo el mapa desaparece al instante.</string>
 </resources>

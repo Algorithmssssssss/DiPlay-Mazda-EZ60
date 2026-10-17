@@ -119,7 +119,10 @@ comes from the head unit's navigation service, `com.incall.double.INTERACTIVE_SE
 feed. A window on its 800×480 presentation display (`MeterDisplay#0`) is projected only while an app holds
 that service's navigation focus.
 
-**Turn-by-turn on the HUD (experimental)** (**Settings → Navigation → Location**, EZ-60 only, on by
+The EZ-60's own switches are together on **Settings → Mazda EZ-60** (shown on the EZ-60 only, first in the
+list), so they are quick to find and turn off.
+
+**Turn-by-turn on the HUD (experimental)** (**Settings → Mazda EZ-60 → Windshield HUD**, on by
 default) feeds it with CarPlay's route guidance, which Google Maps and Apple Maps both send:
 
 | Step | Call |
@@ -187,10 +190,30 @@ Both trims use the same `IDouInteractiveManager` call numbers that DiPlay uses. 
 (read-only) at each connection and follows the same rule:
 
 - 2D HUD: as described above.
-- AR-HUD: turn-by-turn only. DiPlay opens no window on `MeterDisplay#0` and does not ask the iPhone for the map
-  stream. Its window could never reach the AR-HUD, because DiPlay never switches the video link, and it could
-  cover the car's own guidance when the car switches it. One video decoder fewer also leaves more of the
-  MediaTek video hardware to the car's cameras and DVR.
+- AR-HUD: turn-by-turn only by default. DiPlay opens no window on `MeterDisplay#0`, does not ask the iPhone for
+  the map stream and never switches the video link. One video decoder fewer also leaves more of the MediaTek
+  video hardware to the car's cameras and DVR. A photo from an AR-HUD car showed that the AR-HUD draws nothing
+  from the turn calls alone (only its own speed, gear, range and music line), at least while stopped.
+- AR-HUD with **AR-HUD map (experimental)** (**Settings → Mazda EZ-60 → Windshield HUD**, AR-HUD cars only,
+  off by default; turning it on applies at the next connection, turning it off removes the map at once): DiPlay
+  shows CarPlay's map, or a turn card (arrow, distance, road) when the iPhone sends no map, in the car's own map
+  box, as the car's navigation does:
+
+  | | The car's navigation | DiPlay |
+  |---|---|---|
+  | When | guiding, not in Park, HUD mode with a map | CarPlay guiding with the HUD's navigation focus, not in Park, HUD mode with a map |
+  | Readings (read-only VirtualCar properties) | gear `826278449` (4 = P), HUD mode `826279576` (0 off, 1 classic, 2 easy, 3 custom), map layout `826279579` (1 = left) | the same, once a second while guiding; a failed reading counts as Park |
+  | Map box on `MeterDisplay#0` (4032×845) | 390×350 at (1640,161); at (70,161) in custom mode with the left layout; none in easy mode | the same; the stream is asked for at 390×350 (× the HUD map view) |
+  | Show | `setVideoStatus(5)`; on `onRequestLVDS(19)` show the window and `sendSwitchLVDSFinishEvent(0)`; on `20` ask again after 200 ms, at most 8 times | the same, with its own `IDoubleVideoCallback` (calls 72, 73, 74 and 1 only) |
+  | Hide | `setVideoStatus(6)`; on `onIPStatus(6)` remove the window and confirm | the same, when the route ends, in Park, in a mode without a map, or when the connection closes |
+
+  DiPlay only hides a link it switched on itself. A link reply it did not ask for (more than 2 s after its own
+  request) means another app is using the link: the car's own navigation, or a HUD video player such as Migu
+  Video. DiPlay then removes its window, leaves the link alone and waits for the next route. No reply within 3 s,
+  or 8 declined requests, turns the map off until the next connection. DiPlay cannot tell when the car's own
+  navigation was already guiding before CarPlay's route started: do not use both at once. Each step is logged
+  as "HUD: AR map …" and "HUD: AR-HUD state gear=… hudMode=… mapLayout=…", and the probe's "Car features"
+  section shows the current readings.
 
 The session log starts with a "Car features:" line, and the EZ-60 probe adds a "Car features (read-only)"
 section: HUD type, screen, Ethernet, audio architecture, speakers, cameras and the other per-trim switches, so
@@ -217,7 +240,7 @@ navigation focus and accepted the turn call. Whether the AR-HUD drew anything ha
 
 ## Ambient lights following CarPlay music (experimental)
 
-**Settings → Advanced → Ambient lighting → Follow CarPlay music** (EZ-60 only, off by default). The car's own
+**Settings → Mazda EZ-60 → Ambient lighting → Follow CarPlay music** (off by default). The car's own
 music sync runs inside its media center and only for that app's own player, so CarPlay music never reached the
 lights (report 17). With the switch on, DiPlay does what the media center does, through the same car adapter
 (`wt.atom`, `IAtomInterface.setValue`, priority 200):

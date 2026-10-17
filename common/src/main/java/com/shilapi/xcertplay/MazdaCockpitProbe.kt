@@ -317,6 +317,9 @@ internal object MazdaCockpitProbe {
                 if (MazdaPlatform.isEz60) section("Car features (read-only)") {
                     for (key in MazdaCarFeatures.REPORTED) appendLine("$key=${MazdaCarFeatures.value(key) ?: "unset"}")
                     appendLine("HUD as DiPlay treats it: ${MazdaCarFeatures.hud()}")
+                    val readings = MazdaArHudLayout.read()
+                    appendLine("AR-HUD readings: $readings mapSide=${MazdaArHudLayout.side(readings) ?: "none"} " +
+                        "arMapSwitch=${MazdaHudSettings.arMap(app)}")
                 }
             }.lineSequence().joinToString("\n") { DiagnosticRedactor.mask(it) }
             runCatching { File(directory(app), SNAPSHOT_FILE).writeText(text) }

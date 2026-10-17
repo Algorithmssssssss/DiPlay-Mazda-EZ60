@@ -16,7 +16,11 @@ internal object MazdaPlatform {
     private val buildPattern = Regex("(?i)mazda|changan|camzd|j90k|wtcl")
 
     /** The EZ-60 head unit by its build model (WUTONG/TINNOVE J90K, measured by the probe), for defaults. */
-    val isEz60: Boolean by lazy { Build.MODEL.equals("J90K", ignoreCase = true) }
+    val isEz60: Boolean get() = ez60ForTests ?: detectedEz60
+    private val detectedEz60: Boolean by lazy { Build.MODEL.equals("J90K", ignoreCase = true) }
+
+    /** Lets a test render the EZ-60's own settings on the test device; null outside tests. */
+    @Volatile internal var ez60ForTests: Boolean? = null
 
     /**
      * The car's Bluetooth music player (in the media center) holds Android audio focus. It sets this when it takes
