@@ -1,6 +1,6 @@
-# DiPlay for Mazda EZ-60 0.2.19-ez60.1 — pre-release
+# DiPlay for Mazda EZ-60 0.2.19-ez60.2 — pre-release 2.0
 
-First pre-release of the Mazda EZ-60 fork, based on [DiPlay 0.2.19](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.19). It was tested on all three trims of the Chinese-market EZ-60. Options 1 and 2 take DiPlay's 2D HUD path; it was measured on an Option 1 car (CAMZD OS build 20250930150736) with an iPhone on iOS 27. Option 3, with the AR-HUD, was tested by testers on their own car (firmware `SWD.26.8`). Google Maps was used for navigation. It is not an Apple-certified product.
+Pre-release 2.0 of the Mazda EZ-60 fork, for closed testers, based on [DiPlay 0.2.19](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.19). Testers: see [Notes for testers](PRE-RELEASE-2.0-TESTERS.md). It was tested on all three trims of the Chinese-market EZ-60. Options 1 and 2 take DiPlay's 2D HUD path; it was measured on an Option 1 car (CAMZD OS build 20250930150736) with an iPhone on iOS 27. Option 3, with the AR-HUD, was tested by testers on their own car (firmware `SWD.26.8`). Google Maps was used for navigation. It is not an Apple-certified product.
 
 ## What works
 

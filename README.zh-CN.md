@@ -6,7 +6,7 @@
 
 [下载](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/releases) · [安装与连接（英文）](docs/INSTALL.md) · [报告问题](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/issues/new/choose) · [English](README.md)
 
-## 0.2.19-ez60.1 可用功能
+## 0.2.19-ez60.2 可用功能
 
 - **无线 CarPlay**：使用车载热点最流畅（使用中 43–59 fps，每帧解码 4–5 ms，触摸到画面 21–60 ms），也可使用 5 GHz Wi-Fi Direct。
 - **有线 CarPlay**：通过 USB 连接，需先执行一次 ADB 命令（车机没有 VPN 授权界面）。

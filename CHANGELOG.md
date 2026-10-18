@@ -1,4 +1,6 @@
-# DiPlay for Mazda EZ-60 0.2.19-ez60.1 — unreleased
+# DiPlay for Mazda EZ-60 0.2.19-ez60.2 — 2026-10-18 (pre-release 2.0, closed testers)
+
+Pre-release 2.0 goes to the closed tester group only. 0.2.19-ez60.1 was never released; its test builds went to testers, so this entry lists everything since 0.2.17-ez60.1. [Notes for testers](docs/PRE-RELEASE-2.0-TESTERS.md).
 
 Moves the fork to DiPlay 0.2.19 and adds the EZ-60's Option 3 trim, whose windshield HUD is the AR-HUD. Testers reported it working on all three trims on 2026-10-18: Options 1 and 2 take DiPlay's 2D HUD path, Option 3 the AR-HUD path. See [release notes](docs/RELEASE-NOTES-EZ60.md) and [the merge of the Option 3 work](docs/EZ60-ALL-TRIMS-MERGE.md).
 

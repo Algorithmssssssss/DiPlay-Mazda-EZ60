@@ -17,8 +17,8 @@ had no conflicts and changed nothing in either side's code. The app code on this
 commit `540c405c`. That commit built the last Option 3 test APK (`DiPlay-EZ60-0.2.19-arhud-map-6.apk`); the commits
 after it change documentation only.
 
-The version stays `0.2.19-ez60.1` (versionCode 38), which has not been released. Raise it when you publish a
-release.
+The version stays `0.2.19-ez60.1` (versionCode 38), which has not been released. Branch `pre-release-2.0`, made
+from this branch for the closed testers, raises it to `0.2.19-ez60.2` (versionCode 39).
 
 ## Branches left as they were
 

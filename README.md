@@ -6,7 +6,7 @@
 
 [Releases](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/releases) · [Install and connect](docs/INSTALL.md) · [Report a problem](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/issues/new/choose) · [中文](README.zh-CN.md)
 
-## What works in 0.2.19-ez60.1
+## What works in 0.2.19-ez60.2
 
 - **Wireless CarPlay** over the car's built-in hotspot (smoothest: 43–59 fps while in use, 4–5 ms per frame to decode, 21–60 ms from touch to picture) or Wi-Fi Direct on 5 GHz.
 - **Wired CarPlay** over USB, after one ADB command (the car has no VPN approval screen).
