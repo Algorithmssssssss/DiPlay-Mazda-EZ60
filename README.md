@@ -2,7 +2,7 @@
 
 **CarPlay for the Chinese-market Mazda EZ-60** (Changan Mazda J90K, CAMZD OS on Android 14, MediaTek MT8676), wired and wireless, on the car's 5K split screen and windshield HUD. A fork of [DiPlay](https://github.com/shihabal3amri/DiPlay). App: `com.reachkim.diplay.ez60`, installs beside upstream DiPlay.
 
-> **Pre-release.** Tested on one EZ-60 with an iPhone on iOS 27. It is not an Apple-certified product, and it is not affiliated with or endorsed by Apple, Mazda, Changan or Tinnove.
+> **Pre-release.** Tested on all three EZ-60 trims (Options 1, 2 and 3). It is not an Apple-certified product, and it is not affiliated with or endorsed by Apple, Mazda, Changan or Tinnove.
 
 [Releases](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/releases) · [Install and connect](docs/INSTALL.md) · [Report a problem](https://github.com/Algorithmssssssss/DiPlay-Mazda-EZ60/issues/new/choose) · [中文](README.zh-CN.md)
 
@@ -11,7 +11,9 @@
 - **Wireless CarPlay** over the car's built-in hotspot (smoothest: 43–59 fps while in use, 4–5 ms per frame to decode, 21–60 ms from touch to picture) or Wi-Fi Direct on 5 GHz.
 - **Wired CarPlay** over USB, after one ADB command (the car has no VPN approval screen).
 - **Both screen halves.** CarPlay opens on the half you start it from, follows the car's two-finger swipe to the other half without reconnecting, and narrows when the car shows its vehicle panel or voice assistant.
-- **Windshield HUD.** While CarPlay navigation guides, the car's HUD draws its own turn arrow, distance and remaining route, and shows CarPlay's map in its map area, in a Far, Normal or Near view; it clears when you end the route or arrive. Confirmed with Google Maps. DiPlay only feeds the HUD's display: it never touches the car's own navigation or driving assistance.
+- **Windshield HUD (Options 1 and 2).** While CarPlay navigation guides, the car's HUD draws its own turn arrow, distance and remaining route, and shows CarPlay's map in its map area, in a Far, Normal or Near view; it clears when you end the route or arrive. Confirmed with Google Maps. DiPlay only feeds the HUD's display: it never touches the car's own navigation or driving assistance.
+- **AR-HUD (Option 3).** The AR-HUD draws its own turn arrow and distance from CarPlay's guidance. **AR-HUD map (experimental)**, off by default, adds CarPlay's map in the AR-HUD's own map box while you drive.
+- **Settings → Mazda EZ-60:** the car's HUD and ambient-light switches on one page, each easy to turn off.
 - **Picture tuned for the MT8676:** 60 fps and MediaTek's low-latency decoders by default, with a fallback to the standard decoder if one fails.
 - Steering-wheel previous, next and play/pause.
 - **Works beside the car's own Bluetooth music:** DiPlay leaves audio focus to the car's Bluetooth player, so the car no longer pauses the iPhone when CarPlay plays.

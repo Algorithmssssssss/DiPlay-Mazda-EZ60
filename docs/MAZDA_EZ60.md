@@ -267,8 +267,8 @@ Both trims use the same `IDouInteractiveManager` call numbers that DiPlay uses. 
   about 60 ms after leaving P. DiPlay confirms that 6, keeps its window, and reads the gear at once and 300 ms
   later, so even a short P is seen: in P it removes the window and gives the link back, and out of Park it asks
   again at its next reading (first tester report: the map stayed off after D → P → D. The fix that removed the
-  window on that 6 and asked again out of Park was confirmed on the car; this gear-reading version is not yet
-  driven).
+  window on that 6 and asked again out of Park was confirmed on the car, and the testers reported this
+  gear-reading version working on 2026-10-18).
   Whether this connection asked for the AR-HUD map, and at which size, belongs to the running CarPlay session: when
   CarPlay opens the car's home screen, DiPlay's CarPlay screen closes, and the next one adopts the session and
   shows the map again (first tester report: the map did not come back). The same goes for which output stream 111

@@ -41,10 +41,13 @@ cable, tap **Connect with USB**, and accept Trust and CarPlay on the iPhone.
 
 - CarPlay opens on the half you started DiPlay from. The car's two-finger swipe moves it to the other half
   without reconnecting.
-- **Turn-by-turn on the HUD (experimental)**, under **Settings → Navigation → Location**, is on by default.
-  While CarPlay navigation guides, the windshield HUD shows the car's own turn arrow, distance and remaining
-  route, and CarPlay's map in its map area. **HUD map view** (Far, Normal, Near) sets how much map it shows.
-  Changes apply at the next connection.
+- **Turn-by-turn on the HUD (experimental)**, under **Settings → Mazda EZ-60 → Windshield HUD**, is on by
+  default. While CarPlay navigation guides, the windshield HUD shows the car's own turn arrow and distance.
+  On Options 1 and 2 it also shows the remaining route and CarPlay's map in its map area. **HUD map view**
+  (Far, Normal, Near) sets how much map it shows and applies at the next connection.
+- On Option 3 (AR-HUD), **AR-HUD map (experimental)** on the same card is off by default. On, it shows
+  CarPlay's map in the AR-HUD's own map box while you drive, from the next connection; **AR-HUD map size**
+  picks the car's size, Large or Largest. Turning it off removes the map at once.
 - While you use the car's own navigation (for example with its driving assistance), don't start CarPlay
   directions at the same time, or turn **Turn-by-turn on the HUD** off.
 

@@ -1,23 +1,38 @@
 # DiPlay for Mazda EZ-60 0.2.19-ez60.1 — unreleased
 
-Moves the fork to DiPlay 0.2.19. See [release notes](docs/RELEASE-NOTES-EZ60.md).
+Moves the fork to DiPlay 0.2.19 and adds the EZ-60's Option 3 trim, whose windshield HUD is the AR-HUD. Testers reported it working on all three trims on 2026-10-18: Options 1 and 2 take DiPlay's 2D HUD path, Option 3 the AR-HUD path. See [release notes](docs/RELEASE-NOTES-EZ60.md) and [the merge of the Option 3 work](docs/EZ60-ALL-TRIMS-MERGE.md).
+
+### Every EZ-60 trim
 
 - Use upstream's MediaTek decoder tuning (#608) by default on the EZ-60: H.264 keeps `c2.mtk.avc.decoder.lowlatency`, HEVC uses `c2.mtk.hevc.decoder.lowlatency`, and a low-latency decoder that fails or stalls hands the session to the standard decoder. It can be turned off under Settings → Advanced → Video and audio.
-- From upstream 0.2.18–0.2.19: restart a call microphone whose first read fails, report the microphone level as `peakDbfs` (beside the fork's `silenced=` and `recordings=`), keep the right timing for 16 kHz calls, Siri and navigation prompts, show the last picture when a SurfaceView output comes back, allow the wired VPN over the car's approved network ADB when the VPN screen is missing, and get the diagnostic report on a phone by QR code.
+- Add a Mazda EZ-60 page to Settings, first in the list and only on the EZ-60, with the car's own switches: turn-by-turn on the HUD, the HUD map view, the AR-HUD map (Option 3 only) and the ambient lights. The HUD and light settings keep their saved values.
+- Detect the car's HUD from its feature configuration (`car_feature_hud_type`), as the car's own navigation does: 3 is the AR-HUD, any other value the 2D HUD. Report the car's per-trim features in the session log ("Car features:"; the report filter dropped it at first) and in the probe, and leave the head unit's ADB serial out of the probe.
+- End DiPlay's HUD navigation, give back the navigation focus and the AR-HUD video link, and remove DiPlay's HUD window as soon as the EZ-60 is switched off, as the car's own navigation does. The head unit freezes DiPlay a few seconds later and force-stops it at the next start, which used to leave DiPlay's navigation state on the car's HUD service. The switch-off watch listens to all global settings, as the probe does: on an AR-HUD car's firmware a watch on the key alone never heard it.
+- Keep the HUD's guidance and map when CarPlay connects mid-drive: Google Maps resumes its route with brief "no route" updates, which ended the HUD's guidance for up to two minutes. The HUD now clears 5 s after "no route" unless a route follows (arrival still clears it at once).
 - Translate the EZ-60 settings and probe into Japanese.
 - Add Download probe report to the phone page (QR code, or the car's address and a 6-digit code) under Diagnostics → Get the report on a phone, beside the diagnostic report. The probe's own Open on iPhone page stays.
 - The probe report covers the whole CarPlay session, not only the newest 512 KB log file (about the last 20 minutes of a drive), adds a HUD section, and names the saved video settings.
-- Detect the car's HUD from its feature configuration (`car_feature_hud_type`), as the car's own navigation does. On the AR-HUD trim, keep turn-by-turn but open no HUD map window and request no HUD map stream. Report the car's per-trim features in the session log and the probe.
-- AR-HUD map: follow every HUD mode the car's own navigation follows (mode 5 puts the map on the left; it showed nothing before), and come back after the CarPlay screen reopens from the car's home screen. Keep stream 111 off the main picture's surface when a reopened CarPlay screen adopts the running session.
-- AR-HUD map: come back after the car shifts into Park and out again (the car hides the HUD picture in Park), add an AR-HUD map size (the car's size, Large or Largest), and ask the iPhone for the map at 60 fps.
-- From the EZNav developers' measurements (2026-10-17): draw the 2D HUD map in the car's own 178×178 box at (584,179), or (38,179) with the HUD panels swapped, instead of the Deepal S05's 227×188; keep DiPlay's HUD window only while it guides on the HUD, on both trims, and remove it at switch-off, since a window left on the HUD display across a deep sleep broke the 360 camera; answer every AR-HUD link reply as the car's navigation does and keep the map on an `onIPStatus(6)` DiPlay did not ask for, checking the gear at once for Park; and size the AR-HUD map's Large and Largest boxes to the projected area (Largest 735×560 at (1285,60)).
-- Hear the EZ-60 being switched off on every firmware: the switch-off watch now listens to all global settings, as the probe does (an AR-HUD car's switch-off reached the probe but not the watch).
-- End DiPlay's HUD navigation, give back the navigation focus and the AR-HUD video link as soon as the EZ-60 is switched off, as the car's own navigation does. The head unit force-stops DiPlay about a second later, which used to leave DiPlay's navigation state on the car's HUD service; another developer saw the 360 camera app crash on an AR-HUD car locked for 5 minutes with navigation left on the HUD.
-- Add a Mazda EZ-60 page to Settings, first in the list and only on the EZ-60, with the car's own switches: turn-by-turn on the HUD, the HUD map view, the new AR-HUD map and the ambient lights.
-- Experimental, off by default: show CarPlay's map (or the next turn without a map) on the AR-HUD trim, in the car's own map box, while CarPlay guides out of Park. DiPlay switches the AR-HUD's picture the way the car's own navigation does and gives it back when the route ends; it steps aside when another app uses the HUD and turns itself off for the connection on any failure.
+
+### Options 1 and 2 (2D HUD)
+
+- Draw the HUD map in the car's own 178×178 box at (584,179), or at (38,179) when the driver swaps the HUD panels, instead of the Deepal S05's 227×188 at (573,167), whose edges were cropped. These are the car navigation's own values, confirmed at the glass by the EZNav developers.
+- Keep DiPlay's window on the HUD display only while DiPlay guides on the HUD, and remove it at switch-off. The EZNav developers saw a window left on that display across the head unit's deep sleep break the 360 camera on their cars.
+
+### Option 3 (AR-HUD)
+
+- Turn-by-turn on the AR-HUD by default: the AR-HUD draws its own turn arrow, distance and arrival time from DiPlay's guidance, except in its Beyond-Class 3D mode, which hides them. Without the AR-HUD map, DiPlay opens no HUD window and asks the iPhone for no map stream.
+- Experimental, off by default: **AR-HUD map**, CarPlay's map (or the next turn without a map) in the AR-HUD's own map box while CarPlay guides out of Park. DiPlay switches the AR-HUD's picture the way the car's own navigation does and gives it back when the route ends; it steps aside when another app uses the HUD and turns itself off for the connection on any failure.
+- AR-HUD map: follow every HUD mode the car's own navigation follows (mode 5 puts the map on the left; it showed nothing before), come back after the car shifts into Park and out again, and come back after the CarPlay screen reopens from the car's home screen.
+- AR-HUD map size: the car's size (390×350), Large (560×455) or Largest (735×560 at (1285,60), which read best at the glass for the EZNav developers). With the map on the left the car's size is kept. The map is asked for at 60 fps; about 32 fps arrives from Google Maps.
+- From the EZNav developers' measurements (2026-10-17): answer every AR-HUD link reply as the car's navigation does, remove the window before handing the picture back, and keep the map on an `onIPStatus(6)` DiPlay did not ask for, checking the gear at once and 300 ms later for Park.
+- The testers reported no fault in the 360 camera or the dash camera with the AR-HUD map in use.
+
+### Every head unit
+
+- From upstream 0.2.18–0.2.19: restart a call microphone whose first read fails, report the microphone level as `peakDbfs` (beside the fork's `silenced=` and `recordings=`), keep the right timing for 16 kHz calls, Siri and navigation prompts, show the last picture when a SurfaceView output comes back, allow the wired VPN over the car's approved network ADB when the VPN screen is missing, and get the diagnostic report on a phone by QR code.
 - Start wireless CarPlay's Bonjour service at once on head units whose network does not answer DNS: the mDNS library reverse-resolved each hotspot address, which held up each connection attempt by 10–20 s on an AR-HUD EZ-60.
-- Write the "Car features:" line to the session log (the report filter dropped it), and leave the head unit's ADB serial out of the probe.
-- Keep the HUD's guidance and map when CarPlay connects mid-drive: Google Maps resumes its route with brief "no route" updates, which ended the HUD's guidance for up to two minutes. The HUD now clears 5 s after "no route" unless a route follows (arrival still clears it at once).
+- Keep the cluster or HUD map stream (stream 111) off the main picture's surface when a reopened CarPlay screen adopts the running session, on the EZ-60 HUDs and BYD clusters alike.
+- Mask vehicle identification numbers (VINs) in diagnostic and probe reports. The EZ-60's voice assistant writes the car's VIN into a setting the probe records.
 
 # DiPlay for Mazda EZ-60 0.2.17-ez60.1 — 2026-10-11 (pre-release, not published)
 
