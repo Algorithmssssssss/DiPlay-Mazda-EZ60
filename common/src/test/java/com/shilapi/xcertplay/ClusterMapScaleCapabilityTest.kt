@@ -92,8 +92,7 @@ class ClusterMapScaleCapabilityTest {
             content = CarPlayClusterDisplay.Content.INSTRUMENTS, markerXPercent = 60, markerYPercent = 35)
         assertEquals(expected, actual)
         assertEquals(1280.0 / 480.0, MapMirrors.streamAspect, 0.0001)
-        assertTrue(activity.javaClass.getDeclaredField("clusterStreamOnDisplay")
-            .apply { isAccessible = true }.getBoolean(activity))
+        assertTrue(CarPlaySessionCluster.streamOnDisplay)
     }
 
     @Test fun measuredDilink4ProjectionRetainsItsSaved1920Calibration() {

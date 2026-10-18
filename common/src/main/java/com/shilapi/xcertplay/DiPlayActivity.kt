@@ -99,7 +99,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 internal enum class SettingsCategory {
-    OVERVIEW, CONNECTION, DISPLAY, AUDIO, NAVIGATION, VEHICLE, LANGUAGE, DIAGNOSTICS, ADVANCED, ABOUT,
+    OVERVIEW, MAZDA_EZ60, CONNECTION, DISPLAY, AUDIO, NAVIGATION, VEHICLE, LANGUAGE, DIAGNOSTICS, ADVANCED, ABOUT,
 }
 
 /** A settings card. Every entry needs one category in [SettingsInformationArchitecture]; see AGENTS.md. */
@@ -123,11 +123,15 @@ internal enum class SettingsSection {
     BYD_NAVIGATION,
     PERMISSIONS_AND_HELP,
     LANGUAGE,
+    MAZDA_HUD,
+    MAZDA_LIGHTS,
 }
 
 internal object SettingsInformationArchitecture {
     val sectionsByCategory: Map<SettingsCategory, Set<SettingsSection>> = mapOf(
         SettingsCategory.OVERVIEW to emptySet(),
+        // The EZ-60's own features, together so its drivers and testers find and turn them off in one place.
+        SettingsCategory.MAZDA_EZ60 to setOf(SettingsSection.MAZDA_HUD, SettingsSection.MAZDA_LIGHTS),
         SettingsCategory.LANGUAGE to setOf(SettingsSection.LANGUAGE),
         SettingsCategory.ABOUT to emptySet(),
         SettingsCategory.CONNECTION to setOf(
@@ -154,6 +158,9 @@ internal object SettingsInformationArchitecture {
             SettingsSection.AMBIENT_LIGHTING,
         ),
     )
+
+    /** Categories this head unit offers: the Mazda EZ-60 page only on the EZ-60. */
+    fun shown(category: SettingsCategory): Boolean = category != SettingsCategory.MAZDA_EZ60 || MazdaPlatform.isEz60
 }
 
 /** DiAuto's visual language, with a connection flow for an independent CarPlay receiver. */
@@ -1090,9 +1097,10 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     private fun settingsRail(): LinearLayout = column().apply {
         background = rounded(SURFACE, BORDER)
         setPadding(dp(12), dp(12), dp(12), dp(12))
-        SettingsCategory.entries.forEach { category ->
+        val categories = SettingsCategory.entries.filter(SettingsInformationArchitecture::shown)
+        categories.forEach { category ->
             addView(settingsRailDestination(category), matchButton(0, 52).apply {
-                bottomMargin = if (category == SettingsCategory.entries.last()) 0 else dp(8)
+                bottomMargin = if (category == categories.last()) 0 else dp(8)
             })
         }
     }
@@ -1140,6 +1148,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     private fun settingsCategoryIcon(category: SettingsCategory): Int = when (category) {
         SettingsCategory.OVERVIEW -> R.drawable.ic_dp_overview
+        SettingsCategory.MAZDA_EZ60 -> R.drawable.ic_dp_car
         SettingsCategory.CONNECTION -> R.drawable.ic_dp_connection
         SettingsCategory.DISPLAY -> R.drawable.ic_dp_display
         SettingsCategory.AUDIO -> R.drawable.ic_dp_audio
@@ -1153,6 +1162,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     private fun settingsCategoryTitle(category: SettingsCategory): String = getString(when (category) {
         SettingsCategory.OVERVIEW -> R.string.settings_overview
+        SettingsCategory.MAZDA_EZ60 -> R.string.settings_ez60
         SettingsCategory.CONNECTION -> R.string.connection
         SettingsCategory.DISPLAY -> R.string.settings_display
         SettingsCategory.AUDIO -> R.string.audio
@@ -1167,6 +1177,10 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     private fun settingsCategoryContent(content: LinearLayout) {
         when (settingsCategory) {
             SettingsCategory.OVERVIEW -> settingsOverview(content)
+            SettingsCategory.MAZDA_EZ60 -> {
+                settingsPageTitle(content, getString(R.string.settings_ez60), getString(R.string.settings_ez60_summary))
+                renderSections(content, SettingsInformationArchitecture.sectionsByCategory.getValue(SettingsCategory.MAZDA_EZ60))
+            }
             SettingsCategory.CONNECTION -> connectionSettings(content)
             SettingsCategory.DISPLAY -> displaySettings(content)
             SettingsCategory.AUDIO -> audioSettings(content)
@@ -1197,7 +1211,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             setPadding(0, 0, 0, dp(20))
         })
 
-        val destinations = listOf(
+        val destinations = listOfNotNull(
+            (SettingsCategory.MAZDA_EZ60 to R.string.settings_ez60_summary)
+                .takeIf { SettingsInformationArchitecture.shown(SettingsCategory.MAZDA_EZ60) },
             SettingsCategory.CONNECTION to R.string.settings_connection_summary,
             SettingsCategory.DISPLAY to R.string.settings_display_summary,
             SettingsCategory.AUDIO to R.string.settings_audio_summary,
@@ -1418,9 +1434,10 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     private fun buildSettingsSearchIndex(): List<SettingsSearchResult> {
         val selected = settingsCategory
         // Category names first, so a card that only links to a category cannot claim its name.
-        val index = SettingsCategory.entries.associateByTo(linkedMapOf(), ::settingsCategoryTitle)
+        val categories = SettingsCategory.entries.filter(SettingsInformationArchitecture::shown)
+        val index = categories.associateByTo(linkedMapOf(), ::settingsCategoryTitle)
         try {
-            for (category in SettingsCategory.entries.filter { it != SettingsCategory.OVERVIEW } + SettingsCategory.OVERVIEW) {
+            for (category in categories.filter { it != SettingsCategory.OVERVIEW } + SettingsCategory.OVERVIEW) {
                 settingsCategory = category
                 val titles = mutableListOf(settingsCategoryTitle(category))
                 searchIndexSink = titles
@@ -2064,18 +2081,24 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             getString(R.string.settings_navigation_wheel_volume), R.drawable.ic_dp_audio) { card ->
             navigationWheelControls(card)
         }
-        filteredSection(content, SettingsSection.AMBIENT_LIGHTING, getString(R.string.settings_ambient_title)) { card ->
-            // The EZ-60's lights follow CarPlay music through the car's own music mode (MazdaAmbientLights).
-            if (MazdaPlatform.isEz60) {
+        // The EZ-60's lights are on its own page (MAZDA_LIGHTS).
+        if (!MazdaPlatform.isEz60) {
+            filteredSection(content, SettingsSection.AMBIENT_LIGHTING, getString(R.string.settings_ambient_title)) { card ->
+                card.addView(button(ambientConfigurationLabel(AmbientMusicSettings.load(this)), false) {
+                    showAmbientConfiguration()
+                }, matchButton(0, 60))
+            }
+        }
+        if (MazdaPlatform.isEz60) {
+            filteredSection(content, SettingsSection.MAZDA_HUD, getString(R.string.settings_mazda_hud_card),
+                R.drawable.ic_dp_navigation) { card -> mazdaHudControls(card) }
+            // The lights follow CarPlay music through the car's own music mode (MazdaAmbientLights).
+            filteredSection(content, SettingsSection.MAZDA_LIGHTS, getString(R.string.settings_ambient_title)) { card ->
                 toggle(card, getString(R.string.settings_mazda_ambient_music),
                     getString(R.string.settings_mazda_ambient_music_description), MazdaAmbientLights.enabled(this)) {
                     MazdaAmbientLights.saveEnabled(this, it)
                 }
                 mazdaAmbientTuning(card)
-            } else {
-                card.addView(button(ambientConfigurationLabel(AmbientMusicSettings.load(this)), false) {
-                    showAmbientConfiguration()
-                }, matchButton(0, 60))
             }
         }
         filteredSection(content, SettingsSection.LOCATION,
@@ -2084,16 +2107,6 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 getString(R.string.sends_precise_android_location_as_carplay_gps_data_when_th),
                 AirPlayPersistence.loadLocationReportingEnabled(this), save = ::onLocationReportingChanged)
             card.addView(label(getString(R.string.location_reporting_reconnects), 14, MUTED))
-            // Only the EZ-60 has this head-up display; the switch is shown there alone.
-            if (MazdaPlatform.isEz60) {
-                toggle(card, getString(R.string.settings_mazda_hud), getString(R.string.settings_mazda_hud_description),
-                    MazdaHudSettings.enabled(this)) { MazdaHudSettings.save(this, it) }
-                card.addView(button("${getString(R.string.settings_mazda_hud_map_view)} · " +
-                    getString(mazdaHudMapViewName(MazdaHudSettings.mapView(this))), false) {
-                    showMazdaHudMapViewPicker()
-                }, matchButton(12, 60))
-                card.addView(label(getString(R.string.settings_mazda_hud_map_view_description), 14, MUTED))
-            }
         }
         // Cluster video does not require a BYD navigation broadcast receiver.
         filteredSection(content, SettingsSection.CLUSTER_MAP,
@@ -4853,6 +4866,37 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         card.addView(label(getString(R.string.settings_mazda_ambient_tuning_description), 14, MUTED))
     }
 
+    /** The EZ-60 windshield HUD: turn-by-turn, and on the AR-HUD trim the experimental map. */
+    private fun mazdaHudControls(card: LinearLayout) {
+        toggle(card, getString(R.string.settings_mazda_hud), getString(R.string.settings_mazda_hud_description),
+            MazdaHudSettings.enabled(this)) {
+            MazdaHudSettings.save(this, it)
+            render()
+        }
+        if (!MazdaHudSettings.enabled(this)) return
+        // Only the AR-HUD trim needs it: the 2D HUD shows the map whenever turn-by-turn is on.
+        if (MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.AUGMENTED_REALITY) {
+            toggle(card, getString(R.string.settings_mazda_ar_map), getString(R.string.settings_mazda_ar_map_description),
+                MazdaHudSettings.arMap(this)) {
+                MazdaHudSettings.saveArMap(this, it)
+                if (it) markReconnectNeeded()
+                render()
+            }
+            if (MazdaHudSettings.arMap(this)) {
+                card.addView(button("${getString(R.string.settings_mazda_ar_map_size)} · " +
+                    getString(mazdaArMapSizeName(MazdaHudSettings.arMapSize(this))), false) {
+                    showMazdaArMapSizePicker()
+                }, matchButton(12, 60))
+                card.addView(label(getString(R.string.settings_mazda_ar_map_size_description), 14, MUTED))
+            }
+        }
+        card.addView(button("${getString(R.string.settings_mazda_hud_map_view)} · " +
+            getString(mazdaHudMapViewName(MazdaHudSettings.mapView(this))), false) {
+            showMazdaHudMapViewPicker()
+        }, matchButton(12, 60))
+        card.addView(label(getString(R.string.settings_mazda_hud_map_view_description), 14, MUTED))
+    }
+
     private fun mazdaAmbientEffectName(effect: MazdaAmbientTuning.Effect): Int = when (effect) {
         MazdaAmbientTuning.Effect.BEAT -> R.string.settings_mazda_ambient_effect_beat
         MazdaAmbientTuning.Effect.RHYTHM -> R.string.settings_mazda_ambient_effect_rhythm
@@ -4865,6 +4909,27 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     // EZ-60: how much map the HUD shows; the stream size is set when CarPlay connects.
+    private fun mazdaArMapSizeName(size: MazdaHudSettings.ArMapSize): Int = when (size) {
+        MazdaHudSettings.ArMapSize.CAR -> R.string.settings_mazda_ar_map_size_car
+        MazdaHudSettings.ArMapSize.LARGE -> R.string.settings_mazda_ar_map_size_large
+        MazdaHudSettings.ArMapSize.LARGEST -> R.string.settings_mazda_ar_map_size_largest
+    }
+
+    private fun showMazdaArMapSizePicker() {
+        val sizes = MazdaHudSettings.ArMapSize.entries
+        val current = sizes.indexOf(MazdaHudSettings.arMapSize(this))
+        appDialogBuilder().setTitle(getString(R.string.settings_mazda_ar_map_size))
+            .setSingleChoiceItems(sizes.map { getString(mazdaArMapSizeName(it)) }.toTypedArray(), current) { dialog, which ->
+                dialog.dismiss()
+                if (which == current) return@setSingleChoiceItems
+                MazdaHudSettings.saveArMapSize(this, sizes[which])
+                markReconnectNeeded()
+                render()
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
     private fun showMazdaHudMapViewPicker() {
         val views = listOf(MazdaHudSettings.MapView.FAR, MazdaHudSettings.MapView.NORMAL, MazdaHudSettings.MapView.NEAR)
         val current = views.indexOf(MazdaHudSettings.mapView(this))

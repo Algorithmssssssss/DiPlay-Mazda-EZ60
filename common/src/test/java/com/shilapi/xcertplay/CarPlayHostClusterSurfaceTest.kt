@@ -35,6 +35,7 @@ class CarPlayHostClusterSurfaceTest {
     }
 
     @After fun tearDown() {
+        CarPlaySessionCluster.streamOnDisplay = false
         setField("sink", null)
         (getField("teardownExecutor") as ExecutorService).shutdownNow()
         (getField("airPlayCommandExecutor") as ExecutorService).shutdownNow()
@@ -44,7 +45,7 @@ class CarPlayHostClusterSurfaceTest {
     @Test fun aStreamForTheHudKeepsItsOwnSurfaceWhenTheMainSurfaceReturns() {
         val main = surface()
         val hud = surface()
-        setField("clusterStreamOnDisplay", true)
+        CarPlaySessionCluster.streamOnDisplay = true
         setField("clusterSurface", hud)
 
         attachSurface(main)
@@ -56,7 +57,18 @@ class CarPlayHostClusterSurfaceTest {
 
     @Test fun aStreamForTheHudWithoutItsWindowGetsNoSurface() {
         val main = surface()
-        setField("clusterStreamOnDisplay", true)
+        CarPlaySessionCluster.streamOnDisplay = true
+
+        attachSurface(main)
+
+        verify(sink).setSurface(MAIN, main)
+        verify(sink, never()).setSurface(ALT, main)
+    }
+
+    // Tester, 2026-10-17: CarPlay opened the car's home screen; the next CarPlay screen adopted the running session.
+    @Test fun aScreenThatAdoptsTheSessionStillKeepsTheHudStreamOffTheMainSurface() {
+        CarPlaySessionCluster.streamOnDisplay = true // set by the screen that started the session
+        val main = surface()
 
         attachSurface(main)
 

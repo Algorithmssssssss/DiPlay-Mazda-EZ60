@@ -103,7 +103,8 @@ internal object MazdaCockpitProbe {
         "(?i)display|lcd|screen|panel|dual|split|multi|hwc|surface|vehicle|mazda|changan|camzd|wtcl|j90|ivi|cockpit|" +
             "carplay|carlink|hicar|projection|codec|video|wifi|wlan|p2p|bluetooth|usb|audio",
     )
-    private val privateProperty = Regex("(?i)serial|imei|meid|iccid|mac|addr|ssid|pass|key|token|secret|cert|sign|uuid|ether|\\.id$")
+    // persist.adb.wifi.guid names the head unit's serial ("adb-<serial> -<suffix>").
+    private val privateProperty = Regex("(?i)serial|imei|meid|iccid|mac|addr|ssid|pass|key|token|secret|cert|sign|uuid|guid|ether|\\.id$")
     private val propertyLine = Regex("^\\[([^]]+)]: \\[(.*)]$")
     private val windowConfiguration = Regex("winConfig=\\{[^}]*\\}|mWindowingMode=\\w+")
 
@@ -313,6 +314,13 @@ internal object MazdaCockpitProbe {
                 section("Day/night and input") { dayNightAndInput(app, this) }
                 section("Apps") { apps(app, this) }
                 if (MazdaPlatform.isEz60) section("Ambient lighting (read-only)") { MazdaAmbientProbe.section(app, this) }
+                if (MazdaPlatform.isEz60) section("Car features (read-only)") {
+                    for (key in MazdaCarFeatures.REPORTED) appendLine("$key=${MazdaCarFeatures.value(key) ?: "unset"}")
+                    appendLine("HUD as DiPlay treats it: ${MazdaCarFeatures.hud()}")
+                    val readings = MazdaArHudLayout.read()
+                    appendLine("AR-HUD readings: $readings mapSide=${MazdaArHudLayout.side(readings) ?: "none"} " +
+                        "arMapSwitch=${MazdaHudSettings.arMap(app)}")
+                }
             }.lineSequence().joinToString("\n") { DiagnosticRedactor.mask(it) }
             runCatching { File(directory(app), SNAPSHOT_FILE).writeText(text) }
             main.post { done() }
@@ -328,7 +336,9 @@ internal object MazdaCockpitProbe {
         appendLine()
         appendLine("--- EZ-60 probe events (recording=${isRecording(context)}) ---")
         val events = File(directory, EVENTS_FILE)
-        append(if (events.isFile) events.readText() else "No recorded events.\n")
+        // Masked again: events recorded before a masking rule existed keep what it now hides.
+        append(if (events.isFile) events.readLines().joinToString("\n", postfix = "\n") { DiagnosticRedactor.mask(it) }
+            else "No recorded events.\n")
         appendLine()
         appendLine("--- EZ-60 probe crashes (most recent last) ---")
         val crashes = File(directory, CRASH_FILE)

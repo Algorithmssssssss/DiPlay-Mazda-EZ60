@@ -17,7 +17,12 @@ import java.util.concurrent.Executors
  * the next turn, the road names and what is left of the route. Nothing else on that service, and no vehicle
  * properties. Calls run on one background thread; [log] gets each step that matters.
  */
-internal class MazdaHud(private val context: Context, private val log: (String) -> Unit) {
+internal class MazdaHud(
+    private val context: Context,
+    private val log: (String) -> Unit,
+    /** Whether DiPlay guides on the HUD now: navigation started and the focus is DiPlay's. Worker thread. */
+    private val onGuiding: (Boolean) -> Unit = {},
+) {
     private val worker = Executors.newSingleThreadExecutor { Thread(it, "diplay-mazda-hud").apply { isDaemon = true } }
     private val callback = FocusCallback { value ->
         log("HUD: navigation focus changed value=$value")
@@ -33,6 +38,14 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
     // The car's service says who shows navigation on the HUD; assumed granted on request until it says otherwise.
     private var holdsFocus = true
     private var unavailableLogged = false
+    private var guidingPublished = false
+    // The car is switched off: HUD navigation stays ended until it is on again ([setCarOff]).
+    @Volatile private var carOff = false
+    private val state = context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
+
+    init {
+        runCatching { worker.execute(::reportUnclearedOnWorker) }
+    }
 
     /** One HUD update, in the car's vocabulary. */
     internal data class Frame(
@@ -56,7 +69,30 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         worker.shutdown()
     }
 
+    /**
+     * The car was switched off (true) or on again (false). Off ends HUD navigation at once, as the car's own
+     * navigation does: the head unit force-stops DiPlay about a second later, and nothing DiPlay set on the HUD
+     * service may outlive it ([MazdaPowerWatch]). Updates queued before it are skipped. Any thread.
+     */
+    fun setCarOff(off: Boolean) {
+        if (carOff == off) return
+        carOff = off
+        if (!off) return
+        runCatching {
+            worker.execute {
+                if (active) log("HUD: car switched off; ending HUD navigation as the car's navigation does")
+                stopOnWorker()
+            }
+        }
+    }
+
+    /** Tells [onGuiding] the current state again, in order with later changes (a listener joined late). */
+    fun republishGuiding() {
+        runCatching { worker.execute { runCatching { onGuiding(guidingPublished) } } }
+    }
+
     private fun sendOnWorker(frame: Frame) {
+        if (carOff) return
         val binder = service() ?: return
         if (!active) {
             val focus = call(binder, REQUEST_FOCUS) { writeString(context.packageName); writeStrongBinder(callback) }
@@ -67,6 +103,9 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             routeLongestMeters = 0
             sentPercent = -1
             log("HUD: navigation started on the car's service focus=$focus status=$status")
+            // Cleared when guidance ends; still set at the next start means DiPlay was stopped while guiding.
+            state.edit().putLong(KEY_GUIDING_SINCE, System.currentTimeMillis()).commit()
+            publishGuiding()
         }
         // Another navigation app (the car's own included) took the HUD: never overwrite its guidance.
         if (!holdsFocus) return
@@ -100,7 +139,7 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         val binder = service()
         active = false
         sent = null
-        if (binder == null) return
+        if (binder == null) return publishGuiding()
         // The car's navigation apps clear in this order, then give focus back. Only the focus holder clears:
         // after another app took the HUD, its guidance stays.
         if (holdsFocus) {
@@ -110,7 +149,18 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             call(binder, STATUS) { writeInt(STATUS_IDLE) }
         }
         call(binder, ABANDON_FOCUS) { writeString(context.packageName); writeStrongBinder(callback) }
+        state.edit().remove(KEY_GUIDING_SINCE).commit()
         log(if (holdsFocus) "HUD: guidance ended; HUD cleared" else "HUD: guidance ended; HUD left to the other app")
+        publishGuiding()
+    }
+
+    private fun reportUnclearedOnWorker() {
+        val since = state.getLong(KEY_GUIDING_SINCE, 0L)
+        if (since == 0L) return
+        log("HUD: the last run was stopped while guiding on the HUD (started " +
+            java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date(since)) +
+            ") before it could clear the HUD")
+        state.edit().remove(KEY_GUIDING_SINCE).commit()
     }
 
     private fun onFocusOnWorker(value: Int?) {
@@ -120,6 +170,14 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         holdsFocus = holds
         if (holds) sent = null // resend everything to the HUD now it is ours again
         else log("HUD: another navigation app took the HUD; DiPlay stops sending until it is returned")
+        publishGuiding()
+    }
+
+    private fun publishGuiding() {
+        val guiding = active && holdsFocus
+        if (guiding == guidingPublished) return
+        guidingPublished = guiding
+        runCatching { onGuiding(guiding) }
     }
 
     private fun service(): IBinder? {
@@ -189,19 +247,23 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
     }
 
     internal companion object {
-        // The HUD's 800x480 display and the part the car's own apps draw into (probe test card only).
+        // The 2D HUD's 800x480 display and the car's own map box on it (WT_TinnoveNavigation layout_arhud_presentation:
+        // dm_178 at dm_584, dm_179; at dm_38 when the driver swaps the HUD panels and map layout 826279579 reads 1),
+        // confirmed at the glass with labelled grids by the EZNav developers (2026-10-17). The 227x188 at (573,167)
+        // used before is the Deepal S05's box: on the EZ-60 its edges are cropped.
         const val WIDTH = 800
         const val HEIGHT = 480
-        const val VISIBLE_LEFT = 573
-        const val VISIBLE_TOP = 167
-        const val VISIBLE_RIGHT = 800
-        const val VISIBLE_BOTTOM = 355
+        const val VISIBLE_LEFT = 584
+        const val VISIBLE_TOP = 179
+        const val VISIBLE_RIGHT = 762
+        const val VISIBLE_BOTTOM = 357
+        const val VISIBLE_LEFT_SWAPPED = 38
 
         private const val SERVICE_MANAGER = "com.incall.SVR_MNG_SERVICE"
         private const val SERVICE_MANAGER_INTERFACE = "com.incall.serversdk.server.ISvrManager"
         private const val GET_SERVER = 6
         private const val NAVIGATION_SERVICE = "com.incall.double.INTERACTIVE_SERVICE"
-        private const val NAVIGATION_INTERFACE = "com.incall.serversdk.interactive.IDouInteractiveManager"
+        const val NAVIGATION_INTERFACE = "com.incall.serversdk.interactive.IDouInteractiveManager"
         private const val FOCUS_CALLBACK_INTERFACE = "com.incall.serversdk.interactive.callback.INaviFocusCallback"
         private const val ON_FOCUS_CHANGE = 3
         private const val FOCUS_GAINED = 1
@@ -214,6 +276,9 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
         private const val REQUEST_FOCUS = 63 // requestNaviFocus(String package, INaviFocusCallback)
         private const val ABANDON_FOCUS = 64 // abandonNaviFocus(String package, INaviFocusCallback)
         val ALLOWED = setOf(STATUS, TURN, ROAD, REMAIN, PERCENT, REQUEST_FOCUS, ABANDON_FOCUS)
+
+        private const val STATE_PREFS = "diplay_mazda_hud_state"
+        private const val KEY_GUIDING_SINCE = "guiding_since"
 
         // The car's own navigation (WT_TinnoveNavigation): 1 not navigating, 2 navigating, 3 simulating.
         private const val STATUS_NAVIGATING = 2
@@ -258,6 +323,25 @@ internal class MazdaHud(private val context: Context, private val log: (String) 
             else -> 0 // no maneuver: no arrow
         }
 
+        /** The car's navigation service ([NAVIGATION_INTERFACE]), or null; no logging. Not on the main thread. */
+        fun navigationService(): IBinder? {
+            val manager = serviceManager(SERVICE_MANAGER) ?: return null
+            val request = Parcel.obtain()
+            val reply = Parcel.obtain()
+            return try {
+                request.writeInterfaceToken(SERVICE_MANAGER_INTERFACE)
+                request.writeString(NAVIGATION_SERVICE)
+                manager.transact(GET_SERVER, request, reply, 0)
+                reply.readException()
+                reply.readStrongBinder()
+            } catch (_: Exception) {
+                null
+            } finally {
+                request.recycle()
+                reply.recycle()
+            }
+        }
+
         @Suppress("DiscouragedPrivateApi", "PrivateApi")
         private fun serviceManager(name: String): IBinder? = runCatching {
             val manager = Class.forName("android.os.ServiceManager")
@@ -292,4 +376,27 @@ internal object MazdaHudSettings {
     fun save(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_ENABLED, enabled).apply()
     }
+
+    /** CarPlay's map on the AR-HUD ([MazdaArHud]); off by default: it switches the car's HUD video link. */
+    fun arMap(context: Context): Boolean = enabled(context) &&
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_AR_MAP, false)
+
+    fun saveArMap(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_AR_MAP, enabled).apply()
+    }
+
+    /** The AR-HUD map at the car's own size, or larger ([MazdaArHudLayout.box]). */
+    enum class ArMapSize { CAR, LARGE, LARGEST }
+
+    fun arMapSize(context: Context): ArMapSize = runCatching {
+        ArMapSize.valueOf(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_AR_MAP_SIZE, null) ?: ArMapSize.CAR.name)
+    }.getOrDefault(ArMapSize.CAR)
+
+    fun saveArMapSize(context: Context, size: ArMapSize) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_AR_MAP_SIZE, size.name).apply()
+    }
+
+    private const val KEY_AR_MAP = "ar_hud_map"
+    private const val KEY_AR_MAP_SIZE = "ar_hud_map_size"
 }

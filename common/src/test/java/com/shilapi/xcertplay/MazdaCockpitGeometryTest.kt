@@ -33,10 +33,10 @@ class MazdaCockpitGeometryTest {
     }
 
     @Test fun theHudCardSitsInTheProjectedPartOfTheHudSurface() {
-        // The car's navigation app draws its HUD into this 227x188 corner of the 800x480 display.
+        // The car's navigation app draws its 2D HUD map into this 178x178 box of the 800x480 display.
         assertTrue(MazdaHud.VISIBLE_LEFT in 0 until MazdaHud.VISIBLE_RIGHT && MazdaHud.VISIBLE_RIGHT <= MazdaHud.WIDTH)
         assertTrue(MazdaHud.VISIBLE_TOP in 0 until MazdaHud.VISIBLE_BOTTOM && MazdaHud.VISIBLE_BOTTOM <= MazdaHud.HEIGHT)
-        assertEquals(227 to 188, (MazdaHud.VISIBLE_RIGHT - MazdaHud.VISIBLE_LEFT) to (MazdaHud.VISIBLE_BOTTOM - MazdaHud.VISIBLE_TOP))
+        assertEquals(178 to 178, (MazdaHud.VISIBLE_RIGHT - MazdaHud.VISIBLE_LEFT) to (MazdaHud.VISIBLE_BOTTOM - MazdaHud.VISIBLE_TOP))
     }
 
     @Test fun eachHalfNarrowsOnlyForItsOwnPanelOrAssistant() {

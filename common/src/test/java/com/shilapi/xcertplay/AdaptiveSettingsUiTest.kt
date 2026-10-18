@@ -925,12 +925,34 @@ class AdaptiveSettingsUiTest {
 
     @Test fun overviewLinksToEveryOtherCategory() {
         val screen = openSettings()
-        (SettingsCategory.entries - SettingsCategory.OVERVIEW).forEach { category ->
+        (SettingsCategory.entries - SettingsCategory.OVERVIEW).filter(SettingsInformationArchitecture::shown).forEach { category ->
             val title = ReflectionHelpers.callInstanceMethod<String>(screen, "settingsCategoryTitle",
                 ReflectionHelpers.ClassParameter(SettingsCategory::class.java, category))
             assertTrue(category.name, descendants(screen.window.decorView).any {
                 it.contentDescription == screen.getString(R.string.settings_open_category, title)
             })
+        }
+    }
+
+    // The EZ-60's own switches live on one page its testers can find from Overview; other head units never see it.
+    @Test fun ez60PageCollectsTheCarsSwitches() {
+        val openEz60 = context.getString(R.string.settings_open_category, context.getString(R.string.settings_ez60))
+        assertFalse(descendants(openSettings().window.decorView).any { it.contentDescription == openEz60 })
+        val hudType = MazdaCarFeatures::class.java.getDeclaredField("hudType").apply { isAccessible = true }
+        try {
+            MazdaPlatform.ez60ForTests = true
+            hudType.set(null, "3")
+            val screen = openSettings()
+            descendants(screen.window.decorView).first { it.contentDescription == openEz60 }.performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+            val shown = texts(screen).map { it.text.toString() }.toList()
+            listOf(R.string.settings_mazda_hud, R.string.settings_mazda_ar_map, R.string.settings_mazda_ambient_music)
+                .forEach { assertTrue(screen.getString(it), screen.getString(it) in shown) }
+            assertTrue(shown.any { it.startsWith(screen.getString(R.string.settings_mazda_hud_map_view)) })
+            assertFalse("The AR-HUD map is off by default", MazdaHudSettings.arMap(screen))
+        } finally {
+            MazdaPlatform.ez60ForTests = null
+            hudType.set(null, null)
         }
     }
 

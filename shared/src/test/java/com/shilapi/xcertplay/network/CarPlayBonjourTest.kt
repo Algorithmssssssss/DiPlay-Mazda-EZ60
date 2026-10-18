@@ -6,6 +6,8 @@ import com.shilapi.xcertplay.airplay.AirPlayIdentity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
+import java.net.Inet6Address
+import java.net.InetAddress
 
 class CarPlayBonjourTest {
     @Test fun discoveryDiagnosticsKeepOutcomeWithoutPhoneIdentifiers() {
@@ -23,6 +25,21 @@ class CarPlayBonjourTest {
             CarPlayBonjourEvent.ProbeFailed(CarPlayBonjourEvent.ProbeProgress.Stage.REQUEST_SENT, 1,
                 java.net.SocketTimeoutException("Private phone secret")).diagnosticSummary())
     }
+    // EZ-60 (Option 3): JmDNS reverse-resolved each unnamed address, waiting out a 5 s DNS timeout per address
+    // before the AirPlay service went out. A named address answers getHostName() without a lookup.
+    @Test fun mdnsAddressesAreNamedSoJmdnsNeverReverseResolvesThem() {
+        val ipv4 = InetAddress.getByAddress(byteArrayOf(192.toByte(), 168.toByte(), 43, 1))
+        val linkLocal = Inet6Address.getByAddress(null, ByteArray(16).also { it[0] = 0xfe.toByte(); it[1] = 0x80.toByte(); it[15] = 1 }, 7)
+        val global = InetAddress.getByAddress(ByteArray(16).also { it[0] = 0x20; it[1] = 0x01; it[15] = 1 })
+        for (address in listOf(ipv4, linkLocal, global)) {
+            val named = CarPlayBonjourProtocol.namedAddress(address, "carplay-020000000002")
+            assertEquals("carplay-020000000002", named.hostName)
+            assertEquals(address, named)
+            assertEquals(address.hostAddress, named.hostAddress)
+            assertEquals((address as? Inet6Address)?.scopeId, (named as? Inet6Address)?.scopeId)
+        }
+    }
+
     private val config = AirPlayConfig(
         deviceName = "xcertplay",
         deviceId = "02:00:00:00:00:02",
