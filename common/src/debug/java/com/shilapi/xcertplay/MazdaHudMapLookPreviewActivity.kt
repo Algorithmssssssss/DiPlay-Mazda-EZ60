@@ -77,41 +77,46 @@ class MazdaHudMapLookPreviewActivity : Activity() {
         return view
     }
 
-    /** Roads, a park, water, buildings, labels, the route and the position arrow, in CarPlay-like colours. */
+    /**
+     * Roads, a park, water, buildings, labels, the route and the position arrow. The dark map uses Google Maps' night
+     * colours as an EZ-60 read them (land #1c3857, water #012054, 2026-10-21), with faint side streets, and both maps
+     * get the small noise of the car's compressed map stream.
+     */
     private fun sampleMap(width: Int, height: Int, dark: Boolean): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val w = width.toFloat()
         val h = height.toFloat()
-        canvas.drawColor(if (dark) Color.rgb(43, 43, 46) else Color.rgb(242, 239, 233))
+        canvas.drawColor(if (dark) Color.rgb(28, 56, 87) else Color.rgb(242, 239, 233))
         val fill = Paint(Paint.ANTI_ALIAS_FLAG)
-        fill.color = if (dark) Color.rgb(36, 62, 44) else Color.rgb(196, 230, 184)
+        fill.color = if (dark) Color.rgb(30, 68, 78) else Color.rgb(196, 230, 184)
         canvas.drawRect(w * 0.05f, h * 0.08f, w * 0.38f, h * 0.36f, fill)
-        fill.color = if (dark) Color.rgb(28, 44, 70) else Color.rgb(160, 205, 240)
+        fill.color = if (dark) Color.rgb(1, 32, 84) else Color.rgb(160, 205, 240)
         canvas.drawPath(Path().apply {
             moveTo(w * 0.62f, h)
             cubicTo(w * 0.7f, h * 0.75f, w * 0.85f, h * 0.7f, w, h * 0.62f)
             lineTo(w, h)
             close()
         }, fill)
-        fill.color = if (dark) Color.rgb(58, 58, 62) else Color.rgb(225, 221, 214)
+        fill.color = if (dark) Color.rgb(40, 68, 99) else Color.rgb(225, 221, 214)
         for (i in 0..3) canvas.drawRect(w * (0.08f + i * 0.07f), h * 0.6f, w * (0.13f + i * 0.07f), h * 0.68f, fill)
         val road = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
-        val roadColour = if (dark) Color.rgb(110, 110, 112) else Color.WHITE
-        val casing = if (dark) Color.rgb(70, 70, 72) else Color.rgb(200, 196, 190)
-        fun street(x0: Float, y0: Float, x1: Float, y1: Float, width: Float) {
+        val mainRoad = if (dark) Color.rgb(150, 165, 185) else Color.WHITE
+        val sideStreet = if (dark) Color.rgb(50, 80, 112) else Color.WHITE
+        val casing = if (dark) Color.rgb(24, 48, 76) else Color.rgb(200, 196, 190)
+        fun street(x0: Float, y0: Float, x1: Float, y1: Float, width: Float, colour: Int) {
             road.color = casing
             road.strokeWidth = width + 2f
             canvas.drawLine(x0 * w, y0 * h, x1 * w, y1 * h, road)
-            road.color = roadColour
+            road.color = colour
             road.strokeWidth = width
             canvas.drawLine(x0 * w, y0 * h, x1 * w, y1 * h, road)
         }
-        street(0f, 0.5f, 1f, 0.45f, 9f)
-        street(0.45f, 0f, 0.5f, 1f, 9f)
-        for (i in 1..4) street(0f, i * 0.2f - 0.08f, 1f, i * 0.2f - 0.05f, 3f)
-        for (i in 1..4) street(i * 0.22f, 0f, i * 0.22f - 0.04f, 1f, 3f)
-        road.color = if (dark) Color.rgb(38, 120, 245) else Color.rgb(26, 115, 232)
+        street(0f, 0.5f, 1f, 0.45f, 9f, mainRoad)
+        street(0.45f, 0f, 0.5f, 1f, 9f, mainRoad)
+        for (i in 1..4) street(0f, i * 0.2f - 0.08f, 1f, i * 0.2f - 0.05f, 3f, sideStreet)
+        for (i in 1..4) street(i * 0.22f, 0f, i * 0.22f - 0.04f, 1f, 3f, sideStreet)
+        road.color = if (dark) Color.rgb(0, 190, 220) else Color.rgb(26, 115, 232)
         road.strokeWidth = 10f
         canvas.drawPath(Path().apply {
             moveTo(w * 0.47f, h)
@@ -128,6 +133,16 @@ class MazdaHudMapLookPreviewActivity : Activity() {
         canvas.drawCircle(w * 0.473f, h * 0.82f, 9f, fill)
         fill.color = Color.rgb(38, 120, 245)
         canvas.drawCircle(w * 0.473f, h * 0.82f, 6f, fill)
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        val noise = java.util.Random(7)
+        for (i in pixels.indices) {
+            val n = noise.nextInt(9) - 4
+            val p = pixels[i]
+            pixels[i] = Color.rgb(((p shr 16 and 0xff) + n).coerceIn(0, 255), ((p shr 8 and 0xff) + n).coerceIn(0, 255),
+                ((p and 0xff) + n).coerceIn(0, 255))
+        }
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
         return bitmap
     }
 

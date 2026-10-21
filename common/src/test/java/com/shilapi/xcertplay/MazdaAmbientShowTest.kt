@@ -103,6 +103,35 @@ class MazdaAmbientShowTest {
         assertEquals(State.ACTIVE, show.state)
     }
 
+    // No tick runs while the music is stopped, so the stop comes through stop() (EZ-60 2026-10-21: a driver had to
+    // turn the switch off and on to get the lights back).
+    @Test fun afterTheCarTookTheLightsBackTheNextPlayOrSongTriesAgain() {
+        show.tick(true, on, 0.3)
+        now = 900
+        show.tick(true, on, 0.3)
+        sceneMode = 1
+        now = 3_000
+        show.tick(true, on, 0.3)
+        assertEquals(State.IDLE, show.state)
+        show.stop("music stopped")
+        sceneMode = 2
+        show.tick(true, on, 0.3)
+        assertEquals(State.ACTIVE, show.state)
+
+        now = 5_000
+        show.tick(true, on, 0.3)
+        sceneMode = 1
+        now = 7_500
+        show.tick(true, on, 0.3)
+        assertEquals(State.IDLE, show.state)
+        show.tick(true, on, 0.3)
+        assertEquals("Still the same song: left alone", State.IDLE, show.state)
+        show.newSong()
+        sceneMode = 2
+        show.tick(true, on, 0.3)
+        assertEquals(State.ACTIVE, show.state)
+    }
+
     @Test fun stoppingTheMusicHandsBackTheDriversColourAndBrightness() {
         show.tick(true, on, 0.3)
         writes.clear()

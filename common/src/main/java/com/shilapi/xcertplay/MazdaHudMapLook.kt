@@ -13,19 +13,38 @@ import kotlin.math.min
 /**
  * How CarPlay's map reads on the EZ-60 HUD. The HUD projects light, so black is see-through, but the iPhone fills the
  * map's background with a flat colour that the glass shows as a lit box. See-through ([MazdaHudSettings.mapSeeThrough])
- * fades that colour: 0 % is the iPhone's picture, 100 % removes it. Lines only ([MazdaHudSettings.MapStyle.LINES]) also
- * fades parks, water and buildings, keeps roads, labels and strong colours (the route, traffic, the position arrow),
- * and draws them at full brightness. The background colour is the picture's most common colour ([backgroundColor]).
+ * takes that colour away: 0 % is the iPhone's picture, 100 % removes it. On a dark (night) map the background's light
+ * is subtracted from every pixel, so faint roads stay whole and darker areas (water) go black; on a light map the
+ * colours near the background fade. Lines only ([MazdaHudSettings.MapStyle.LINES]) also fades parks, water and
+ * buildings, keeps roads, labels and strong colours (the route, traffic, the position arrow), and draws them at full
+ * brightness. The background colour is the picture's most common colour ([backgroundColor]).
  */
 internal object MazdaHudMapLook {
     /** How far apart two colours may be per channel (0-255) and still count as the same background. */
     const val BACKGROUND_TOLERANCE = 12
 
     /**
-     * The most common colour of [pixels] (ARGB, alpha ignored): the colour with the most pixels within
-     * [BACKGROUND_TOLERANCE], averaged over those pixels. Black when there are none.
+     * The map's background in [pixels] (ARGB, alpha ignored): their most common colour ([mostCommon]). Along a river
+     * or a lake the water can outnumber the land for a while (Google Maps at night, 2026-10-21). On a dark map the
+     * [previous] background is kept, per channel the brighter of the two, while it still covers [AREA_PERCENT] of the
+     * picture: subtracting only the water would light the land up.
      */
-    fun backgroundColor(pixels: IntArray): Int {
+    fun backgroundColor(pixels: IntArray, previous: Int? = null): Int {
+        val found = mostCommon(pixels)
+        if (previous == null || !isDark(found) || !isDark(previous)) return found
+        val share = pixels.count { near(previous, it) }
+        return if (share * 100 >= pixels.size * AREA_PERCENT) brighterOf(found, previous) else found
+    }
+
+    /** Whether a background is a night map's: the filter then subtracts it instead of fading the colours near it. */
+    fun isDark(color: Int): Boolean =
+        (color shr 16 and 0xff) * 299 + (color shr 8 and 0xff) * 587 + (color and 0xff) * 114 < DARK_LUMA * 1000
+
+    /**
+     * The most common colour of [pixels]: the colour with the most pixels within [BACKGROUND_TOLERANCE], averaged over
+     * those pixels. Black when there are none.
+     */
+    fun mostCommon(pixels: IntArray): Int {
         if (pixels.isEmpty()) return BLACK
         var best = pixels[0]
         var bestCount = -1
@@ -61,24 +80,33 @@ internal object MazdaHudMapLook {
      */
     fun reach(width: Int, height: Int): Float = max(MIN_REACH, min(width, height) * REACH_SHARE)
 
+    private fun brighterOf(a: Int, b: Int): Int = BLACK or (max(a shr 16 and 0xff, b shr 16 and 0xff) shl 16) or
+        (max(a shr 8 and 0xff, b shr 8 and 0xff) shl 8) or max(a and 0xff, b and 0xff)
+
     private fun near(a: Int, b: Int, tolerance: Int = BACKGROUND_TOLERANCE): Boolean =
         abs((a shr 16 and 0xff) - (b shr 16 and 0xff)) <= tolerance &&
             abs((a shr 8 and 0xff) - (b shr 8 and 0xff)) <= tolerance &&
             abs((a and 0xff) - (b and 0xff)) <= tolerance
 
     private const val BLACK = 0xff000000.toInt()
+    /** Luma (0-255) below which a background is a night map's; Google Maps' night land is about 51. */
+    private const val DARK_LUMA = 115
+    /** How much of the picture an earlier background must still cover to stay part of the background. */
+    const val AREA_PERCENT = 15
     private const val CHANGE_TOLERANCE = 3
     private const val MIN_REACH = 3f
     private const val REACH_SHARE = 0.035f
 
     /**
-     * The filter on the GPU, over the map view's picture ("content", opaque video). Output is premultiplied: what
-     * fades becomes transparent, which the 2D HUD's black window and the AR-HUD's transparent one both leave unlit.
+     * The filter on the GPU, over the map view's picture ("content", opaque video). It works out the light the HUD
+     * should project and returns it premultiplied, as transparent as it is dark: the 2D HUD's black window and the
+     * AR-HUD's transparent one both leave that unlit.
      */
     const val SHADER = """
         uniform shader content;
         uniform float2 size;
         uniform float3 background;
+        uniform float darkMap;
         uniform float seeThrough;
         uniform float lines;
         uniform float reach;
@@ -100,26 +128,40 @@ internal object MazdaHudMapLook {
             return min(apart(c, a), apart(c, b)) - 0.5 * apart(a, b);
         }
 
+        float level(float3 c) {
+            return max(c.r, max(c.g, c.b));
+        }
+
         half4 main(float2 p) {
             float4 c = content.eval(p);
             if (c.a < 0.004) return half4(0.0);
             float3 rgb = c.rgb / c.a;
-            // Colours near the background fade; compression noise stays below the lower edge. A day map's white
-            // roads are only about 0.09 from its background.
-            float keep = smoothstep(0.03, 0.09, apart(rgb, background));
+            float3 light;
+            if (darkMap > 0.5) {
+                // Take the background's glow off every pixel. A threshold cut faint roads into dashes on the car's
+                // compressed map stream; subtracting keeps them whole, and darker water goes black. Below 0.05 is
+                // compression noise and the faint fill of parks and buildings; the curve above it lifts the side
+                // streets the subtraction dimmed.
+                float3 above = clamp((rgb - background) / max(float3(1.0) - background, float3(0.05)), 0.0, 1.0);
+                light = pow(clamp((above - 0.05) / 0.95, 0.0, 1.0), float3(0.6));
+            } else {
+                // A light map: fade the colours near its background along a gentle ramp, so noise on features close
+                // to it (white roads are only about 0.09 away) dims them evenly instead of speckling them.
+                light = rgb * clamp((apart(rgb, background) - 0.025) / 0.1, 0.0, 1.0);
+            }
             if (lines > 0.5) {
                 float d = reach * 0.7071;
                 float thin = max(max(across(rgb, p, float2(reach, 0.0)), across(rgb, p, float2(0.0, reach))),
                     max(across(rgb, p, float2(d, d)), across(rgb, p, float2(d, -d))));
-                float bright = max(rgb.r, max(rgb.g, rgb.b));
-                float chroma = bright - min(rgb.r, min(rgb.g, rgb.b));
+                float chroma = level(rgb) - min(rgb.r, min(rgb.g, rgb.b));
                 // Strong colours (the route, traffic, the position arrow) stay at any width.
-                keep *= max(smoothstep(0.04, 0.12, thin), smoothstep(0.3, 0.5, chroma));
+                float keep = max(smoothstep(0.02, 0.1, thin), smoothstep(0.3, 0.5, chroma));
                 // Grey roads and dark labels hardly show on the glass: draw what is left at full brightness.
-                rgb = mix(rgb, rgb / max(bright, 0.25), seeThrough);
+                light = light / max(level(light), 0.25) * keep;
             }
-            float alpha = mix(1.0, keep, seeThrough) * c.a;
-            return half4(rgb * alpha, alpha);
+            float3 shown = mix(rgb, light, seeThrough);
+            float alpha = mix(1.0, level(light), seeThrough);
+            return half4(shown * c.a, alpha * c.a);
         }
     """
 }
@@ -153,7 +195,7 @@ internal class MazdaHudMapFilter(private val view: TextureView, private val log:
         val pixels = IntArray(SAMPLE_WIDTH * SAMPLE_HEIGHT)
         runCatching { view.getBitmap(bitmap) }.getOrNull()?.getPixels(pixels, 0, SAMPLE_WIDTH, 0, 0, SAMPLE_WIDTH,
             SAMPLE_HEIGHT) ?: return
-        val found = MazdaHudMapLook.backgroundColor(pixels)
+        val found = MazdaHudMapLook.backgroundColor(pixels, previous = background)
         if (!MazdaHudMapLook.changed(background, found)) return
         // Log a new map colour (day and night, another map), not the small moves while it scrolls.
         if (MazdaHudMapLook.changed(logged, found, LOG_TOLERANCE)) {
@@ -192,6 +234,7 @@ internal class MazdaHudMapFilter(private val view: TextureView, private val log:
         shader.setFloatUniform("size", width.toFloat(), height.toFloat())
         shader.setFloatUniform("background", (background shr 16 and 0xff) / 255f, (background shr 8 and 0xff) / 255f,
             (background and 0xff) / 255f)
+        shader.setFloatUniform("darkMap", if (MazdaHudMapLook.isDark(background)) 1f else 0f)
         shader.setFloatUniform("seeThrough", seeThrough / 100f)
         shader.setFloatUniform("lines", if (style == MazdaHudSettings.MapStyle.LINES) 1f else 0f)
         shader.setFloatUniform("reach", MazdaHudMapLook.reach(width, height))

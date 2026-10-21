@@ -37,6 +37,37 @@ class MazdaHudMapLookTest {
         assertEquals(rgb(242, 239, 233), MazdaHudMapLook.backgroundColor(pixels))
     }
 
+    // Google Maps at night beside the river (2026-10-21): the water outnumbered the land for 12 s and became the
+    // background, so the land would have glowed. The land stays part of the background while it is still there.
+    @Test fun waterOutnumberingTheLandDoesNotLightTheLandUp() {
+        val land = rgb(28, 56, 87)
+        val water = rgb(1, 32, 84)
+        val pixels = IntArray(24 * 18) { i ->
+            when {
+                i % 10 == 0 -> rgb(150, 165, 180)
+                i % 10 < 4 -> land
+                else -> water
+            }
+        }
+        assertEquals(water, MazdaHudMapLook.backgroundColor(pixels))
+        assertEquals(land, MazdaHudMapLook.backgroundColor(pixels, previous = land))
+        // Out on the water, with almost no land left in the picture, the water is the background.
+        val openWater = IntArray(24 * 18) { i -> if (i % 20 == 0) land else water }
+        assertEquals(water, MazdaHudMapLook.backgroundColor(openWater, previous = land))
+    }
+
+    @Test fun aLightMapIgnoresTheNightBackground() {
+        val day = rgb(242, 239, 233)
+        val pixels = IntArray(24 * 18) { i -> if (i % 3 == 0) rgb(28, 56, 87) else day }
+        assertEquals(day, MazdaHudMapLook.backgroundColor(pixels, previous = rgb(28, 56, 87)))
+    }
+
+    @Test fun nightBackgroundsAreSubtractedAndDayOnesFaded() {
+        assertTrue(MazdaHudMapLook.isDark(rgb(28, 56, 87)))
+        assertTrue(MazdaHudMapLook.isDark(rgb(43, 43, 46)))
+        assertFalse(MazdaHudMapLook.isDark(rgb(242, 239, 233)))
+    }
+
     @Test fun noPictureMeansBlack() {
         assertEquals(rgb(0, 0, 0), MazdaHudMapLook.backgroundColor(IntArray(0)))
     }

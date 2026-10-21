@@ -53,6 +53,8 @@ object SettingsBackupCodec {
         "diplay" to Policy.Allow(DIPLAY_KEYS),
         "carplay_picture" to Policy.All,
         "diplay_car_hotspot" to Policy.All,
+        // EZ-60 windshield HUD (MazdaHudSettings): turn-by-turn, map view and size, map style and see-through.
+        "diplay_mazda_hud" to Policy.All,
     )
 
     private sealed interface Policy {

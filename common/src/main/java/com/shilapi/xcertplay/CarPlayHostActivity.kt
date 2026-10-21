@@ -582,6 +582,18 @@ class CarPlayHostActivity : ComponentActivity() {
     private var sidePanelBlurActive = false
     private var sidePanelBlurGeneration = 0
     private val sidePanelBlurEnd = Runnable { finishSidePanelBlur() }
+    // EZ-60: while the window changes size (the head unit's edge-screen swipe, its panels), CarPlay still shows its
+    // last layout, and the part that layout leaves black showed as a black bar until the iPhone redrew. As with the
+    // side panel, CarPlay's drawn picture, copied small and blurred, covers the window until the size settles.
+    private var resizeBlur: ImageView? = null
+    private var resizeBlurActive = false
+    private var resizeBlurGeneration = 0
+    private val resizeBlurEnd = object : Runnable {
+        override fun run() {
+            // The new layout shows once the view-area switch (the iPhone's own transition) is over.
+            if (cockpitTransitionUntil != 0L) mainHandler.postDelayed(this, 100L) else finishResizeBlur()
+        }
+    }
     private fun finishSidePanelBlur() {
         sidePanelBlurActive = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -1900,6 +1912,11 @@ class CarPlayHostActivity : ComponentActivity() {
         paintWaitingScreen()
         viewport.addView(panel, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER))
         root.addView(viewport, FrameLayout.LayoutParams(-1, -1))
+        // Above the video and gesture layer, below the side panel's blur and the menus.
+        resizeBlur = ImageView(this).apply {
+            visibility = View.GONE
+            scaleType = ImageView.ScaleType.FIT_XY
+        }.also { root.addView(it, FrameLayout.LayoutParams(-1, -1)) }
         // Above the video and gesture layer, below the menus.
         sidePanelBlur = ImageView(this).apply {
             visibility = View.GONE
@@ -2491,6 +2508,78 @@ class CarPlayHostActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Covers the window with CarPlay's drawn picture, blurred, while its size changes; each change holds it for
+     * [RESIZE_BLUR_SETTLE_MILLIS] more. Android 12 and later only (RenderEffect).
+     */
+    private fun coverResize() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || !MazdaPlatform.isEz60) return
+        val display = sessionDisplay ?: return
+        val overlay = resizeBlur ?: return
+        val view = videoView ?: return
+        if (controller == null || sidePanelBlurring) return
+        mainHandler.removeCallbacks(resizeBlurEnd)
+        mainHandler.postDelayed(resizeBlurEnd, RESIZE_BLUR_SETTLE_MILLIS)
+        if (resizeBlurActive) return
+        resizeBlurActive = true
+        val generation = ++resizeBlurGeneration
+        overlay.animate().cancel()
+        val show = { picture: Bitmap ->
+            if (generation == resizeBlurGeneration && resizeBlurActive) {
+                overlay.setImageBitmap(drawnPart(picture, display))
+                val radius = dp(24).toFloat()
+                overlay.setRenderEffect(RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP))
+                overlay.alpha = 1f
+                overlay.visibility = View.VISIBLE
+            }
+        }
+        val width = (display.width / 8).coerceAtLeast(1)
+        val height = (display.height / 8).coerceAtLeast(1)
+        val surface = fallbackVideoView
+        if (surface != null) {
+            val picture = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            runCatching {
+                PixelCopy.request(surface, picture, { result ->
+                    if (result == PixelCopy.SUCCESS) show(picture)
+                }, mainHandler)
+            }
+        } else {
+            (view as? TextureView)?.getBitmap(width, height)?.let(show)
+        }
+    }
+
+    // The part of CarPlay's canvas the iPhone draws in its current layout: its narrow layout leaves the rest black,
+    // with an 8 px black strip at its right edge at 1080p (see videoViewArea).
+    private fun drawnPart(picture: Bitmap, display: CarPlaySessionDisplay): Bitmap {
+        val scaleX = picture.width.toFloat() / display.width
+        val scaleY = picture.height.toFloat() / display.height
+        val drawn = display.cockpitViewAreas.getOrNull(display.viewAreaIndex)?.let { area ->
+            val strip = if (area.right > 0) kotlin.math.ceil(8.0 * display.height / 1080).toInt() else 0
+            android.graphics.Rect(area.left, area.top, display.width - area.right - strip, display.height - area.bottom)
+        } ?: display.viewAreas?.let { areas ->
+            val area = areas.layoutArea(areas.current)
+            android.graphics.Rect(area.originX, area.originY, area.originX + area.width, area.originY + area.height)
+        } ?: return picture
+        val left = (drawn.left * scaleX).toInt().coerceIn(0, picture.width - 1)
+        val top = (drawn.top * scaleY).toInt().coerceIn(0, picture.height - 1)
+        val right = (drawn.right * scaleX).toInt().coerceIn(left + 1, picture.width)
+        val bottom = (drawn.bottom * scaleY).toInt().coerceIn(top + 1, picture.height)
+        if (left == 0 && top == 0 && right == picture.width && bottom == picture.height) return picture
+        return Bitmap.createBitmap(picture, left, top, right - left, bottom - top)
+    }
+
+    private fun finishResizeBlur() {
+        resizeBlurActive = false
+        resizeBlur?.let { overlay ->
+            if (overlay.visibility != View.VISIBLE) return@let
+            overlay.animate().alpha(0f).setDuration(400L).withEndAction {
+                if (resizeBlurActive) return@withEndAction
+                overlay.visibility = View.GONE
+                overlay.setImageDrawable(null)
+            }.start()
+        }
+    }
+
     // Lifts the blur when the finger lifts; CarPlay then blurs its own picture while it changes size.
     private fun endSidePanelBlur() {
         if (!sidePanelBlurring) return
@@ -2543,6 +2632,10 @@ class CarPlayHostActivity : ComponentActivity() {
         sidePanelBlurActive = false
         sidePanelBlur?.animate()?.cancel()
         sidePanelBlur?.setImageDrawable(null)
+        mainHandler.removeCallbacks(resizeBlurEnd)
+        resizeBlurActive = false
+        resizeBlur?.animate()?.cancel()
+        resizeBlur?.setImageDrawable(null)
     }
 
     // The screen edge the side panel would take now (where its tab is), or null when it is shown or unavailable.
@@ -5429,6 +5522,7 @@ class CarPlayHostActivity : ComponentActivity() {
         if (width <= 0 || height <= 0 || shuttingDown.get()) return
         val size = DisplaySize(width, height)
         if (size == pendingDisplaySize) return
+        if (size != activeDisplaySize) coverResize()
         mainHandler.removeCallbacks(applyDisplaySize)
         if (size == activeDisplaySize && !displayLayoutChanged()) {
             pendingDisplaySize = null
@@ -6584,6 +6678,8 @@ class CarPlayHostActivity : ComponentActivity() {
         private const val CENTER_MAP_IDLE_MILLIS = 3_000L // a reconnect is quicker; a session end is not
         const val LOG_RETENTION_MILLIS = 5 * 60_000L
         const val DISPLAY_CHANGE_DEBOUNCE_MILLIS = 500L
+        /** How long the resize blur stays after the window's last size change. */
+        const val RESIZE_BLUR_SETTLE_MILLIS = 600L
         const val CONFIGURATION_POLL_INTERVAL_MILLIS = 2_000L
         const val RECONNECT_DELAY_MILLIS = 2_000L
         const val IAP_TUNNEL_RECONNECT_DELAY_MILLIS = 15_000L

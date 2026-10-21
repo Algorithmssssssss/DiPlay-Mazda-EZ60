@@ -163,12 +163,17 @@ more streets, smaller) and Near for 75 % (176×144, scaled up). It applies at th
 **HUD map style** and **See-through background** (same card, both HUDs) change how the map reads on the glass,
 at once. The HUD projects light, so black is see-through, but the iPhone fills the map's background with a flat
 colour that shows as a lit box. DiPlay reads that colour every 2 s from a 24×18 copy of the picture (its most
-common colour) and fades it on the GPU (`MazdaHudMapLook`, an AGSL `RenderEffect` on the map's `TextureView`,
-Android 13 and later): 0 % is the iPhone's picture, 100 % removes the background (default 70 %). **Lines only**
-also fades parks, water and buildings: it keeps what differs from both of its sides (roads, labels) and strong
-colours (route, traffic, position arrow), and draws them at full brightness. Dark maps work best; on a light map
-Lines only reads better than Whole map, whose dark labels do not show on the glass. The session log has
-`HUD: map look style=… seeThrough=…` and `HUD: map background #…`. Debug builds have a preview with a drawn map:
+common colour) and removes it on the GPU (`MazdaHudMapLook`, an AGSL `RenderEffect` on the map's `TextureView`,
+Android 13 and later): 0 % is the iPhone's picture, 100 % removes the background (default 70 %). On a dark (night)
+map the background is subtracted from every pixel, so darker water goes black and faint side streets stay whole;
+the first car test (2026-10-21, Google Maps at night: land `#1c3857`, water `#012054`) cut them into dashes with a
+threshold and left the river as a dark blue patch. While the land is still at least 15 % of the picture it stays
+the background when the water outnumbers it (12 s along the river in that test). On a light map the colours near
+the background fade. **Lines only** also fades parks, water and buildings: it keeps what differs from both of its
+sides (roads, labels) and strong colours (route, traffic, position arrow), and draws them at full brightness. On a
+light map Lines only reads better than Whole map, whose dark labels do not show on the glass. The session log has
+`HUD: map look style=… seeThrough=…` and `HUD: map background #…`; the settings export includes the HUD's choices.
+Debug builds have a preview with a drawn map:
 `adb shell am start -n <package>/com.shilapi.xcertplay.MazdaHudMapLookPreviewActivity`.
 
 **Safety.** DiPlay talks only to the HUD's display service (`IDouInteractiveManager`); it writes no vehicle
@@ -358,9 +363,27 @@ Bluetooth player has it, which runs no light sync). Safety:
 - After switching music mode on, DiPlay reads the scene mode back; if the car did not enter music mode, or any
   write fails, it hands the lights back and stays off until the next CarPlay connection
   (`Ambient: stopped: …`).
-- If the car or its media center takes the lights back, DiPlay stops writing until the music starts again.
+- If the car or its media center takes the lights back, DiPlay stops writing until the music stops or the next song
+  starts (`Ambient: new song; trying the lights again`). Before 2026-10-21 it waited for a stop it never saw, so
+  the lights stayed off until the switch was turned off and on.
 - If DiPlay stops in the middle of a song, it hands the lights back the next time it starts.
 - The music level is read from audio DiPlay already plays; no microphone.
+
+"Playing" is the iPhone's now-playing state, or music DiPlay can hear: on 2026-10-21 the iPhone reported a song as
+not playing for 8–56 s after several song changes while it played on, and the lights stopped each time
+(`Ambient: the iPhone reports no music playing, but music is heard; following the music`).
+
+**CarPlay audio over the car's Bluetooth (experimental).** No music then reaches DiPlay: the iPhone plays to the
+car's Bluetooth player. DiPlay then reads the level from the car's own sound output (Android's `Visualizer` on the
+output mix, with the microphone permission it has for calls). Untested on the car; the log says which way it went:
+`Ambient: Bluetooth music: listening to the car's sound output`, `… is heard; the lights follow it`,
+`… stays silent while the iPhone plays` (the output mix does not carry the Bluetooth player) or
+`… cannot be heard (…)` (Android refused).
+
+**Resizing the CarPlay window.** While the head unit changes the window's size (the edge-screen swipe, its
+panels), CarPlay still shows its last layout until the iPhone redraws, and the part that layout leaves black showed
+as a black bar. As with the side panel, CarPlay's drawn picture, copied small and blurred, now covers the window
+until the size has settled for 0.6 s and the view-area switch is over (Android 12 and later).
 
 ## Known issues
 

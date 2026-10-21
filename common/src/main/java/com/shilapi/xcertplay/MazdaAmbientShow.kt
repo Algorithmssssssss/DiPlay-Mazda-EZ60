@@ -38,7 +38,7 @@ internal class MazdaAmbientShow(
     private var sentColour = -1
     private var cycleStep = 0
     private var restoreSettings: CarSettings? = null
-    // The car or media center took the lights back: wait for the music to stop before trying again.
+    // The car or media center took the lights back: wait for the music to stop or the next song before trying again.
     private var yielded = false
 
     /**
@@ -57,9 +57,21 @@ internal class MazdaAmbientShow(
         }
     }
 
-    /** The CarPlay session or the switch ended: hand the lights back now. */
+    /**
+     * The music stopped, or the CarPlay session or the switch ended: hand the lights back now. Lights the car took
+     * back may be tried again: no tick runs while the music is stopped, so the tick never saw it stop (an EZ-60
+     * driver had to turn the switch off and on to get the lights back).
+     */
     fun stop(reason: String) {
+        yielded = false
         if (state == State.ACTIVE) close(reason)
+    }
+
+    /** A new song: lights the car took back during the last one may be tried again, once. */
+    fun newSong() {
+        if (!yielded) return
+        yielded = false
+        log("Ambient: new song; trying the lights again")
     }
 
     /** A new CarPlay session may try again after a failure. */

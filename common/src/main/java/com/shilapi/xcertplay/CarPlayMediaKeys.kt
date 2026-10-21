@@ -396,7 +396,9 @@ internal object CarPlayMediaKeys {
         } else {
             mediaAudioActive
         }
-        MazdaAmbientLights.update(context, playing, focusHeld || MazdaPlatform.carBluetoothMusicHasFocus(context))
+        val song = nowPlaying.title?.let { "$it\u0000${nowPlaying.artist.orEmpty()}" }
+        MazdaAmbientLights.update(context, playing, focusHeld || MazdaPlatform.carBluetoothMusicHasFocus(context),
+            audioActive = session != null && mediaAudioActive, song = song)
     }
 
     private fun publishPlaybackStateLocked() {

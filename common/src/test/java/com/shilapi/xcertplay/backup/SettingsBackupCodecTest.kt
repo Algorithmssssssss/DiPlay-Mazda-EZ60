@@ -159,4 +159,22 @@ class SettingsBackupCodecTest {
         assertEquals(true, prefs("diplay_car_hotspot").getBoolean("auto_enable", false))
         assertFalse(airplay.contains("identity_private"))
     }
+
+    // A tester's export after an EZ-60 HUD map test had none of the HUD's choices in it (2026-10-21).
+    @Test
+    fun theEz60HudChoicesTravel() {
+        prefs("diplay_mazda_hud").edit()
+            .putString("map_style", "LINES")
+            .putInt("map_see_through", 90)
+            .putString("map_view", "FAR")
+            .apply()
+        val document = SettingsBackupCodec.export(context, "0.2.19-ez60.2")
+        val hud = JSONObject(String(document)).getJSONObject("settings").getJSONObject("diplay_mazda_hud")
+        assertEquals("LINES", hud.getString("map_style"))
+        assertEquals(90, hud.getInt("map_see_through"))
+        prefs("diplay_mazda_hud").edit().clear().commit()
+        SettingsBackupCodec.import(context, document)
+        assertEquals(90, prefs("diplay_mazda_hud").getInt("map_see_through", 0))
+        assertEquals("FAR", prefs("diplay_mazda_hud").getString("map_view", null))
+    }
 }
