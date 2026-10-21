@@ -27,4 +27,9 @@
     <string name="settings_mazda_ar_map_size_large">大</string>
     <string name="settings_mazda_ar_map_size_largest">最大</string>
     <string name="settings_mazda_ar_map_size_description">「與車輛一致」與車輛內建導航的地圖相同。「大」與「最大」會使用更多 AR-HUD 畫面，位於 HUD 車速與檔位的右側；「最大」是在 100 吋 AR-HUD 車型的擋風玻璃上看起來最清楚的大小。地圖在左側時維持車輛的大小。於下次連線時生效。</string>
+    <string name="settings_mazda_hud_map_style">HUD 地圖樣式</string>
+    <string name="settings_mazda_hud_map_style_whole">完整地圖</string>
+    <string name="settings_mazda_hud_map_style_lines">僅線條</string>
+    <string name="settings_mazda_hud_map_see_through">背景透明度</string>
+    <string name="settings_mazda_hud_map_look_description">HUD 會把地圖背景投射成一個發光的方框。透明度越高，背景越淡，越能透過它看到路面：0 % 為 iPhone 繪製的原始地圖，100 % 完全去除背景。「僅線條」還會去除公園、水域和建築，並以更高亮度顯示道路、路線和地名。變更立即生效。</string>
 </resources>

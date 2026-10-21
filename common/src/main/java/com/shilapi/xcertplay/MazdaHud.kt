@@ -1,6 +1,7 @@
 package com.shilapi.xcertplay
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Binder
 import android.os.IBinder
 import android.os.Parcel
@@ -397,6 +398,43 @@ internal object MazdaHudSettings {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_AR_MAP_SIZE, size.name).apply()
     }
 
+    /** What the HUD map keeps: the whole map, or only its roads, route and labels ([MazdaHudMapLook]). */
+    enum class MapStyle { WHOLE, LINES }
+
+    fun mapStyle(context: Context): MapStyle = runCatching {
+        MapStyle.valueOf(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_MAP_STYLE, null) ?: MapStyle.WHOLE.name)
+    }.getOrDefault(MapStyle.WHOLE)
+
+    fun saveMapStyle(context: Context, style: MapStyle) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_MAP_STYLE, style.name).apply()
+    }
+
+    /** How see-through the map's background is, in percent: 0 draws the iPhone's picture as it is. */
+    val SEE_THROUGH_STEPS = (0..100 step 10).toList()
+    const val DEFAULT_SEE_THROUGH = 70
+
+    fun mapSeeThrough(context: Context): Int = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        .getInt(KEY_MAP_SEE_THROUGH, DEFAULT_SEE_THROUGH).coerceIn(0, 100)
+
+    fun saveMapSeeThrough(context: Context, percent: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putInt(KEY_MAP_SEE_THROUGH, percent.coerceIn(0, 100)).apply()
+    }
+
+    /** Calls [onChange] on the main thread when the map's style or see-through changes, until the result is called. */
+    fun watchMapLook(context: Context, onChange: () -> Unit): () -> Unit {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        // Preferences hold their listeners weakly: the returned function keeps this one alive.
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == KEY_MAP_STYLE || key == KEY_MAP_SEE_THROUGH) onChange()
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        return { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+
     private const val KEY_AR_MAP = "ar_hud_map"
     private const val KEY_AR_MAP_SIZE = "ar_hud_map_size"
+    private const val KEY_MAP_STYLE = "map_style"
+    private const val KEY_MAP_SEE_THROUGH = "map_see_through"
 }

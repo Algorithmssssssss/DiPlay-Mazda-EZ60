@@ -27,4 +27,9 @@
     <string name="settings_mazda_ar_map_size_large">كبير</string>
     <string name="settings_mazda_ar_map_size_largest">الأكبر</string>
     <string name="settings_mazda_ar_map_size_description">«حجم السيارة» هو حجم خريطة نظام الملاحة الخاص بالسيارة. يستخدم «كبير» و«الأكبر» مساحة أكبر من صورة شاشة AR-HUD، على يمين السرعة وناقل الحركة على الشاشة؛ و«الأكبر» هو الحجم الذي كان الأوضح على الزجاج في السيارات المزودة بشاشة AR-HUD بقياس 100 بوصة. عندما تكون الخريطة على اليسار يبقى حجم السيارة. يُطبَّق عند الاتصال التالي.</string>
+    <string name="settings_mazda_hud_map_style">نمط خريطة شاشة العرض الأمامية</string>
+    <string name="settings_mazda_hud_map_style_whole">الخريطة كاملة</string>
+    <string name="settings_mazda_hud_map_style_lines">الخطوط فقط</string>
+    <string name="settings_mazda_hud_map_see_through">خلفية شفافة</string>
+    <string name="settings_mazda_hud_map_look_description">تعرض شاشة العرض الأمامية خلفية الخريطة كمربع مضيء. «الشفافية» تُخفتها لترى الطريق من خلالها: 0٪ تعرض الخريطة كما يرسمها الآيفون، و100٪ تزيل الخلفية. «الخطوط فقط» تزيل أيضًا الحدائق والمياه والمباني، وترسم الطرق والمسار والأسماء بإضاءة أقوى. تُطبَّق التغييرات فورًا.</string>
 </resources>

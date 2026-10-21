@@ -27,4 +27,9 @@
     <string name="settings_mazda_ar_map_size_large">Grande</string>
     <string name="settings_mazda_ar_map_size_largest">Máximo</string>
     <string name="settings_mazda_ar_map_size_description">«Como el coche» es el tamaño del mapa de la navegación propia del coche. «Grande» y «Máximo» usan más imagen del AR-HUD, a la derecha de la velocidad y la marcha del HUD; «Máximo» es el tamaño que mejor se leía en el parabrisas en coches con AR-HUD de 100 pulgadas. Con el mapa a la izquierda se mantiene el tamaño del coche. Se aplica en la próxima conexión.</string>
+    <string name="settings_mazda_hud_map_style">Estilo del mapa en el HUD</string>
+    <string name="settings_mazda_hud_map_style_whole">Mapa completo</string>
+    <string name="settings_mazda_hud_map_style_lines">Solo líneas</string>
+    <string name="settings_mazda_hud_map_see_through">Fondo transparente</string>
+    <string name="settings_mazda_hud_map_look_description">El HUD proyecta el fondo del mapa como un recuadro iluminado. La transparencia lo atenúa para que veas la carretera a través de él: 0 % muestra el mapa tal como lo dibuja el iPhone y 100 % quita el fondo. Solo líneas también quita parques, agua y edificios, y dibuja más brillantes las carreteras, la ruta y los nombres. Los cambios se aplican al instante.</string>
 </resources>

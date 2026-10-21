@@ -160,6 +160,17 @@ change applies at the next connection. **HUD map view** (same card: Far, Normal,
 shows: Normal asks the iPhone for a stream at the area's size (232×192), Far for 150 % (336×280, scaled down:
 more streets, smaller) and Near for 75 % (176×144, scaled up). It applies at the next connection.
 
+**HUD map style** and **See-through background** (same card, both HUDs) change how the map reads on the glass,
+at once. The HUD projects light, so black is see-through, but the iPhone fills the map's background with a flat
+colour that shows as a lit box. DiPlay reads that colour every 2 s from a 24×18 copy of the picture (its most
+common colour) and fades it on the GPU (`MazdaHudMapLook`, an AGSL `RenderEffect` on the map's `TextureView`,
+Android 13 and later): 0 % is the iPhone's picture, 100 % removes the background (default 70 %). **Lines only**
+also fades parks, water and buildings: it keeps what differs from both of its sides (roads, labels) and strong
+colours (route, traffic, position arrow), and draws them at full brightness. Dark maps work best; on a light map
+Lines only reads better than Whole map, whose dark labels do not show on the glass. The session log has
+`HUD: map look style=… seeThrough=…` and `HUD: map background #…`. Debug builds have a preview with a drawn map:
+`adb shell am start -n <package>/com.shilapi.xcertplay.MazdaHudMapLookPreviewActivity`.
+
 **Safety.** DiPlay talks only to the HUD's display service (`IDouInteractiveManager`); it writes no vehicle
 properties and has no path to the car's driver assistance. It sends only while CarPlay navigation guides,
 asks for the HUD's navigation focus once per route, and stops sending at once if the service says another

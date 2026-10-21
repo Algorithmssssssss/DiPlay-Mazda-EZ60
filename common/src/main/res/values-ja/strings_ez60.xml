@@ -27,4 +27,9 @@
     <string name="settings_mazda_ar_map_size_large">大</string>
     <string name="settings_mazda_ar_map_size_largest">最大</string>
     <string name="settings_mazda_ar_map_size_description">「車と同じ」は純正ナビの地図と同じ大きさです。「大」と「最大」はAR-HUDの映像をより広く使い、HUDの速度とシフト位置の右側に表示します。「最大」は100インチAR-HUD車のフロントガラスで最も見やすかった大きさです。地図が左側のときは車と同じ大きさのままです。次回の接続から有効になります。</string>
+    <string name="settings_mazda_hud_map_style">HUDの地図スタイル</string>
+    <string name="settings_mazda_hud_map_style_whole">地図全体</string>
+    <string name="settings_mazda_hud_map_style_lines">線のみ</string>
+    <string name="settings_mazda_hud_map_see_through">背景の透過</string>
+    <string name="settings_mazda_hud_map_look_description">HUDは地図の背景を光る四角として映します。透過を上げると背景が薄くなり、その向こうの道路が見えます。0 %はiPhoneが描いたままの地図、100 %は背景を消します。「線のみ」は公園・水域・建物も消し、道路・ルート・地名を明るく表示します。変更はすぐに反映されます。</string>
 </resources>

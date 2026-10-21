@@ -27,4 +27,9 @@
     <string name="settings_mazda_ar_map_size_large">Large</string>
     <string name="settings_mazda_ar_map_size_largest">Largest</string>
     <string name="settings_mazda_ar_map_size_description">The car’s size matches its own navigation map. Large and Largest use more of the AR-HUD picture, to the right of the HUD’s speed and gear; Largest is the size that read best at the glass on 100-inch AR-HUD cars. With the map on the left, the car’s size is kept. Applies at the next connection.</string>
+    <string name="settings_mazda_hud_map_style">HUD map style</string>
+    <string name="settings_mazda_hud_map_style_whole">Whole map</string>
+    <string name="settings_mazda_hud_map_style_lines">Lines only</string>
+    <string name="settings_mazda_hud_map_see_through">See-through background</string>
+    <string name="settings_mazda_hud_map_look_description">The HUD projects the map’s background as a lit box. See-through fades it so you see the road through it: 0 % is the map as the iPhone draws it, 100 % removes the background. Lines only also removes parks, water and buildings, and draws roads, the route and labels brighter. Changes apply at once.</string>
 </resources>

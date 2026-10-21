@@ -4895,6 +4895,16 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             showMazdaHudMapViewPicker()
         }, matchButton(12, 60))
         card.addView(label(getString(R.string.settings_mazda_hud_map_view_description), 14, MUTED))
+        // The map's look applies at once: the HUD window follows these preferences while it is shown.
+        card.addView(button("${getString(R.string.settings_mazda_hud_map_style)} · " +
+            getString(mazdaHudMapStyleName(MazdaHudSettings.mapStyle(this))), false) {
+            showMazdaHudMapStylePicker()
+        }, matchButton(12, 60))
+        card.addView(overlaySliderRow(getString(R.string.settings_mazda_hud_map_see_through),
+            MazdaHudSettings.SEE_THROUGH_STEPS, MazdaHudSettings.mapSeeThrough(this)) { "$it %" }.apply {
+            onSave = { value -> MazdaHudSettings.saveMapSeeThrough(this@DiPlayActivity, value) }
+        })
+        card.addView(label(getString(R.string.settings_mazda_hud_map_look_description), 14, MUTED))
     }
 
     private fun mazdaAmbientEffectName(effect: MazdaAmbientTuning.Effect): Int = when (effect) {
@@ -4906,6 +4916,25 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         MazdaHudSettings.MapView.FAR -> R.string.settings_mazda_hud_map_far
         MazdaHudSettings.MapView.NORMAL -> R.string.settings_mazda_hud_map_normal
         MazdaHudSettings.MapView.NEAR -> R.string.settings_mazda_hud_map_near
+    }
+
+    private fun mazdaHudMapStyleName(style: MazdaHudSettings.MapStyle): Int = when (style) {
+        MazdaHudSettings.MapStyle.WHOLE -> R.string.settings_mazda_hud_map_style_whole
+        MazdaHudSettings.MapStyle.LINES -> R.string.settings_mazda_hud_map_style_lines
+    }
+
+    private fun showMazdaHudMapStylePicker() {
+        val styles = MazdaHudSettings.MapStyle.entries
+        val current = styles.indexOf(MazdaHudSettings.mapStyle(this))
+        appDialogBuilder().setTitle(getString(R.string.settings_mazda_hud_map_style))
+            .setSingleChoiceItems(styles.map { getString(mazdaHudMapStyleName(it)) }.toTypedArray(), current) { dialog, which ->
+                dialog.dismiss()
+                if (which == current) return@setSingleChoiceItems
+                MazdaHudSettings.saveMapStyle(this, styles[which])
+                render()
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
     }
 
     // EZ-60: how much map the HUD shows; the stream size is set when CarPlay connects.

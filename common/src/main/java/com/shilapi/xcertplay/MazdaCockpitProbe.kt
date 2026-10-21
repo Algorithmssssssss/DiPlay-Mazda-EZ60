@@ -319,7 +319,8 @@ internal object MazdaCockpitProbe {
                     appendLine("HUD as DiPlay treats it: ${MazdaCarFeatures.hud()}")
                     val readings = MazdaArHudLayout.read()
                     appendLine("AR-HUD readings: $readings mapSide=${MazdaArHudLayout.side(readings) ?: "none"} " +
-                        "arMapSwitch=${MazdaHudSettings.arMap(app)}")
+                        "arMapSwitch=${MazdaHudSettings.arMap(app)} mapStyle=${MazdaHudSettings.mapStyle(app)} " +
+                        "seeThrough=${MazdaHudSettings.mapSeeThrough(app)}%")
                 }
             }.lineSequence().joinToString("\n") { DiagnosticRedactor.mask(it) }
             runCatching { File(directory(app), SNAPSHOT_FILE).writeText(text) }

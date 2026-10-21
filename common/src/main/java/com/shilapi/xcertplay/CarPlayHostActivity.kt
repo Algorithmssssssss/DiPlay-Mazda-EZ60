@@ -5893,7 +5893,7 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun showMazdaHudScreen(display: android.view.Display, area: MazdaHudScreen.Area) {
-        val screen = MazdaHudScreen(this, display, area) { surface -> runOnUiThread { onClusterSurface(surface) } }
+        val screen = MazdaHudScreen(this, display, area, ::appendLog) { surface -> runOnUiThread { onClusterSurface(surface) } }
         screen.setOnDismissListener {
             if (mazdaHudScreen === screen) {
                 mazdaHudScreen = null

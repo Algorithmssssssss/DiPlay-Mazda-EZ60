@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Debug builds only: the HUD map looks on a drawn map; adb (DUMP) can open it. -->
+        <activity android:name="com.shilapi.xcertplay.MazdaHudMapLookPreviewActivity" android:exported="true"
+            android:permission="android.permission.DUMP" />
+    </application>
+</manifest>

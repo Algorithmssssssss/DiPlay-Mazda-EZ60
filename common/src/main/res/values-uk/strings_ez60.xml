@@ -27,4 +27,9 @@
     <string name="settings_mazda_ar_map_size_large">Великий</string>
     <string name="settings_mazda_ar_map_size_largest">Найбільший</string>
     <string name="settings_mazda_ar_map_size_description">«Як у машини» — розмір карти штатної навігації. «Великий» і «Найбільший» займають більше зображення AR-HUD, праворуч від швидкості та передачі на HUD; «Найбільший» найкраще читався на склі в машинах зі 100-дюймовим AR-HUD. Коли карта ліворуч, зберігається розмір машини. Діє з наступного підключення.</string>
+    <string name="settings_mazda_hud_map_style">Стиль карти на HUD</string>
+    <string name="settings_mazda_hud_map_style_whole">Уся карта</string>
+    <string name="settings_mazda_hud_map_style_lines">Лише лінії</string>
+    <string name="settings_mazda_hud_map_see_through">Прозорий фон</string>
+    <string name="settings_mazda_hud_map_look_description">HUD проєктує фон карти як прямокутник, що світиться. Прозорість приглушує його, щоб крізь нього було видно дорогу: 0 % — карта так, як її малює iPhone, 100 % — фон прибрано. «Лише лінії» прибирає також парки, воду й будівлі, а дороги, маршрут і назви малює яскравіше. Зміни застосовуються одразу.</string>
 </resources>

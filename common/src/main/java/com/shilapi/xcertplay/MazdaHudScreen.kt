@@ -11,6 +11,8 @@ import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.hardware.display.DisplayManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.TextPaint
 import android.text.TextUtils
 import android.view.Display
@@ -28,11 +30,13 @@ import com.shilapi.xcertplay.hud.ClusterTurnGuidance
  * the window exists only while DiPlay guides on the HUD: the car's HUD service reads every window on that display
  * about once a second, and a window left there across a deep sleep broke the 360 camera on an AR-HUD car (EZNav). In the area: CarPlay's instrument-cluster map while
  * the iPhone streams it, or a turn card when there is no map. The 2D HUD draws the arrow and distance itself.
+ * The map is drawn with the driver's look ([MazdaHudMapLook]), which changes at once while the window is shown.
  */
 internal class MazdaHudScreen(
     context: Context,
     display: Display,
     private val area: Area = STANDARD_AREA,
+    private val log: (String) -> Unit = {},
     private val onSurface: (Surface?) -> Unit,
 ) : Presentation(context, display) {
     var outputSurface: Surface? = null
@@ -40,6 +44,15 @@ internal class MazdaHudScreen(
     private var card: MazdaHudCardView? = null
     private var areaView: View? = null
     private var mapActive = false
+    private var filter: MazdaHudMapFilter? = null
+    private var stopWatchingLook: (() -> Unit)? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private val sampleBackground = object : Runnable {
+        override fun run() {
+            if (mapActive) filter?.sampleBackground()
+            handler.postDelayed(this, BACKGROUND_SAMPLE_MILLIS)
+        }
+    }
 
     /** Where the area sits on the display, in its pixels; the background outside it is not projected. */
     data class Area(val left: Int, val top: Int, val width: Int, val height: Int, val background: Int)
@@ -66,7 +79,11 @@ internal class MazdaHudScreen(
                     return true
                 }
             }
+            addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+                if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) filter?.apply()
+            }
         }
+        filter = MazdaHudMapFilter(map, log)
         val turnCard = MazdaHudCardView(context).apply {
             guidance = this@MazdaHudScreen.guidance
             visibility = if (mapActive) View.INVISIBLE else View.VISIBLE
@@ -87,6 +104,25 @@ internal class MazdaHudScreen(
         })
     }
 
+    override fun onStart() {
+        super.onStart()
+        applyLook()
+        stopWatchingLook = MazdaHudSettings.watchMapLook(context, ::applyLook)
+        handler.postDelayed(sampleBackground, FIRST_SAMPLE_MILLIS)
+    }
+
+    override fun onStop() {
+        handler.removeCallbacks(sampleBackground)
+        stopWatchingLook?.invoke()
+        stopWatchingLook = null
+        filter?.release()
+        super.onStop()
+    }
+
+    private fun applyLook() {
+        filter?.set(MazdaHudSettings.mapStyle(context), MazdaHudSettings.mapSeeThrough(context))
+    }
+
     /** The AR-HUD's driver changed the map's side: move (and size) the area, keeping the map stream's surface. */
     fun moveTo(box: MazdaArHudLayout.Box) {
         val view = areaView ?: return
@@ -102,9 +138,17 @@ internal class MazdaHudScreen(
     fun setMapActive(active: Boolean) {
         mapActive = active
         card?.visibility = if (active) View.INVISIBLE else View.VISIBLE
+        // Read the new picture's background soon rather than at the next regular sample.
+        if (active && isShowing) {
+            handler.removeCallbacks(sampleBackground)
+            handler.postDelayed(sampleBackground, FIRST_SAMPLE_MILLIS)
+        }
     }
 
     internal companion object {
+        /** How often the map's background colour is read again; it changes with day and night, not every frame. */
+        const val BACKGROUND_SAMPLE_MILLIS = 2_000L
+        const val FIRST_SAMPLE_MILLIS = 500L
         const val AREA_WIDTH = MazdaHud.VISIBLE_RIGHT - MazdaHud.VISIBLE_LEFT
         const val AREA_HEIGHT = MazdaHud.VISIBLE_BOTTOM - MazdaHud.VISIBLE_TOP
         val STANDARD_AREA = Area(MazdaHud.VISIBLE_LEFT, MazdaHud.VISIBLE_TOP, AREA_WIDTH, AREA_HEIGHT, Color.BLACK)
