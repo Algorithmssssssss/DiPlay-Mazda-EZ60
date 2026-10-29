@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_mazda_hud">Indicazioni svolta per svolta sull’HUD (sperimentale)</string>
+    <string name="settings_mazda_hud_description">Mostra la prossima svolta, la distanza e la strada di CarPlay sull’head-up display del parabrezza mentre la navigazione di CarPlay guida. Si applica al prossimo aggiornamento della svolta.</string>
+    <string name="settings_mazda_hud_map_view">Vista mappa dell’HUD</string>
+    <string name="settings_mazda_hud_map_far">Lontana</string>
+    <string name="settings_mazda_hud_map_normal">Normale</string>
+    <string name="settings_mazda_hud_map_near">Vicina</string>
+    <string name="settings_mazda_hud_map_view_description">Quanta parte della mappa mostra l’HUD. Lontana mostra più strade, più piccole; Vicina ne mostra meno, più grandi. Si applica alla prossima connessione.</string>
+    <string name="settings_mazda_ambient_music">Segui la musica di CarPlay</string>
+    <string name="settings_mazda_ambient_music_description">Fa pulsare le luci ambientali dell’auto con la musica di CarPlay, usando la modalità musica dell’auto. Prima accendi nell’auto le luci ambientali e la loro sincronizzazione con la musica. Se qualcosa non funziona, DiPlay si ferma e restituisce le luci all’auto.</string>
+    <string name="settings_mazda_ambient_effect">Effetto luce</string>
+    <string name="settings_mazda_ambient_effect_beat">Battito</string>
+    <string name="settings_mazda_ambient_effect_rhythm">Ritmo</string>
+    <string name="settings_mazda_ambient_effect_description">Battito accende le luci a ogni colpo di basso e le attenua fino al successivo. Ritmo le alza e le abbassa dolcemente con la musica.</string>
+    <string name="settings_mazda_ambient_smoothness">Morbidezza</string>
+    <string name="settings_mazda_ambient_depth">Profondità</string>
+    <string name="settings_mazda_ambient_sensitivity">Sensibilità al battito</string>
+    <string name="settings_mazda_ambient_tuning_description">Morbidezza: 1 cambia rapidamente, 5 lentamente. Profondità: quanto si attenuano le luci tra un battito e l’altro. Sensibilità al battito: 5 coglie i battiti più leggeri. Le modifiche si applicano subito.</string>
+    <string name="settings_ez60">Mazda EZ-60</string>
+    <string name="settings_ez60_summary">L’HUD e le luci ambientali dell’auto. Qui puoi disattivarli.</string>
+    <string name="settings_mazda_hud_card">HUD sul parabrezza</string>
+    <string name="settings_mazda_ar_map">Mappa sull’AR-HUD (sperimentale)</string>
+    <string name="settings_mazda_ar_map_description">Mostra la mappa di CarPlay, o la prossima svolta quando non c’è una mappa, nel riquadro mappa dell’AR-HUD mentre la navigazione di CarPlay guida e l’auto non è in P. Per farlo DiPlay cambia l’immagine dell’HUD dell’auto e la restituisce quando il percorso finisce o qualcosa non funziona. Non usarla mentre guida la navigazione dell’auto. L’attivazione si applica alla prossima connessione; la disattivazione rimuove subito la mappa.</string>
+    <string name="settings_mazda_ar_map_size">Dimensione mappa AR-HUD</string>
+    <string name="settings_mazda_ar_map_size_car">Dimensione dell’auto</string>
+    <string name="settings_mazda_ar_map_size_large">Grande</string>
+    <string name="settings_mazda_ar_map_size_largest">Massima</string>
+    <string name="settings_mazda_ar_map_size_description">La dimensione dell’auto corrisponde alla mappa della sua navigazione. Grande e Massima usano più spazio dell’immagine AR-HUD, a destra di velocità e marcia; Massima è la dimensione più leggibile sul vetro nelle auto con AR-HUD da 100 pollici. Con la mappa a sinistra resta la dimensione dell’auto. Si applica alla prossima connessione.</string>
+    <string name="settings_mazda_hud_map_style">Stile mappa dell’HUD</string>
+    <string name="settings_mazda_hud_map_style_whole">Mappa intera</string>
+    <string name="settings_mazda_hud_map_style_lines">Solo linee</string>
+    <string name="settings_mazda_hud_map_see_through">Sfondo trasparente</string>
+    <string name="settings_mazda_hud_map_look_description">L’HUD proietta lo sfondo della mappa come un riquadro illuminato. La trasparenza lo attenua perché tu veda la strada attraverso: 0 % è la mappa come la disegna l’iPhone, 100 % rimuove lo sfondo. Solo linee rimuove anche parchi, acqua ed edifici e disegna più luminosi strade, percorso ed etichette. Le modifiche si applicano subito.</string>
+</resources>

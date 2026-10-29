@@ -77,6 +77,8 @@ class CarPlayCockpitResizeTest {
             activity.javaClass.getDeclaredMethod("onHostTouch", android.view.View::class.java, MotionEvent::class.java)
                 .apply { isAccessible = true }.invoke(activity, video, event)
         } finally { event.recycle() }
+        // With the settings swipe on, a new touch reaches the iPhone after 80 ms (upstream #922), mapped the same way.
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(81))
         assertEquals(860.0 / 1728, received.single().x, 0.0001)
         assertEquals(0.5, received.single().y, 0.0001)
     }

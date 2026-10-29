@@ -6,7 +6,7 @@ passenger half; a two-finger swipe moves an app between them.
 
 It installs next to upstream DiPlay as `com.reachkim.diplay.ez60` (debug builds add `.hudtest`). The
 update check in About and upstream's background update checks are off, because upstream releases are a
-different app. This fork includes upstream DiPlay through 0.2.19; BYD-only settings are hidden on the
+different app. This fork includes upstream DiPlay through 0.2.22; BYD-only settings are hidden on the
 EZ-60.
 
 ## Status

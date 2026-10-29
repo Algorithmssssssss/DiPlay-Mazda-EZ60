@@ -1,3 +1,24 @@
+# DiPlay for Mazda EZ-60 0.2.22-ez60.1 — 2026-10-29 (test build, not released)
+
+Moves the fork from DiPlay 0.2.19 to 0.2.22 (upstream 0.2.20–0.2.22, 487 commits), on top of the HUD map style work of branch `ez60-hud-map-style`. Not tested on the car yet. See [the merge record](docs/EZ60-UPSTREAM-0.2.22-MERGE.md) for what came in, what was adapted and what to check on the car.
+
+### From upstream 0.2.20–0.2.22
+
+- Wireless music follows the iPhone's clock (playback-rate adjustment, with 0.2.21's speed-up and stutter fixed in 0.2.22), audio threads at audio priority, and separate music buffers for wireless and USB.
+- Wired CarPlay connects on the first attempt after a replug, wireless starts sooner on slow resolvers, and CarPlay and Home name known connection problems.
+- Two-finger gestures keep each finger in its own touch slot; with the settings swipe on, a new touch reaches the iPhone after 80 ms, a lift or a move, so the swipe no longer taps CarPlay.
+- Calls and Siri: microphone audio at audio priority, a recorder that returns no audio is restarted, and silent windows say what else was recording.
+- Korean, Turkish and Italian; hardening against oversized or forged input; settings backups keep each setting's type.
+- New options, all off by default: keep CarPlay in the launcher card, navigation prompts that ask for audio focus, temporary system bars, black rounded corners, a home-screen bubble.
+
+### EZ-60
+
+- Keep the EZ-60's own behavior where upstream changed it: the call microphone sources (VOICE_RECOGNITION first, switched while Android silences them), the cockpit view areas for video and touch (now also for touches held back by the settings swipe), Bonjour without reverse DNS, audio focus left to the car's Bluetooth player, and CarPlay in DiPlay's task.
+- Upstream now gives stream 111 its surface only after CarPlay's first main frame. The EZ-60 HUD and AR-HUD map windows get theirs at that frame too, so the HUD map comes back after a reconnect.
+- Never take one of the car's in-vehicle Ethernet interfaces (`eth0`–`eth2`, `wt_eth2_*`) for the car hotspot. Upstream 0.2.21 added a fallback for head units whose hotspot hides on a VLAN; on the EZ-60 the hotspot is always `ap0` or `ap_br_ap0`.
+- Settings backups carry the HUD settings with their types (map view, size, style, see-through).
+- The EZ-60 settings and probe in Korean, Turkish and Italian.
+
 # DiPlay for Mazda EZ-60 0.2.19-ez60.2 — 2026-10-18 (pre-release 2.0, closed testers)
 
 Pre-release 2.0 goes to the closed tester group only. 0.2.19-ez60.1 was never released; its test builds went to testers, so this entry lists everything since 0.2.17-ez60.1. [Notes for testers](docs/PRE-RELEASE-2.0-TESTERS.md).
@@ -53,6 +74,39 @@ First pre-release of the Mazda EZ-60 fork, based on DiPlay 0.2.17. See [release 
 - Experimental: let the car's ambient lights follow CarPlay music through the car's own music mode (off by default; stops and hands the lights back on any failure).
 
 # Upstream DiPlay history
+
+## DiPlay 0.2.22 — 2026-10-28
+
+- Fix the two 0.2.21 regressions: connect wireless CarPlay over the car hotspot again on BYD DiLink 3.0/4.0 and other units where 0.2.21 took a mobile-data interface for the hotspot, and keep wireless music at the iPhone's speed from the first second instead of 1.5 % fast with stutter (#936, #950, #993, #1070, #1080).
+- Record the driver's voice in WeChat voice messages, Voice Memos and dictation over USB by sending 48 kHz microphone audio in packets that fit the link, and hear music and navigation again after calls on head units that were already in their call state (#1148, #994).
+- Connect wired CarPlay on the first attempt after a replug or reconnect, start wireless up to 20 s sooner on slow resolvers, reconnect after Wi-Fi drops on Android 8–9, retry as soon as Bluetooth turns on, and bring CarPlay to the front when auto-start finds it already connecting (#962, #1057, #972, #1042, #914, #1085).
+- Name known connection problems on the CarPlay screen and Home, including an unpaired or unchosen iPhone, car hotspot problems, a car that sees no USB device, a VPN that cannot be allowed and an iPhone that sends no picture (#1058, #1060, #1062, #1066, #1096, #1097, #1045).
+- Fix two-finger gestures, stop the quick-menu swipe tapping CarPlay, coalesce drags behind a slow connection, show the saved CarPlay size and frame rate, and add the dashboard map on the Denza N9 and Lynk & Co 03, a full-screen DiLink 3.0 dashboard map and steadier cluster album art (#912, #922, #1134, #1032, #934, #1049, #843, #956, #1033).
+- Add Korean and Turkish, and options that are off by default: keep CarPlay in the launcher card, navigation prompts that ask for audio focus, calls at the call's own rate and an interface for Existing Wi-Fi; send ECARX wheel speed and gear; accept lane guidance; and harden DiPlay against oversized or forged input from other devices and apps (#1105, #999, #1052, #1051, #898, #1113, #1089, #1028, #1122, #1123, #1125–#1129, #1131–#1144).
+
+See [0.2.22 release notes](https://github.com/shihabal3amri/DiPlay/blob/main/docs/RELEASE-NOTES-0.2.22.md) for contribution links and limits, and [validation](https://github.com/shihabal3amri/DiPlay/blob/main/docs/VALIDATION.md) for checks. Full-release vehicle acceptance is not claimed.
+
+## DiPlay 0.2.21 — 2026-10-17
+
+- Fix the 0.2.20 music lag by counting the music still waiting to be decoded in the clock adjustment, and bring music back after an interruption when the iPhone plays again (#814, #804).
+- Let wired CarPlay recover by itself: retry when the iPhone never opens its session, stop waiting forever for an ignored mode request, keep an attempt that recovered before its retry, and lower navigation guidance in the audio itself (#907, #841, #876).
+- Stop DiPlay closing when the software Opus encoder fails a check, name the wireless startup failure and refused permissions on the CarPlay screen, stop re-asking about the car hotspot on Android 13, find car hotspots on VLAN interfaces, wait for Bluetooth that is turning on, and save the CarPlay menu settings when an unused hotspot is empty (#866, #824, #795, #893, #885, #822, #853).
+- On BYD head units, hand the dashboard back to the car when CarPlay ends, survive the DiYou desktop card, warn again about a car hotspot that stays off, open BYD's own screens on DiLink 1.0, hide the call popup on Android 10+, clarify the call key setting and offer DiLink 7.0's split screen (#909, #827, #794, #845, #842, #875).
+- Install on Android 7.0, add Italian, and add options that are off by default: temporary system bars, black rounded corners, a play/pause wheel key, double press for Siri, car hotspot import, a home-screen bubble, the car's own music rhythm and music data for it (#847, #863, #818, #811, #823, #813, #769, #844, #695, #908).
+- Record more in the diagnostic report: DiPlay's own frames in the crash record, the USB devices Android lists while waiting for the iPhone, a wheel-speed line each minute, and the USB network traffic when the iPhone never opens CarPlay; note screenshots under screen turning (#827, #830, #862, #907, #864).
+
+See [0.2.21 release notes](https://github.com/shihabal3amri/DiPlay/blob/main/docs/RELEASE-NOTES-0.2.21.md) for contribution links and limits, and [validation](https://github.com/shihabal3amri/DiPlay/blob/main/docs/VALIDATION.md) for checks. Full-release vehicle acceptance is not claimed.
+
+## DiPlay 0.2.20 — 2026-10-15
+
+- Keep music playing when a head unit's audio clock drifts by adjusting its playback rate, run DiPlay's audio threads at audio priority, and keep separate music buffers for wireless and USB (#788, #740, #746).
+- Play calls that a head unit sends to its earpiece on the loudspeaker, add Calls on the loudspeaker for phone and tablet head units, open the microphone for app voice messages, open Siri once per press of BYD's voice key, and record calls in the car's phone audio state from the voice-recognition source (#797, #704, #698, #774, #786, #770).
+- Start wired CarPlay when a USB audio driver holds the iPhone, within seconds after Save and reconnect, after a VERSION reply that follows a reply trailer, and on Android 17 (#699, #714, #744, #708).
+- Turn the car hotspot on through the system shell, or without ADB on head units that aren't BYD on Android 8.0–10; let Connect in the "Car hotspot is off" dialog connect; add a switch for the Wi-Fi Direct scan pause; and skip 5 GHz Wi-Fi Direct channels on head units without that band (#699, #748, #775, #777, #789, #768, #740).
+- Find the dashboard cluster on controller 13 and 17 firmware and the Leopard 5 Ultra, hide the DiLink 4 cluster routes on DiLink 3, fall back from HEVC to H.264 without a hardware decoder, show CarPlay with FFmpeg-backed decoders, and group the settings menu inside CarPlay by goal (#714, #734, #707, #710).
+- Record DiPlay's last crash, the wheel and media keys it received, the car Bluetooth pause, app-call vocoder info, music rebuffers and the USB devices listed while waiting for a CH341 adapter in the diagnostic report (#700, #702, #788, #740, #759, #793).
+
+See [0.2.20 release notes](https://github.com/shihabal3amri/DiPlay/blob/main/docs/RELEASE-NOTES-0.2.20.md) for contribution links and limits, and [validation](https://github.com/shihabal3amri/DiPlay/blob/main/docs/VALIDATION.md) for checks. Full-release vehicle acceptance is not claimed.
 
 ## DiPlay 0.2.19 — 2026-10-12
 

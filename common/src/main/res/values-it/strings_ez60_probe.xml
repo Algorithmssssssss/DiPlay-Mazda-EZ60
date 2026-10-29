@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">Sonda EZ-60</string>
+    <string name="settings_probe_description">Misura le metà dello schermo, il decoder video, il Wi-Fi, l’USB, l’audio e i tasti di quest’auto, così DiPlay può essere regolato per la Mazda EZ-60. Nulla viene inviato automaticamente.</string>
+    <string name="settings_probe_run">Avvia la sonda EZ-60</string>
+    <string name="settings_probe_running">Sonda in corso…</string>
+    <string name="settings_probe_record_start">Avvia la registrazione degli eventi</string>
+    <string name="settings_probe_record_stop">Ferma la registrazione degli eventi</string>
+    <string name="settings_probe_recording_hint">Registrazione in corso. Ora sposta DiPlay sull’altra metà dello schermo e indietro, attiva l’assistente vocale, premi ogni tasto del volante, passa dal giorno alla notte e collega l’iPhone. Poi ferma la registrazione e avvia la sonda.</string>
+    <string name="settings_probe_view">Mostra il rapporto della sonda</string>
+    <string name="settings_probe_share">Apri su iPhone</string>
+    <string name="settings_probe_share_url">Su un iPhone nella stessa rete Wi-Fi dell’auto (l’hotspot dell’auto o quello dell’iPhone), apri in Safari:\n%1$s</string>
+    <string name="settings_probe_share_unavailable">L’auto non è collegata a nessuna rete Wi-Fi. Attiva l’hotspot dell’auto o collegati all’hotspot dell’iPhone, poi riprova.</string>
+    <string name="settings_probe_window_test">Prova la finestra di CarPlay</string>
+    <string name="settings_probe_window_test_body">Prova della finestra di CarPlay\n\nCarPlay si aprirebbe qui. Tocca per chiudere.</string>
+    <string name="settings_probe_meter_test">Prova il display del cruscotto</string>
+    <string name="settings_probe_meter_card">Prova DiPlay\n%1$s</string>
+    <string name="settings_probe_meter_shown">Scheda di prova mostrata sul display %1$s per 20 secondi. Guarda il quadro strumenti e l’HUD.</string>
+    <string name="settings_probe_meter_failed">Impossibile mostrare la scheda di prova sul display %1$s.</string>
+    <string name="settings_probe_meter_none">Quest’auto non ha un secondo display per le app.</string>
+</resources>

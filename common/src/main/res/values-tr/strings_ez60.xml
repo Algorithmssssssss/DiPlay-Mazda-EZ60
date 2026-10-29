@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_mazda_hud">HUD’da adım adım yol tarifi (deneysel)</string>
+    <string name="settings_mazda_hud_description">CarPlay navigasyonu yol tarifi verirken CarPlay’in bir sonraki dönüşünü, mesafeyi ve yolu ön camdaki head-up ekranda gösterir. Bir sonraki dönüş güncellemesinde uygulanır.</string>
+    <string name="settings_mazda_hud_map_view">HUD harita görünümü</string>
+    <string name="settings_mazda_hud_map_far">Uzak</string>
+    <string name="settings_mazda_hud_map_normal">Normal</string>
+    <string name="settings_mazda_hud_map_near">Yakın</string>
+    <string name="settings_mazda_hud_map_view_description">HUD’un haritanın ne kadarını gösterdiği. Uzak daha çok sokağı daha küçük, Yakın daha az sokağı daha büyük gösterir. Bir sonraki bağlantıda uygulanır.</string>
+    <string name="settings_mazda_ambient_music">CarPlay müziğini takip et</string>
+    <string name="settings_mazda_ambient_music_description">Aracın kendi müzik modunu kullanarak aracın ambiyans ışıklarını CarPlay müziğine göre titreştirir. Önce araçta ambiyans ışıklarını ve müzik senkronizasyonunu açın. Bir sorun olursa DiPlay durur ve ışıkları araca geri verir.</string>
+    <string name="settings_mazda_ambient_effect">Işık efekti</string>
+    <string name="settings_mazda_ambient_effect_beat">Vuruş</string>
+    <string name="settings_mazda_ambient_effect_rhythm">Ritim</string>
+    <string name="settings_mazda_ambient_effect_description">Vuruş, ışıkları her bas vuruşunda yakar ve bir sonrakine kadar söndürür. Ritim, ışıkları müzikle birlikte yumuşakça artırıp azaltır.</string>
+    <string name="settings_mazda_ambient_smoothness">Yumuşaklık</string>
+    <string name="settings_mazda_ambient_depth">Derinlik</string>
+    <string name="settings_mazda_ambient_sensitivity">Vuruş hassasiyeti</string>
+    <string name="settings_mazda_ambient_tuning_description">Yumuşaklık: 1 hızlı, 5 yavaş değişir. Derinlik: ışıkların vuruşlar arasında ne kadar kısıldığı. Vuruş hassasiyeti: 5 daha yumuşak vuruşları da yakalar. Değişiklikler hemen uygulanır.</string>
+    <string name="settings_ez60">Mazda EZ-60</string>
+    <string name="settings_ez60_summary">Aracın HUD’u ve ambiyans ışıkları. Her birini buradan kapatabilirsiniz.</string>
+    <string name="settings_mazda_hud_card">Ön cam HUD’u</string>
+    <string name="settings_mazda_ar_map">AR-HUD haritası (deneysel)</string>
+    <string name="settings_mazda_ar_map_description">CarPlay navigasyonu yol tarifi verirken ve araç P’de değilken CarPlay’in haritasını (harita yoksa bir sonraki dönüşü) AR-HUD’un kendi harita kutusunda gösterir. DiPlay bunun için aracın HUD görüntüsünü değiştirir ve rota bittiğinde ya da bir sorun olduğunda geri verir. Aracın kendi navigasyonu yol tarifi verirken kullanmayın. Açmak bir sonraki bağlantıda uygulanır; kapatmak haritayı hemen kaldırır.</string>
+    <string name="settings_mazda_ar_map_size">AR-HUD harita boyutu</string>
+    <string name="settings_mazda_ar_map_size_car">Aracın boyutu</string>
+    <string name="settings_mazda_ar_map_size_large">Büyük</string>
+    <string name="settings_mazda_ar_map_size_largest">En büyük</string>
+    <string name="settings_mazda_ar_map_size_description">Aracın boyutu, kendi navigasyon haritasıyla aynıdır. Büyük ve En büyük, HUD’un hız ve vites göstergesinin sağında AR-HUD görüntüsünün daha fazlasını kullanır; En büyük, 100 inç AR-HUD’lu araçlarda camda en iyi okunan boyuttur. Harita soldayken aracın boyutu korunur. Bir sonraki bağlantıda uygulanır.</string>
+    <string name="settings_mazda_hud_map_style">HUD harita stili</string>
+    <string name="settings_mazda_hud_map_style_whole">Tüm harita</string>
+    <string name="settings_mazda_hud_map_style_lines">Yalnızca çizgiler</string>
+    <string name="settings_mazda_hud_map_see_through">Saydam arka plan</string>
+    <string name="settings_mazda_hud_map_look_description">HUD, haritanın arka planını ışıklı bir kutu olarak yansıtır. Saydamlık onu soldurur, böylece yolu içinden görürsünüz: 0 % haritayı iPhone’un çizdiği gibi bırakır, 100 % arka planı kaldırır. Yalnızca çizgiler ayrıca parkları, suyu ve binaları kaldırır; yolları, rotayı ve etiketleri daha parlak çizer. Değişiklikler hemen uygulanır.</string>
+</resources>

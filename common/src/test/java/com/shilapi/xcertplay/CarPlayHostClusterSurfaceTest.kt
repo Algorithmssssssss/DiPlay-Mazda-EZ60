@@ -2,6 +2,7 @@ package com.shilapi.xcertplay
 
 import android.graphics.SurfaceTexture
 import android.view.Surface
+import com.shilapi.xcertplay.airplay.AirPlaySession
 import com.shilapi.xcertplay.media.AndroidMediaSink
 import java.util.concurrent.ExecutorService
 import org.junit.After
@@ -11,6 +12,7 @@ import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -36,6 +38,7 @@ class CarPlayHostClusterSurfaceTest {
 
     @After fun tearDown() {
         CarPlaySessionCluster.streamOnDisplay = false
+        MazdaPlatform.ez60ForTests = null
         setField("sink", null)
         (getField("teardownExecutor") as ExecutorService).shutdownNow()
         (getField("airPlayCommandExecutor") as ExecutorService).shutdownNow()
@@ -47,12 +50,41 @@ class CarPlayHostClusterSurfaceTest {
         val hud = surface()
         CarPlaySessionCluster.streamOnDisplay = true
         setField("clusterSurface", hud)
+        mainPictureRendered()
 
         attachSurface(main)
 
         verify(sink).setSurface(MAIN, main)
         verify(sink).setSurface(ALT, hud)
         verify(sink, never()).setSurface(ALT, main)
+    }
+
+    // Upstream 0.2.20+: stream 111 gets its surface only after the main picture's first frame.
+    @Test fun theHudWaitsForTheMainPicturesFirstFrame() {
+        val main = surface()
+        val hud = surface()
+        CarPlaySessionCluster.streamOnDisplay = true
+        setField("clusterSurface", hud)
+
+        attachSurface(main)
+
+        verify(sink).setSurface(MAIN, main)
+        verify(sink, never()).setSurface(ALT, hud)
+        verify(sink, never()).setSurface(ALT, main)
+    }
+
+    // The EZ-60 skips upstream's cluster setup, which is where a waiting cluster gets its surface at the first frame.
+    @Test fun theFirstMainFrameGivesAWaitingHudWindowItsSurface() {
+        MazdaPlatform.ez60ForTests = true
+        val hud = surface()
+        CarPlaySessionCluster.streamOnDisplay = true
+        setField("clusterSurface", hud)
+        mainPictureRendered()
+
+        CarPlayHostActivity::class.java.getDeclaredMethod("ensureClusterPresentation")
+            .apply { isAccessible = true }.invoke(activity)
+
+        verify(sink).setSurface(ALT, hud)
     }
 
     @Test fun aStreamForTheHudWithoutItsWindowGetsNoSurface() {
@@ -88,6 +120,12 @@ class CarPlayHostClusterSurfaceTest {
     private companion object {
         const val MAIN = 110 // CarPlayHostActivity.SCREEN_TYPE_MAIN
         const val ALT = 111 // stream 111: the cluster or HUD map
+    }
+
+    private fun mainPictureRendered() {
+        val session = mock(AirPlaySession::class.java)
+        `when`(session.hasRenderedMainFrame).thenReturn(true)
+        setField("activeAirPlaySession", session)
     }
 
     private fun surface(): Surface = Surface(SurfaceTexture(0).also { textures += it })

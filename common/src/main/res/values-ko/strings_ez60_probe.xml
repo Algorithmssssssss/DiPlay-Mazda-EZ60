@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">EZ-60 프로브</string>
+    <string name="settings_probe_description">이 차량의 화면 양쪽, 동영상 디코더, Wi-Fi, USB, 오디오, 버튼을 측정해 DiPlay를 Mazda EZ-60에 맞게 조정할 수 있게 합니다. 아무것도 자동으로 전송되지 않습니다.</string>
+    <string name="settings_probe_run">EZ-60 프로브 실행</string>
+    <string name="settings_probe_running">프로브 실행 중…</string>
+    <string name="settings_probe_record_start">이벤트 기록 시작</string>
+    <string name="settings_probe_record_stop">이벤트 기록 중지</string>
+    <string name="settings_probe_recording_hint">기록 중입니다. 이제 DiPlay를 화면 반대쪽으로 옮겼다가 되돌리고, 음성 비서를 깨우고, 스티어링 휠 버튼을 하나씩 누르고, 주간과 야간을 바꾸고, iPhone을 연결하세요. 그런 다음 기록을 멈추고 프로브를 실행하세요.</string>
+    <string name="settings_probe_view">프로브 보고서 보기</string>
+    <string name="settings_probe_share">iPhone에서 열기</string>
+    <string name="settings_probe_share_url">차량과 같은 Wi-Fi(차량 핫스팟 또는 iPhone 핫스팟)에 연결된 iPhone의 Safari에서 여세요:\n%1$s</string>
+    <string name="settings_probe_share_unavailable">차량이 어떤 Wi-Fi 네트워크에도 연결되어 있지 않습니다. 차량 핫스팟을 켜거나 iPhone 핫스팟에 연결한 뒤 다시 시도하세요.</string>
+    <string name="settings_probe_window_test">CarPlay 창 테스트</string>
+    <string name="settings_probe_window_test_body">CarPlay 창 테스트\n\n여기에 CarPlay가 열립니다. 탭하면 닫힙니다.</string>
+    <string name="settings_probe_meter_test">계기 디스플레이 테스트</string>
+    <string name="settings_probe_meter_card">DiPlay 테스트\n%1$s</string>
+    <string name="settings_probe_meter_shown">디스플레이 %1$s에 테스트 카드를 20초 동안 표시했습니다. 계기판과 HUD를 확인하세요.</string>
+    <string name="settings_probe_meter_failed">디스플레이 %1$s에 테스트 카드를 표시할 수 없습니다.</string>
+    <string name="settings_probe_meter_none">이 차량에는 앱용 두 번째 디스플레이가 없습니다.</string>
+</resources>

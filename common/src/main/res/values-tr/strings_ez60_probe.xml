@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">EZ-60 sondası</string>
+    <string name="settings_probe_description">DiPlay’in Mazda EZ-60’a göre ayarlanabilmesi için bu aracın ekran yarılarını, video kod çözücüsünü, Wi-Fi’ını, USB’sini, sesini ve tuşlarını ölçer. Hiçbir şey otomatik olarak gönderilmez.</string>
+    <string name="settings_probe_run">EZ-60 sondasını çalıştır</string>
+    <string name="settings_probe_running">Sonda çalışıyor…</string>
+    <string name="settings_probe_record_start">Olayları kaydetmeye başla</string>
+    <string name="settings_probe_record_stop">Olayları kaydetmeyi durdur</string>
+    <string name="settings_probe_recording_hint">Kaydediliyor. Şimdi DiPlay’i ekranın diğer yarısına kaydırıp geri getirin, sesli asistanı uyandırın, direksiyondaki her tuşa basın, gündüz ve gece arasında geçiş yapın ve iPhone’u takın. Ardından kaydı durdurup sondayı çalıştırın.</string>
+    <string name="settings_probe_view">Sonda raporunu görüntüle</string>
+    <string name="settings_probe_share">iPhone’da aç</string>
+    <string name="settings_probe_share_url">Araçla aynı Wi-Fi’daki (araç hotspot’u veya iPhone’un hotspot’u) bir iPhone’da Safari ile açın:\n%1$s</string>
+    <string name="settings_probe_share_unavailable">Araç hiçbir Wi-Fi ağına bağlı değil. Araç hotspot’unu açın veya iPhone’un hotspot’una katılın, sonra tekrar deneyin.</string>
+    <string name="settings_probe_window_test">CarPlay penceresini test et</string>
+    <string name="settings_probe_window_test_body">CarPlay penceresi testi\n\nCarPlay burada açılırdı. Kapatmak için dokunun.</string>
+    <string name="settings_probe_meter_test">Gösterge ekranını test et</string>
+    <string name="settings_probe_meter_card">DiPlay testi\n%1$s</string>
+    <string name="settings_probe_meter_shown">Test kartı %1$s ekranında 20 saniye gösterildi. Gösterge paneline ve HUD’a bakın.</string>
+    <string name="settings_probe_meter_failed">Test kartı %1$s ekranında gösterilemedi.</string>
+    <string name="settings_probe_meter_none">Bu araçta uygulamalar için ikinci bir ekran yok.</string>
+</resources>
