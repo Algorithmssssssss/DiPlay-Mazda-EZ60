@@ -25,6 +25,7 @@
     <string name="settings_mazda_trim_standard">Вариант 1 или 2 (2D HUD)</string>
     <string name="settings_mazda_trim_ar">Вариант 3 (100-дюймовый AR-HUD)</string>
     <string name="settings_mazda_trim_description">DiPlay рисует на лобовом стекле под вашу комплектацию: окно карты 2D HUD в вариантах 1 и 2, более крупную карту AR-HUD в варианте 3. «Автоматически» читает комплектацию из машины, как это делает штатная навигация; выбирайте вручную, только если там указана не та. Действует со следующего подключения.</string>
+    <string name="settings_gesture_fingers_hint_ez60">На Mazda EZ-60 жест тремя пальцами закрывает приложение, поэтому DiPlay использует два пальца и не предлагает три.</string>
     <string name="settings_mazda_ar_map">Карта на AR-HUD (экспериментально)</string>
     <string name="settings_mazda_ar_map_description">Показывает карту CarPlay (или следующий поворот, если карты нет) в собственном окне карты AR-HUD, пока навигация CarPlay ведёт по маршруту и машина не на P. Для этого DiPlay переключает изображение HUD и возвращает его, когда маршрут заканчивается или что-то идёт не так. Не включайте, когда ведёт штатная навигация. Включение действует со следующего подключения, выключение убирает карту сразу.</string>
     <string name="settings_mazda_ar_map_size">Размер карты на AR-HUD</string>

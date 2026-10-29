@@ -3546,7 +3546,9 @@ open class CarPlayHostActivity : ComponentActivity() {
             minHeight = dp(52)
             style(DiPlayButtonKind.SECONDARY, overlayPalette, overlay = true)
             setOnClickListener {
-                gestureFingerCount = when (gestureFingerCount) { 0 -> 2; 4 -> 0; else -> gestureFingerCount + 1 }
+                gestureFingerCount = AirPlayPersistence.settingsGestureFingerChoices().let { choices ->
+                    choices[(choices.indexOf(gestureFingerCount) + 1) % choices.size]
+                }
                 text = settingsGestureButtonText()
             }
         }

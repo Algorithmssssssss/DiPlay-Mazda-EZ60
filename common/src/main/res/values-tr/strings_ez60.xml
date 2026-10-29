@@ -25,6 +25,7 @@
     <string name="settings_mazda_trim_standard">Seçenek 1 veya 2 (2D HUD)</string>
     <string name="settings_mazda_trim_ar">Seçenek 3 (100 inç AR-HUD)</string>
     <string name="settings_mazda_trim_description">DiPlay ön cama donanımınıza göre çizer: Seçenek 1 ve 2’de 2D HUD’un harita kutusu, Seçenek 3’te daha büyük AR-HUD haritası. Otomatik, donanımı aracın kendi navigasyonu gibi araçtan okur; yalnızca Otomatik yanlış donanımı gösterirse kendinizinkini seçin. Bir sonraki bağlantıda uygulanır.</string>
+    <string name="settings_gesture_fingers_hint_ez60">Mazda EZ-60’ta üç parmakla kaydırmak uygulamayı kapatır; bu yüzden DiPlay iki parmak kullanır ve üç parmağı sunmaz.</string>
     <string name="settings_mazda_ar_map">AR-HUD haritası (deneysel)</string>
     <string name="settings_mazda_ar_map_description">CarPlay navigasyonu yol tarifi verirken ve araç P’de değilken CarPlay’in haritasını (harita yoksa bir sonraki dönüşü) AR-HUD’un kendi harita kutusunda gösterir. DiPlay bunun için aracın HUD görüntüsünü değiştirir ve rota bittiğinde ya da bir sorun olduğunda geri verir. Aracın kendi navigasyonu yol tarifi verirken kullanmayın. Açmak bir sonraki bağlantıda uygulanır; kapatmak haritayı hemen kaldırır.</string>
     <string name="settings_mazda_ar_map_size">AR-HUD harita boyutu</string>

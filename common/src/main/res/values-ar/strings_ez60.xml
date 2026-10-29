@@ -25,6 +25,7 @@
     <string name="settings_mazda_trim_standard">الخيار 1 أو 2 (شاشة HUD ثنائية الأبعاد)</string>
     <string name="settings_mazda_trim_ar">الخيار 3 (شاشة AR-HUD بقياس 100 بوصة)</string>
     <string name="settings_mazda_trim_description">يرسم DiPlay على الزجاج الأمامي بحسب فئة سيارتك: مربع الخريطة في شاشة HUD ثنائية الأبعاد في الخيارين 1 و2، وخريطة AR-HUD الأكبر في الخيار 3. يقرأ «تلقائي» الفئة من السيارة كما يفعل نظام الملاحة الخاص بها؛ اختر فئتك فقط إذا أظهر «تلقائي» فئة خاطئة. يُطبَّق عند الاتصال التالي.</string>
+    <string name="settings_gesture_fingers_hint_ez60">في مازدا EZ-60 يؤدي السحب بثلاثة أصابع إلى إغلاق التطبيق، لذلك يستخدم DiPlay إصبعين ولا يعرض خيار الثلاثة.</string>
     <string name="settings_mazda_ar_map">خريطة على شاشة AR-HUD (تجريبي)</string>
     <string name="settings_mazda_ar_map_description">تعرض خريطة CarPlay، أو المنعطف التالي عند عدم توفر خريطة، في إطار الخريطة الخاص بشاشة AR-HUD أثناء توجيه ملاحة CarPlay وعندما لا تكون السيارة على وضع P. لذلك يبدّل DiPlay صورة شاشة العرض في السيارة ويعيدها عند انتهاء المسار أو عند حدوث أي خلل. لا تستخدمها أثناء توجيه نظام الملاحة الخاص بالسيارة. يُطبَّق التفعيل عند الاتصال التالي، ويزيل الإيقاف الخريطة فورًا.</string>
     <string name="settings_mazda_ar_map_size">حجم الخريطة على شاشة AR-HUD</string>

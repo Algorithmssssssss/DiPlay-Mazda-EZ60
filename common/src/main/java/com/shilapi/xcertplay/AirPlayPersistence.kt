@@ -1050,9 +1050,17 @@ object AirPlayPersistence {
     }
 
     /** Fingers for the swipe-down that opens settings; some head units reserve three. */
+    /**
+     * Finger counts the settings swipe offers; 0 turns it off. The Mazda EZ-60 closes the app on a three-finger swipe,
+     * so it swipes with two by default and never with three.
+     */
+    fun settingsGestureFingerChoices(): List<Int> = if (MazdaPlatform.isEz60) listOf(0, 2, 4) else listOf(0, 2, 3, 4)
+
     fun loadSettingsGestureFingers(context: Context): Int =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_SETTINGS_GESTURE_FINGERS, 3).let { if (it == 0) 0 else it.coerceIn(2, 4) }
+            .getInt(KEY_SETTINGS_GESTURE_FINGERS, if (MazdaPlatform.isEz60) 2 else 3)
+            .let { if (it == 0) 0 else it.coerceIn(2, 4) }
+            .let { if (it in settingsGestureFingerChoices()) it else 2 }
 
     fun saveSettingsGestureFingers(context: Context, fingers: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()

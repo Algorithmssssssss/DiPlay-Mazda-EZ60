@@ -25,6 +25,7 @@
     <string name="settings_mazda_trim_standard">Option 1 或 2（2D HUD）</string>
     <string name="settings_mazda_trim_ar">Option 3（100 英寸 AR-HUD）</string>
     <string name="settings_mazda_trim_description">DiPlay 按你的车型版本在挡风玻璃上显示：Option 1 和 2 使用 2D HUD 的地图框，Option 3 使用更大的 AR-HUD 地图。“自动”会像车辆自带导航一样从车辆读取版本；仅当“自动”显示的版本不对时再手动选择。在下次连接时生效。</string>
+    <string name="settings_gesture_fingers_hint_ez60">在马自达 EZ-60 上，三指滑动会关闭应用，因此 DiPlay 使用两指，不提供三指选项。</string>
     <string name="settings_mazda_ar_map">AR-HUD 地图（实验性）</string>
     <string name="settings_mazda_ar_map_description">在 CarPlay 导航引导中且车辆不在 P 挡时，于 AR-HUD 自带的地图区域显示 CarPlay 地图（没有地图时显示下一个转向）。DiPlay 会为此切换车辆的 HUD 画面，并在路线结束或出现任何故障时交还。车辆自带导航正在引导时请勿使用。开启后在下次连接时生效；关闭后地图会立即移除。</string>
     <string name="settings_mazda_ar_map_size">AR-HUD 地图大小</string>

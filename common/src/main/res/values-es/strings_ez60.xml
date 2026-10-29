@@ -25,6 +25,7 @@
     <string name="settings_mazda_trim_standard">Opción 1 o 2 (HUD 2D)</string>
     <string name="settings_mazda_trim_ar">Opción 3 (AR-HUD de 100 pulgadas)</string>
     <string name="settings_mazda_trim_description">DiPlay dibuja en el parabrisas según tu versión: el recuadro del mapa del HUD 2D en las opciones 1 y 2, y el mapa más grande del AR-HUD en la opción 3. «Automático» lee la versión del coche, como hace su propia navegación; elige la tuya solo si «Automático» muestra una equivocada. Se aplica en la próxima conexión.</string>
+    <string name="settings_gesture_fingers_hint_ez60">En el Mazda EZ-60, deslizar con tres dedos cierra la app, así que DiPlay usa dos dedos y no ofrece tres.</string>
     <string name="settings_mazda_ar_map">Mapa en el AR-HUD (experimental)</string>
     <string name="settings_mazda_ar_map_description">Muestra el mapa de CarPlay, o el siguiente giro si no hay mapa, en el recuadro de mapa propio del AR-HUD mientras la navegación de CarPlay guía y el coche no está en P. Para ello DiPlay cambia la imagen del HUD del coche y la devuelve al terminar la ruta o si algo falla. No lo uses mientras guía la navegación propia del coche. Al activarlo se aplica en la próxima conexión; al desactivarlo el mapa desaparece al instante.</string>
     <string name="settings_mazda_ar_map_size">Tamaño del mapa en el AR-HUD</string>

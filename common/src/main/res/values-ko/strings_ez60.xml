@@ -25,6 +25,7 @@
     <string name="settings_mazda_trim_standard">옵션 1 또는 2 (2D HUD)</string>
     <string name="settings_mazda_trim_ar">옵션 3 (100인치 AR-HUD)</string>
     <string name="settings_mazda_trim_description">DiPlay는 트림에 맞춰 앞유리에 표시합니다. 옵션 1과 2에서는 2D HUD의 지도 영역, 옵션 3에서는 더 큰 AR-HUD 지도입니다. 자동은 차량 자체 내비게이션처럼 차량에서 트림을 읽습니다. 자동이 잘못된 트림을 보여 줄 때만 직접 고르세요. 다음 연결부터 적용됩니다.</string>
+    <string name="settings_gesture_fingers_hint_ez60">Mazda EZ-60에서는 세 손가락으로 쓸어내리면 앱이 닫히므로 DiPlay는 두 손가락을 사용하며 세 손가락은 선택할 수 없습니다.</string>
     <string name="settings_mazda_ar_map">AR-HUD 지도 (실험 기능)</string>
     <string name="settings_mazda_ar_map_description">CarPlay 내비게이션이 안내하고 차량이 P단이 아닐 때, AR-HUD의 지도 영역에 CarPlay 지도(지도가 없으면 다음 회전)를 표시합니다. 이를 위해 DiPlay가 차량 HUD 화면을 전환하고, 경로가 끝나거나 문제가 생기면 되돌려 줍니다. 차량 자체 내비게이션이 안내하는 동안에는 사용하지 마세요. 켜면 다음 연결부터 적용되고, 끄면 지도가 바로 사라집니다.</string>
     <string name="settings_mazda_ar_map_size">AR-HUD 지도 크기</string>

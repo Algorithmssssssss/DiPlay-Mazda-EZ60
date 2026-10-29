@@ -1791,14 +1791,15 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     private fun allSettingsSections(content: LinearLayout) {
         filteredSection(content, SettingsSection.CARPLAY_CONTROLS,
             getString(R.string.carplay_controls), R.drawable.ic_dp_controls) { card ->
-            val gestureFingers = listOf(0, 2, 3, 4)
+            val gestureFingers = AirPlayPersistence.settingsGestureFingerChoices()
             choice(card, getString(R.string.settings_gesture_fingers_label),
                 gestureFingers.map { if (it == 0) getString(R.string.settings_gesture_disabled) else getString(R.string.settings_gesture_fingers_option, it) },
                 gestureFingers.indexOf(AirPlayPersistence.loadSettingsGestureFingers(this)).coerceAtLeast(0),
                 reconnects = false) {
                 AirPlayPersistence.saveSettingsGestureFingers(this, gestureFingers[it])
             }
-            card.addView(label(getString(R.string.settings_gesture_fingers_hint), 14, MUTED).apply {
+            card.addView(label(getString(if (MazdaPlatform.isEz60) R.string.settings_gesture_fingers_hint_ez60
+                else R.string.settings_gesture_fingers_hint), 14, MUTED).apply {
                 setPadding(0, dp(10), 0, 0)
             })
             toggle(card, getString(R.string.right_hand_drive), getString(R.string.place_carplay_s_controls_closer_to_the_driver), AirPlayPersistence.loadRightHandDrive(this)) { AirPlayPersistence.saveRightHandDrive(this, it); markReconnectNeeded() }

@@ -25,6 +25,7 @@
     <string name="settings_mazda_trim_standard">オプション1または2（2D HUD）</string>
     <string name="settings_mazda_trim_ar">オプション3（100インチAR-HUD）</string>
     <string name="settings_mazda_trim_description">DiPlayはグレードに合わせてフロントガラスに表示します。オプション1と2では2D HUDの地図枠、オプション3ではより大きいAR-HUDの地図です。「自動」は純正ナビと同じく車からグレードを読み取ります。「自動」の表示が違うときだけ選んでください。次回の接続から有効になります。</string>
+    <string name="settings_gesture_fingers_hint_ez60">Mazda EZ-60では3本指のスワイプでアプリが閉じるため、DiPlayは2本指を使い、3本指は選べません。</string>
     <string name="settings_mazda_ar_map">AR-HUDの地図（実験的機能）</string>
     <string name="settings_mazda_ar_map_description">CarPlayのナビが案内中で、車がP以外のとき、AR-HUD本来の地図枠にCarPlayの地図（地図がないときは次の曲がり角）を表示します。DiPlayはこのために車のHUD映像を切り替え、ルートの終了時や不具合が起きたときに元に戻します。車の純正ナビが案内中のときは使わないでください。オンにすると次回の接続から有効になり、オフにするとすぐに地図が消えます。</string>
     <string name="settings_mazda_ar_map_size">AR-HUDの地図の大きさ</string>

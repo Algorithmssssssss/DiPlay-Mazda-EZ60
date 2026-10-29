@@ -133,6 +133,24 @@ class CarPlayHostSettingsTest {
         assertEquals(0, field("gestureFingerCount"))
     }
 
+    // The EZ-60 closes the app on a three-finger swipe: the quick menu goes 2 → 4 → off → 2 there.
+    @Test fun theEz60QuickMenuNeverPicksThreeFingers() {
+        try {
+            MazdaPlatform.ez60ForTests = true
+            invoke("loadPersistedSettings")
+            assertEquals(2, field("gestureFingerCount"))
+            invoke("openSettingsMenu")
+            val seen = mutableListOf<Any?>()
+            repeat(3) {
+                gestureButtonOrDisabled().performClick()
+                seen += field("gestureFingerCount")
+            }
+            assertEquals(listOf(4, 0, 2), seen)
+        } finally {
+            MazdaPlatform.ez60ForTests = null
+        }
+    }
+
     @Test fun menuStaysCenteredAndUsesAvailableWidthAcrossWindowSizes() {
         invoke("openSettingsMenu")
         val overlay = menu() as ViewGroup
@@ -1149,6 +1167,10 @@ class CarPlayHostSettingsTest {
     private fun lengthSlider() = views(menu()).filterIsInstance<SeekBar>().first { it.max == 60 }
     private fun gestureButton() = views(menu()).filterIsInstance<Button>()
         .first { it.text == activity.getString(R.string.settings_gesture_fingers, field("gestureFingerCount")) }
+    private fun gestureButtonOrDisabled() = views(menu()).filterIsInstance<Button>().first {
+        it.text == activity.getString(R.string.settings_gesture_fingers, field("gestureFingerCount")) ||
+            it.text == activity.getString(R.string.settings_gesture_disabled_action)
+    }
     private fun fullSettingsButton() = views(menu()).filterIsInstance<Button>()
         .first { it.text == activity.getString(R.string.app_name) + " " + activity.getString(R.string.settings) }
     /** Answers the "Discard your changes?" dialog that an exit with staged edits now shows. */
