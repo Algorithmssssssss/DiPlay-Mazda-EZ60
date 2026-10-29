@@ -60,7 +60,7 @@ object SettingsBackupCodec {
     private val PICTURE_KEYS = CarPlayPicture.keys.toSet()
     // The driver's choices only. "ignore_off_report" records what one car's firmware reports, so it stays out.
     private val CAR_HOTSPOT_KEYS = setOf("auto_enable", "config_write")
-    // The readers in MazdaHudSettings call getString, getBoolean and getInt.
+    // The readers in MazdaHudSettings call getString, getBoolean and getInt. The trim ("trim") belongs to one car.
     private val MAZDA_HUD_KEYS = mapOf(
         "turn_by_turn" to KeyType.BOOLEAN, "map_view" to KeyType.STRING, "ar_hud_map" to KeyType.BOOLEAN,
         "ar_hud_map_size" to KeyType.STRING, "map_style" to KeyType.STRING, "map_see_through" to KeyType.INT,

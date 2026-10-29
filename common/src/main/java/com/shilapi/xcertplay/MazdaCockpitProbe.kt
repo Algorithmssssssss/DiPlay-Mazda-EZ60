@@ -316,7 +316,8 @@ internal object MazdaCockpitProbe {
                 if (MazdaPlatform.isEz60) section("Ambient lighting (read-only)") { MazdaAmbientProbe.section(app, this) }
                 if (MazdaPlatform.isEz60) section("Car features (read-only)") {
                     for (key in MazdaCarFeatures.REPORTED) appendLine("$key=${MazdaCarFeatures.value(key) ?: "unset"}")
-                    appendLine("HUD as DiPlay treats it: ${MazdaCarFeatures.hud()}")
+                    appendLine("HUD as DiPlay treats it: ${MazdaHudSettings.hud(app)} " +
+                        "(car reports ${MazdaCarFeatures.hud()}, trim setting ${MazdaHudSettings.trim(app)})")
                     val readings = MazdaArHudLayout.read()
                     appendLine("AR-HUD readings: $readings mapSide=${MazdaArHudLayout.side(readings) ?: "none"} " +
                         "arMapSwitch=${MazdaHudSettings.arMap(app)} mapStyle=${MazdaHudSettings.mapStyle(app)} " +

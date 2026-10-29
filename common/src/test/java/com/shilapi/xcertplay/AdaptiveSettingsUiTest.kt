@@ -1126,7 +1126,38 @@ class AdaptiveSettingsUiTest {
             listOf(R.string.settings_mazda_hud, R.string.settings_mazda_ar_map, R.string.settings_mazda_ambient_music)
                 .forEach { assertTrue(screen.getString(it), screen.getString(it) in shown) }
             assertTrue(shown.any { it.startsWith(screen.getString(R.string.settings_mazda_hud_map_view)) })
+            assertTrue(screen.getString(R.string.settings_mazda_trim) + " · " +
+                screen.getString(R.string.settings_mazda_trim_automatic, screen.getString(R.string.settings_mazda_trim_ar)) in shown)
             assertFalse("The AR-HUD map is off by default", MazdaHudSettings.arMap(screen))
+        } finally {
+            MazdaPlatform.ez60ForTests = null
+            hudType.set(null, null)
+        }
+    }
+
+    // A driver whose car reports the 2D HUD but who has Option 3 picks it, and gets the AR-HUD's settings.
+    @Test fun ez60TrimPickedByHandShowsThatTrimsHudSettings() {
+        val openEz60 = context.getString(R.string.settings_open_category, context.getString(R.string.settings_ez60))
+        val hudType = MazdaCarFeatures::class.java.getDeclaredField("hudType").apply { isAccessible = true }
+        try {
+            MazdaPlatform.ez60ForTests = true
+            hudType.set(null, "2")
+            fun ez60Texts(): List<String> {
+                val screen = openSettings()
+                descendants(screen.window.decorView).first { it.contentDescription == openEz60 }.performClick()
+                shadowOf(Looper.getMainLooper()).idle()
+                return texts(screen).map { it.text.toString() }.toList()
+            }
+            val arMap = context.getString(R.string.settings_mazda_ar_map)
+            val automatic = ez60Texts()
+            assertFalse(arMap in automatic)
+            assertTrue(context.getString(R.string.settings_mazda_trim) + " · " + context.getString(
+                R.string.settings_mazda_trim_automatic, context.getString(R.string.settings_mazda_trim_standard)) in automatic)
+            MazdaHudSettings.saveTrim(context, MazdaHudSettings.Trim.OPTION_3)
+            val option3 = ez60Texts()
+            assertTrue(arMap in option3)
+            assertTrue(context.getString(R.string.settings_mazda_trim) + " · " +
+                context.getString(R.string.settings_mazda_trim_ar) in option3)
         } finally {
             MazdaPlatform.ez60ForTests = null
             hudType.set(null, null)

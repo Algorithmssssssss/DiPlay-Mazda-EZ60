@@ -254,7 +254,12 @@ apart by the car's feature configuration: service `tinnove_config`, `IConfigInte
 | Turn, road and remaining distance | the navigation calls in the table above | the same calls |
 
 Both trims use the same `IDouInteractiveManager` call numbers that DiPlay uses. DiPlay reads the HUD type
-(read-only) at each connection and follows the same rule:
+(read-only) at each connection and follows the same rule, unless the driver picks the trim in **Settings → Mazda
+EZ-60 → Windshield HUD → EZ-60 trim**: Automatic (the default, from `car_feature_hud_type`), Option 1 or 2 (2D HUD),
+or Option 3 (100-inch AR-HUD). A trim picked by hand applies at the next connection and stays out of settings
+backups, which may come from another car. On a car that does not report the AR-HUD, a hand-picked Option 3 switches
+the video link only if the AR-HUD's display (`MeterDisplay#0`, 4032×845) exists; otherwise it is turn-by-turn only.
+The session log says "HUD: trim setting=… car=… drawing for …", and the probe's "Car features" section repeats it.
 
 - 2D HUD: as described above.
 - AR-HUD: turn-by-turn only by default. DiPlay opens no window on `MeterDisplay#0`, does not ask the iPhone for
@@ -271,7 +276,7 @@ Both trims use the same `IDouInteractiveManager` call numbers that DiPlay uses. 
   | When | guiding, not in Park, HUD mode with a map | CarPlay guiding with the HUD's navigation focus, not in Park, HUD mode with a map |
   | Readings (read-only VirtualCar properties) | gear `826278449` (4 = P; 8 and 2 seen while driving and reversing), HUD mode `826279576`, map layout `826279579` | the same, once a second while guiding; a failed reading counts as Park |
   | HUD mode → map | Vehicle Centre writes Classic 1, Minimalist 2, Custom 3, Beyond-Class 3D 5. 3 becomes 5 with map layout 1, else 4; then 0 (off) and 2 show no map, 5 shows it left, 1, 4, 6 and any other value show it right (`ARHudManager.x`, `.u`). Beyond-Class 3D hides the HUD's own cards (EZNav) | the same (a tester's car started in mode 5) |
-  | Map box on `MeterDisplay#0` (4032×845) | 390×350 at (1640,161); at (70,161) with the left layout; none in mode 2 | the same, or larger with **AR-HUD map size**: Large 560×455 at (1460,110), Largest 735×560 at (1285,60). The AR-HUD projects about the top-left 2016×630 and the car draws its speed and gear left of x 1285; 735×560 at (1285,60) read best at the glass (EZNav). The left layout keeps the car's size. The stream is asked for at the box size (× the HUD map view), at 60 fps (about 32 fps arrived; 16–20 when asked for 30) |
+  | Map box on `MeterDisplay#0` (4032×845) | 390×350 at (1640,161); at (70,161) with the left layout; none in mode 2 | Largest by default, 735×560 at (1285,60), about three times the car's box; **AR-HUD map size** also offers Large 560×455 at (1460,110) and the car's size. The AR-HUD projects about the top-left 2016×630 and the car draws its speed and gear left of x 1285; 735×560 at (1285,60) read best at the glass on 100" AR-HUD cars (EZNav), so a larger box would cover the speed or leave the projected area. The left layout keeps the car's size. The stream is asked for at the box size (× the HUD map view), at 60 fps (about 32 fps arrived; 16–20 when asked for 30) |
   | Show | `setVideoStatus(5)`; on `onRequestLVDS(19)` show the window; every 19 is answered with `sendSwitchLVDSFinishEvent(0)`; on `20` ask again after 200 ms, at most 8 times | the same, with its own `IDoubleVideoCallback` (calls 72, 73, 74 and 1 only) |
   | Hide | `setVideoStatus(6)`; on `onIPStatus(6)` remove the window if its own hide is pending; every 6 is answered with the finish event | the same, but DiPlay removes its window at once when it hides: when the route ends, in Park, in a mode without a map, or when the connection closes |
 

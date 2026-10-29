@@ -1435,7 +1435,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         if (MazdaPlatform.isEz60) {
             when {
                 // The 2D HUD's window follows DiPlay's guidance (onMazdaHudGuiding).
-                MazdaHudSettings.enabled(this) && MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.STANDARD -> Unit
+                MazdaHudSettings.enabled(this) && MazdaHudSettings.hud(this) == MazdaCarFeatures.Hud.STANDARD -> Unit
                 // On the AR-HUD the window exists only while DiPlay holds the video link (MazdaArHud).
                 MazdaHudSettings.arMap(this) && mazdaArHud != null -> Unit
                 else -> {
@@ -1669,15 +1669,24 @@ open class CarPlayHostActivity : ComponentActivity() {
         // stream that the window scales down (more streets, smaller), Near for a smaller one it scales up.
         if (MazdaPlatform.isEz60) {
             appendLog("Car features: ${MazdaCarFeatures.summary()}")
+            appendLog("HUD: trim setting=${MazdaHudSettings.trim(this)} car=${MazdaCarFeatures.hud()} " +
+                "drawing for ${MazdaHudSettings.hud(this)}")
             // A new connection: the AR-HUD map starts afresh (a failure turned it off for the last one only).
             closeMazdaArHud()
             MazdaArHudConnection.mapRequested = false
             if (!MazdaHudSettings.enabled(this)) return null
             // The AR-HUD shows a picture only over a video link that its user switches. Without the experimental
             // AR-HUD map, DiPlay never switches it: turn-by-turn only, and no map stream to decode.
-            if (MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.AUGMENTED_REALITY) {
+            if (MazdaHudSettings.hud(this) == MazdaCarFeatures.Hud.AUGMENTED_REALITY) {
                 if (!MazdaHudSettings.arMap(this)) {
-                    appendLog("HUD: AR-HUD (car_feature_hud_type=3): turn-by-turn only, no map stream or window")
+                    appendLog("HUD: AR-HUD: turn-by-turn only, no map stream or window")
+                    return null
+                }
+                // Option 3 picked by hand on a car that does not report the AR-HUD: the video link is switched only
+                // where the AR-HUD's display exists.
+                if (MazdaCarFeatures.hud() != MazdaCarFeatures.Hud.AUGMENTED_REALITY &&
+                    MazdaHudScreen.findArDisplay(this) == null) {
+                    appendLog("HUD: trim set to Option 3, but no AR-HUD display: turn-by-turn only")
                     return null
                 }
                 MazdaArHudConnection.mapRequested = true
@@ -6575,7 +6584,7 @@ open class CarPlayHostActivity : ComponentActivity() {
 
     // EZ-60 2D HUD: the window exists only while DiPlay guides on the HUD, as on the AR-HUD.
     private fun onMazdaHudGuiding(guiding: Boolean) {
-        if (isDestroyed || MazdaCarFeatures.hud() != MazdaCarFeatures.Hud.STANDARD) return
+        if (isDestroyed || MazdaHudSettings.hud(this) != MazdaCarFeatures.Hud.STANDARD) return
         if (guiding && MazdaHudSettings.enabled(this) && mazdaPower?.off != true) ensureMazdaHudScreen()
         else dismissMazdaHudScreen()
     }

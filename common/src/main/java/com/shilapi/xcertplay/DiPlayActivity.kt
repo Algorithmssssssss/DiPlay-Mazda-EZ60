@@ -5423,6 +5423,12 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     /** The EZ-60 windshield HUD: turn-by-turn, and on the AR-HUD trim the experimental map. */
     private fun mazdaHudControls(card: LinearLayout) {
+        // Which HUD DiPlay draws for. The car reports it; a driver whose car reports the wrong one picks it here.
+        card.addView(button("${getString(R.string.settings_mazda_trim)} · " +
+            mazdaTrimName(MazdaHudSettings.trim(this)), false) {
+            showMazdaTrimPicker()
+        }, matchButton(0, 60))
+        card.addView(label(getString(R.string.settings_mazda_trim_description), 14, MUTED))
         toggle(card, getString(R.string.settings_mazda_hud), getString(R.string.settings_mazda_hud_description),
             MazdaHudSettings.enabled(this)) {
             MazdaHudSettings.save(this, it)
@@ -5430,7 +5436,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         }
         if (!MazdaHudSettings.enabled(this)) return
         // Only the AR-HUD trim needs it: the 2D HUD shows the map whenever turn-by-turn is on.
-        if (MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.AUGMENTED_REALITY) {
+        if (MazdaHudSettings.hud(this) == MazdaCarFeatures.Hud.AUGMENTED_REALITY) {
             toggle(card, getString(R.string.settings_mazda_ar_map), getString(R.string.settings_mazda_ar_map_description),
                 MazdaHudSettings.arMap(this)) {
                 MazdaHudSettings.saveArMap(this, it)
@@ -5486,6 +5492,30 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 dialog.dismiss()
                 if (which == current) return@setSingleChoiceItems
                 MazdaHudSettings.saveMapStyle(this, styles[which])
+                render()
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun mazdaTrimName(trim: MazdaHudSettings.Trim): String = when (trim) {
+        MazdaHudSettings.Trim.AUTOMATIC -> getString(R.string.settings_mazda_trim_automatic,
+            mazdaTrimName(if (MazdaCarFeatures.hud() == MazdaCarFeatures.Hud.AUGMENTED_REALITY)
+                MazdaHudSettings.Trim.OPTION_3 else MazdaHudSettings.Trim.OPTION_1_2))
+        MazdaHudSettings.Trim.OPTION_1_2 -> getString(R.string.settings_mazda_trim_standard)
+        MazdaHudSettings.Trim.OPTION_3 -> getString(R.string.settings_mazda_trim_ar)
+    }
+
+    // EZ-60: the HUD path is chosen when CarPlay connects.
+    private fun showMazdaTrimPicker() {
+        val trims = MazdaHudSettings.Trim.entries
+        val current = trims.indexOf(MazdaHudSettings.trim(this))
+        appDialogBuilder().setTitle(getString(R.string.settings_mazda_trim))
+            .setSingleChoiceItems(trims.map(::mazdaTrimName).toTypedArray(), current) { dialog, which ->
+                dialog.dismiss()
+                if (which == current) return@setSingleChoiceItems
+                MazdaHudSettings.saveTrim(this, trims[which])
+                markReconnectNeeded()
                 render()
             }
             .setNegativeButton(getString(R.string.cancel), null)

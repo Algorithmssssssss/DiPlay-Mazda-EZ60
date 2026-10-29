@@ -386,13 +386,39 @@ internal object MazdaHudSettings {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_AR_MAP, enabled).apply()
     }
 
-    /** The AR-HUD map at the car's own size, or larger ([MazdaArHudLayout.box]). */
+    /**
+     * Which EZ-60 the driver says this is. [Trim.AUTOMATIC] follows the car's feature configuration
+     * ([MazdaCarFeatures.hud]); Options 1 and 2 have the 2D HUD, Option 3 the 100-inch AR-HUD.
+     */
+    enum class Trim { AUTOMATIC, OPTION_1_2, OPTION_3 }
+
+    fun trim(context: Context): Trim = runCatching {
+        Trim.valueOf(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_TRIM, null) ?: Trim.AUTOMATIC.name)
+    }.getOrDefault(Trim.AUTOMATIC)
+
+    fun saveTrim(context: Context, trim: Trim) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_TRIM, trim.name).apply()
+    }
+
+    /** The HUD DiPlay draws for: the driver's trim when picked, otherwise what the car reports. */
+    fun hud(context: Context, car: () -> MazdaCarFeatures.Hud = { MazdaCarFeatures.hud() }): MazdaCarFeatures.Hud =
+        when (trim(context)) {
+            Trim.OPTION_1_2 -> MazdaCarFeatures.Hud.STANDARD
+            Trim.OPTION_3 -> MazdaCarFeatures.Hud.AUGMENTED_REALITY
+            Trim.AUTOMATIC -> car()
+        }
+
+    /**
+     * The AR-HUD map at the car's own size, or larger ([MazdaArHudLayout.box]). Largest by default: on the 100-inch
+     * AR-HUD it read best at the glass (EZNav, 2026-10-17), about three times the car's own map box.
+     */
     enum class ArMapSize { CAR, LARGE, LARGEST }
 
     fun arMapSize(context: Context): ArMapSize = runCatching {
         ArMapSize.valueOf(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_AR_MAP_SIZE, null) ?: ArMapSize.CAR.name)
-    }.getOrDefault(ArMapSize.CAR)
+            .getString(KEY_AR_MAP_SIZE, null) ?: ArMapSize.LARGEST.name)
+    }.getOrDefault(ArMapSize.LARGEST)
 
     fun saveArMapSize(context: Context, size: ArMapSize) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_AR_MAP_SIZE, size.name).apply()
@@ -433,6 +459,7 @@ internal object MazdaHudSettings {
         return { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
 
+    private const val KEY_TRIM = "trim"
     private const val KEY_AR_MAP = "ar_hud_map"
     private const val KEY_AR_MAP_SIZE = "ar_hud_map_size"
     private const val KEY_MAP_STYLE = "map_style"

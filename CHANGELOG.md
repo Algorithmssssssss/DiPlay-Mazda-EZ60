@@ -17,6 +17,8 @@ Moves the fork from DiPlay 0.2.19 to 0.2.22 (upstream 0.2.20–0.2.22, 487 commi
 - Upstream now gives stream 111 its surface only after CarPlay's first main frame. The EZ-60 HUD and AR-HUD map windows get theirs at that frame too, so the HUD map comes back after a reconnect.
 - Never take one of the car's in-vehicle Ethernet interfaces (`eth0`–`eth2`, `wt_eth2_*`) for the car hotspot. Upstream 0.2.21 added a fallback for head units whose hotspot hides on a VLAN; on the EZ-60 the hotspot is always `ap0` or `ap_br_ap0`.
 - Settings backups carry the HUD settings with their types (map view, size, style, see-through).
+- **EZ-60 trim** (Settings → Mazda EZ-60 → Windshield HUD): Automatic, as before, or Option 1 or 2 (2D HUD) or Option 3 (100-inch AR-HUD) picked by hand, for a car that reports the wrong HUD. It applies at the next connection and is not part of settings backups.
+- The AR-HUD map is drawn Largest by default, 735×560 at (1285,60): the size that read best at the glass on 100-inch AR-HUD cars, about three times the car's own map box. A size chosen before is kept.
 - The EZ-60 settings and probe in Korean, Turkish and Italian.
 
 # DiPlay for Mazda EZ-60 0.2.19-ez60.2 — 2026-10-18 (pre-release 2.0, closed testers)
