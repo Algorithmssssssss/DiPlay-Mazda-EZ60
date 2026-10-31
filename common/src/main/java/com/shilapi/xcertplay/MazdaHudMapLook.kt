@@ -17,8 +17,9 @@ import kotlin.math.min
  * is subtracted from every pixel, so faint roads stay whole and darker areas (water) go black; on a light map the
  * colours near the background fade. Lines only ([MazdaHudSettings.MapStyle.LINES]) also fades parks, water and
  * buildings, keeps roads, labels and strong colours (the route, traffic, the position arrow), and draws them at full
- * brightness. On the whole map, road brightness ([MazdaHudSettings.mapRoadBoost]) lifts the same lines toward full
- * brightness and leaves the areas as they are: dimmed roads hardly showed on the glass in daylight (2026-10-31).
+ * brightness. On the whole map, road brightness ([MazdaHudSettings.mapRoadBoost]) lifts the lines that run on (roads
+ * and side streets) toward full brightness and leaves areas and houses as they are: dimmed roads hardly showed on the
+ * glass in daylight, and lifting every small spot as well turned the car's clustered houses into specks (2026-10-31).
  * The background colour is the picture's most common colour ([backgroundColor]).
  */
 internal object MazdaHudMapLook {
@@ -135,6 +136,26 @@ internal object MazdaHudMapLook {
             return max(c.r, max(c.g, c.b));
         }
 
+        // How unlike its next two neighbours towards o, or else towards -o, a pixel is: small along a road (also where
+        // a crossing street interrupts it on one side, or at its end), large all round a spot.
+        float alike(float3 c, float2 p, float2 o) {
+            return min(max(apart(c, at(p + o)), apart(c, at(p + 2.0 * o))),
+                max(apart(c, at(p - o)), apart(c, at(p - 2.0 * o))));
+        }
+
+        // A road runs on: in some direction its neighbours look like it. A house is a spot that differs all round.
+        float runsOn(float3 c, float2 p) {
+            float s = reach * 0.5;
+            float e = s * 0.7071;
+            float a = s * 0.9239;
+            float b = s * 0.3827;
+            float along = min(min(min(alike(c, p, float2(s, 0.0)), alike(c, p, float2(0.0, s))),
+                    min(alike(c, p, float2(e, e)), alike(c, p, float2(e, -e)))),
+                min(min(alike(c, p, float2(a, b)), alike(c, p, float2(b, a))),
+                    min(alike(c, p, float2(a, -b)), alike(c, p, float2(b, -a)))));
+            return 1.0 - smoothstep(0.35, 0.7, along / max(apart(c, background), 0.02));
+        }
+
         half4 main(float2 p) {
             float4 c = content.eval(p);
             if (c.a < 0.004) return half4(0.0);
@@ -158,11 +179,17 @@ internal object MazdaHudMapLook {
                     max(across(rgb, p, float2(d, d)), across(rgb, p, float2(d, -d))));
                 float chroma = level(rgb) - min(rgb.r, min(rgb.g, rgb.b));
                 // Strong colours (the route, traffic, the position arrow) stay at any width.
-                float keep = max(smoothstep(0.02, 0.1, thin), smoothstep(0.3, 0.5, chroma));
+                float strong = smoothstep(0.3, 0.5, chroma);
                 // Grey roads and dark labels hardly show on the glass: draw them at full brightness, keeping their
-                // colour. Lines only drops everything else; the whole map lifts them by the road brightness.
+                // colour. Lines only drops everything else; the whole map lifts the roads by the road brightness
+                // and leaves the houses, small spots it would otherwise light up too, as they were.
                 float3 bright = light / max(level(light), 0.25);
-                light = lines > 0.5 ? bright * keep : mix(light, bright, roadBoost * keep);
+                if (lines > 0.5) {
+                    light = bright * max(smoothstep(0.02, 0.1, thin), strong);
+                } else {
+                    float road = smoothstep(0.02, 0.1, thin) * runsOn(rgb, p);
+                    light = mix(light, bright, roadBoost * max(road, strong));
+                }
             }
             float3 shown = mix(rgb, light, seeThrough);
             float alpha = mix(1.0, level(light), seeThrough);

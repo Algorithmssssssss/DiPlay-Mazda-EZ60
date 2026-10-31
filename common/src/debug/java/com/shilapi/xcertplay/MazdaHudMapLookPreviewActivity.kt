@@ -82,9 +82,9 @@ class MazdaHudMapLookPreviewActivity : Activity() {
     }
 
     /**
-     * Roads, a park, water, buildings, labels, the route and the position arrow. The dark map uses Google Maps' night
-     * colours as an EZ-60 read them (land #1c3857, water #012054, 2026-10-21), with faint side streets, and both maps
-     * get the small noise of the car's compressed map stream.
+     * Roads, a park, water, buildings, a cluster of houses, labels, the route and the position arrow. The dark map uses
+     * Google Maps' night colours as an EZ-60 read them (land #1c3857, water #012054, 2026-10-21), with faint side
+     * streets, and both maps get the small noise of the car's compressed map stream.
      */
     private fun sampleMap(width: Int, height: Int, dark: Boolean): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -104,6 +104,13 @@ class MazdaHudMapLookPreviewActivity : Activity() {
         }, fill)
         fill.color = if (dark) Color.rgb(40, 68, 99) else Color.rgb(225, 221, 214)
         for (i in 0..3) canvas.drawRect(w * (0.08f + i * 0.07f), h * 0.6f, w * (0.13f + i * 0.07f), h * 0.68f, fill)
+        // Clustered houses, small spots a little lighter than the land, as the car's map draws them (2026-10-31).
+        fill.color = if (dark) Color.rgb(46, 74, 106) else Color.rgb(226, 222, 216)
+        for (row in 0..5) for (column in 0..7) {
+            val left = w * (0.03f + column * 0.022f) + (row % 2) * 2f
+            val top = h * (0.75f + row * 0.034f)
+            canvas.drawRect(left, top, left + 5f, top + 5f, fill)
+        }
         val road = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
         val mainRoad = if (dark) Color.rgb(150, 165, 185) else Color.WHITE
         val sideStreet = if (dark) Color.rgb(50, 80, 112) else Color.WHITE

@@ -175,7 +175,10 @@ sides (roads, labels) and strong colours (route, traffic, position arrow), and d
 light map Lines only reads better than Whole map, whose dark labels do not show on the glass. **Road brightness**
 (Whole map only, 0–100 %, default 70 %) uses the same line test to lift roads, streets, labels and the route toward
 full brightness, keeping their colour, while parks, water and buildings stay as the see-through left them: on a
-daylight drive (2026-10-31) the whole map's dimmed roads hardly showed on the glass. 0 % is the earlier look. The
+daylight drive (2026-10-31) the whole map's dimmed roads hardly showed on the glass. It lifts only lines that run on
+(in one of eight directions the next two neighbours, half a line-test reach apart, look alike on at least one side):
+the first version also lit up every small spot, and the car's clustered houses became specks (photos, 2026-10-31).
+0 % is the earlier look. The
 session log has `HUD: map look style=… seeThrough=… roads=…` and `HUD: map background #…`; the settings export
 includes the HUD's choices.
 Debug builds have a preview with a drawn map:
