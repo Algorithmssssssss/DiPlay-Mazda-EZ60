@@ -120,7 +120,8 @@ internal class MazdaHudScreen(
     }
 
     private fun applyLook() {
-        filter?.set(MazdaHudSettings.mapStyle(context), MazdaHudSettings.mapSeeThrough(context))
+        filter?.set(MazdaHudSettings.mapStyle(context), MazdaHudSettings.mapSeeThrough(context),
+            MazdaHudSettings.mapRoadBoost(context))
     }
 
     /** The AR-HUD's driver changed the map's side: move (and size) the area, keeping the map stream's surface. */

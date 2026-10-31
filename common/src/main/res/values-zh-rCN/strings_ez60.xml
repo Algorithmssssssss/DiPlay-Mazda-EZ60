@@ -38,4 +38,6 @@
     <string name="settings_mazda_hud_map_style_lines">仅线条</string>
     <string name="settings_mazda_hud_map_see_through">背景透明度</string>
     <string name="settings_mazda_hud_map_look_description">HUD 会把地图背景投射成一个发光的方框。透明度越高，背景越淡，越能透过它看到路面：0 % 为 iPhone 绘制的原始地图，100 % 完全去掉背景。“仅线条”还会去掉公园、水域和建筑，并以更高亮度显示道路、路线和地名。更改立即生效。</string>
+    <string name="settings_mazda_hud_map_road_boost">道路亮度</string>
+    <string name="settings_mazda_hud_map_road_boost_description">把道路、小路、地名和路线提亮到接近最亮，白天也能在挡风玻璃上看清；公园、水域和建筑保持不变。0 % 为原来的地图。更改立即生效。</string>
 </resources>

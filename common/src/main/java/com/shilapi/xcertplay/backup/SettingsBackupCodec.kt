@@ -64,6 +64,7 @@ object SettingsBackupCodec {
     private val MAZDA_HUD_KEYS = mapOf(
         "turn_by_turn" to KeyType.BOOLEAN, "map_view" to KeyType.STRING, "ar_hud_map" to KeyType.BOOLEAN,
         "ar_hud_map_size" to KeyType.STRING, "map_style" to KeyType.STRING, "map_see_through" to KeyType.INT,
+        "map_road_boost" to KeyType.INT,
     )
     private val FILES = mapOf(
         "xcertplay_airplay" to Policy.Allow(AIRPLAY_KEYS, AIRPLAY_PREFIXES),

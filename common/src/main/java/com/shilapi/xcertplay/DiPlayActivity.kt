@@ -5467,6 +5467,14 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             onSave = { value -> MazdaHudSettings.saveMapSeeThrough(this@DiPlayActivity, value) }
         })
         card.addView(label(getString(R.string.settings_mazda_hud_map_look_description), 14, MUTED))
+        // Lines only already draws the roads at full brightness.
+        if (MazdaHudSettings.mapStyle(this) == MazdaHudSettings.MapStyle.WHOLE) {
+            card.addView(overlaySliderRow(getString(R.string.settings_mazda_hud_map_road_boost),
+                MazdaHudSettings.ROAD_BOOST_STEPS, MazdaHudSettings.mapRoadBoost(this)) { "$it %" }.apply {
+                onSave = { value -> MazdaHudSettings.saveMapRoadBoost(this@DiPlayActivity, value) }
+            })
+            card.addView(label(getString(R.string.settings_mazda_hud_map_road_boost_description), 14, MUTED))
+        }
     }
 
     private fun mazdaAmbientEffectName(effect: MazdaAmbientTuning.Effect): Int = when (effect) {

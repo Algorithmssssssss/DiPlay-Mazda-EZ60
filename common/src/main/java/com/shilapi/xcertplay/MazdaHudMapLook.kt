@@ -17,7 +17,9 @@ import kotlin.math.min
  * is subtracted from every pixel, so faint roads stay whole and darker areas (water) go black; on a light map the
  * colours near the background fade. Lines only ([MazdaHudSettings.MapStyle.LINES]) also fades parks, water and
  * buildings, keeps roads, labels and strong colours (the route, traffic, the position arrow), and draws them at full
- * brightness. The background colour is the picture's most common colour ([backgroundColor]).
+ * brightness. On the whole map, road brightness ([MazdaHudSettings.mapRoadBoost]) lifts the same lines toward full
+ * brightness and leaves the areas as they are: dimmed roads hardly showed on the glass in daylight (2026-10-31).
+ * The background colour is the picture's most common colour ([backgroundColor]).
  */
 internal object MazdaHudMapLook {
     /** How far apart two colours may be per channel (0-255) and still count as the same background. */
@@ -109,6 +111,7 @@ internal object MazdaHudMapLook {
         uniform float darkMap;
         uniform float seeThrough;
         uniform float lines;
+        uniform float roadBoost;
         uniform float reach;
 
         float3 at(float2 p) {
@@ -149,15 +152,17 @@ internal object MazdaHudMapLook {
                 // to it (white roads are only about 0.09 away) dims them evenly instead of speckling them.
                 light = rgb * clamp((apart(rgb, background) - 0.025) / 0.1, 0.0, 1.0);
             }
-            if (lines > 0.5) {
+            if (lines > 0.5 || roadBoost > 0.004) {
                 float d = reach * 0.7071;
                 float thin = max(max(across(rgb, p, float2(reach, 0.0)), across(rgb, p, float2(0.0, reach))),
                     max(across(rgb, p, float2(d, d)), across(rgb, p, float2(d, -d))));
                 float chroma = level(rgb) - min(rgb.r, min(rgb.g, rgb.b));
                 // Strong colours (the route, traffic, the position arrow) stay at any width.
                 float keep = max(smoothstep(0.02, 0.1, thin), smoothstep(0.3, 0.5, chroma));
-                // Grey roads and dark labels hardly show on the glass: draw what is left at full brightness.
-                light = light / max(level(light), 0.25) * keep;
+                // Grey roads and dark labels hardly show on the glass: draw them at full brightness, keeping their
+                // colour. Lines only drops everything else; the whole map lifts them by the road brightness.
+                float3 bright = light / max(level(light), 0.25);
+                light = lines > 0.5 ? bright * keep : mix(light, bright, roadBoost * keep);
             }
             float3 shown = mix(rgb, light, seeThrough);
             float alpha = mix(1.0, level(light), seeThrough);
@@ -173,6 +178,7 @@ internal object MazdaHudMapLook {
 internal class MazdaHudMapFilter(private val view: TextureView, private val log: (String) -> Unit) {
     private var style = MazdaHudSettings.MapStyle.WHOLE
     private var seeThrough = 0
+    private var roadBoost = 0
     private var background = 0xff000000.toInt()
     private var logged = background
     private var shader: Any? = null
@@ -180,11 +186,12 @@ internal class MazdaHudMapFilter(private val view: TextureView, private val log:
     private var sample: Bitmap? = null
 
     /** The driver's choice; draws again only when it changed. */
-    fun set(style: MazdaHudSettings.MapStyle, seeThrough: Int) {
-        if (style == this.style && seeThrough == this.seeThrough) return
+    fun set(style: MazdaHudSettings.MapStyle, seeThrough: Int, roadBoost: Int) {
+        if (style == this.style && seeThrough == this.seeThrough && roadBoost == this.roadBoost) return
         this.style = style
         this.seeThrough = seeThrough
-        log("HUD: map look style=$style seeThrough=$seeThrough%")
+        this.roadBoost = roadBoost
+        log("HUD: map look style=$style seeThrough=$seeThrough% roads=$roadBoost%")
         apply()
     }
 
@@ -237,6 +244,7 @@ internal class MazdaHudMapFilter(private val view: TextureView, private val log:
         shader.setFloatUniform("darkMap", if (MazdaHudMapLook.isDark(background)) 1f else 0f)
         shader.setFloatUniform("seeThrough", seeThrough / 100f)
         shader.setFloatUniform("lines", if (style == MazdaHudSettings.MapStyle.LINES) 1f else 0f)
+        shader.setFloatUniform("roadBoost", roadBoost / 100f)
         shader.setFloatUniform("reach", MazdaHudMapLook.reach(width, height))
         // The effect keeps the uniforms it was made with: make a new one for every change.
         return RenderEffect.createRuntimeShaderEffect(shader, "content")

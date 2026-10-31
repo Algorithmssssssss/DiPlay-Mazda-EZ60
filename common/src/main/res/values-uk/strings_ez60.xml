@@ -38,4 +38,6 @@
     <string name="settings_mazda_hud_map_style_lines">Лише лінії</string>
     <string name="settings_mazda_hud_map_see_through">Прозорий фон</string>
     <string name="settings_mazda_hud_map_look_description">HUD проєктує фон карти як прямокутник, що світиться. Прозорість приглушує його, щоб крізь нього було видно дорогу: 0 % — карта так, як її малює iPhone, 100 % — фон прибрано. «Лише лінії» прибирає також парки, воду й будівлі, а дороги, маршрут і назви малює яскравіше. Зміни застосовуються одразу.</string>
+    <string name="settings_mazda_hud_map_road_boost">Яскравість доріг</string>
+    <string name="settings_mazda_hud_map_road_boost_description">Піднімає яскравість доріг, вулиць, підписів і маршруту майже до максимуму, щоб їх було видно на склі вдень; парки, вода й будівлі лишаються як є. 0 % — карта як раніше. Зміни застосовуються одразу.</string>
 </resources>

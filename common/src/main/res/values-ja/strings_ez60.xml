@@ -38,4 +38,6 @@
     <string name="settings_mazda_hud_map_style_lines">線のみ</string>
     <string name="settings_mazda_hud_map_see_through">背景の透過</string>
     <string name="settings_mazda_hud_map_look_description">HUDは地図の背景を光る四角として映します。透過を上げると背景が薄くなり、その向こうの道路が見えます。0 %はiPhoneが描いたままの地図、100 %は背景を消します。「線のみ」は公園・水域・建物も消し、道路・ルート・地名を明るく表示します。変更はすぐに反映されます。</string>
+    <string name="settings_mazda_hud_map_road_boost">道路の明るさ</string>
+    <string name="settings_mazda_hud_map_road_boost_description">道路・細い道・地名・ルートを最大の明るさに近づけ、日中でもガラスに見えるようにします。公園・水域・建物はそのままです。0 % は以前と同じ地図です。変更はすぐに反映されます。</string>
 </resources>

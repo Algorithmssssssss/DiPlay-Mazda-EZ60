@@ -448,12 +448,30 @@ internal object MazdaHudSettings {
             .putInt(KEY_MAP_SEE_THROUGH, percent.coerceIn(0, 100)).apply()
     }
 
-    /** Calls [onChange] on the main thread when the map's style or see-through changes, until the result is called. */
+    /**
+     * How far the whole map's roads, streets and labels are lifted toward full brightness, in percent; areas stay as
+     * they are. 0 is the look before 2026-10-31, when dimmed roads hardly showed on the glass in daylight.
+     */
+    val ROAD_BOOST_STEPS = (0..100 step 10).toList()
+    const val DEFAULT_ROAD_BOOST = 70
+
+    fun mapRoadBoost(context: Context): Int = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        .getInt(KEY_MAP_ROAD_BOOST, DEFAULT_ROAD_BOOST).coerceIn(0, 100)
+
+    fun saveMapRoadBoost(context: Context, percent: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putInt(KEY_MAP_ROAD_BOOST, percent.coerceIn(0, 100)).apply()
+    }
+
+    /**
+     * Calls [onChange] on the main thread when the map's style, see-through or road brightness changes, until the
+     * result is called.
+     */
     fun watchMapLook(context: Context, onChange: () -> Unit): () -> Unit {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         // Preferences hold their listeners weakly: the returned function keeps this one alive.
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == KEY_MAP_STYLE || key == KEY_MAP_SEE_THROUGH) onChange()
+            if (key == KEY_MAP_STYLE || key == KEY_MAP_SEE_THROUGH || key == KEY_MAP_ROAD_BOOST) onChange()
         }
         prefs.registerOnSharedPreferenceChangeListener(listener)
         return { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
@@ -464,4 +482,5 @@ internal object MazdaHudSettings {
     private const val KEY_AR_MAP_SIZE = "ar_hud_map_size"
     private const val KEY_MAP_STYLE = "map_style"
     private const val KEY_MAP_SEE_THROUGH = "map_see_through"
+    private const val KEY_MAP_ROAD_BOOST = "map_road_boost"
 }

@@ -172,8 +172,12 @@ threshold and left the river as a dark blue patch. While the land is still at le
 the background when the water outnumbers it (12 s along the river in that test). On a light map the colours near
 the background fade. **Lines only** also fades parks, water and buildings: it keeps what differs from both of its
 sides (roads, labels) and strong colours (route, traffic, position arrow), and draws them at full brightness. On a
-light map Lines only reads better than Whole map, whose dark labels do not show on the glass. The session log has
-`HUD: map look style=… seeThrough=…` and `HUD: map background #…`; the settings export includes the HUD's choices.
+light map Lines only reads better than Whole map, whose dark labels do not show on the glass. **Road brightness**
+(Whole map only, 0–100 %, default 70 %) uses the same line test to lift roads, streets, labels and the route toward
+full brightness, keeping their colour, while parks, water and buildings stay as the see-through left them: on a
+daylight drive (2026-10-31) the whole map's dimmed roads hardly showed on the glass. 0 % is the earlier look. The
+session log has `HUD: map look style=… seeThrough=… roads=…` and `HUD: map background #…`; the settings export
+includes the HUD's choices.
 Debug builds have a preview with a drawn map:
 `adb shell am start -n <package>/com.shilapi.xcertplay.MazdaHudMapLookPreviewActivity`.
 

@@ -22,11 +22,15 @@ import android.widget.TextView
  * `adb shell am start -n <package>/com.shilapi.xcertplay.MazdaHudMapLookPreviewActivity`
  */
 class MazdaHudMapLookPreviewActivity : Activity() {
+    private data class Look(val title: String, val style: MazdaHudSettings.MapStyle, val seeThrough: Int,
+        val roadBoost: Int = 0)
+
     private val looks = listOf(
-        Triple("As the iPhone draws it", MazdaHudSettings.MapStyle.WHOLE, 0),
-        Triple("Whole map, 70 %", MazdaHudSettings.MapStyle.WHOLE, 70),
-        Triple("Whole map, 100 %", MazdaHudSettings.MapStyle.WHOLE, 100),
-        Triple("Lines only, 100 %", MazdaHudSettings.MapStyle.LINES, 100),
+        Look("As the iPhone draws it", MazdaHudSettings.MapStyle.WHOLE, 0),
+        Look("Whole map, 100 %, roads 0 %", MazdaHudSettings.MapStyle.WHOLE, 100),
+        Look("Whole map, 100 %, roads 70 %", MazdaHudSettings.MapStyle.WHOLE, 100, 70),
+        Look("Whole map, 100 %, roads 100 %", MazdaHudSettings.MapStyle.WHOLE, 100, 100),
+        Look("Lines only, 100 %", MazdaHudSettings.MapStyle.LINES, 100),
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,7 +40,7 @@ class MazdaHudMapLookPreviewActivity : Activity() {
             setBackgroundColor(Color.BLACK)
             setPadding(PAD, PAD, PAD, PAD)
         }
-        for (dark in listOf(true, false)) for ((title, style, seeThrough) in looks) {
+        for (dark in listOf(true, false)) for ((title, style, seeThrough, roadBoost) in looks) {
             grid.addView(LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(PAD, PAD, PAD, PAD)
@@ -45,13 +49,13 @@ class MazdaHudMapLookPreviewActivity : Activity() {
                     setTextColor(Color.LTGRAY)
                     gravity = Gravity.CENTER
                 })
-                addView(mapView(dark, style, seeThrough), LinearLayout.LayoutParams(WIDTH, HEIGHT))
+                addView(mapView(dark, style, seeThrough, roadBoost), LinearLayout.LayoutParams(WIDTH, HEIGHT))
             })
         }
         setContentView(grid)
     }
 
-    private fun mapView(dark: Boolean, style: MazdaHudSettings.MapStyle, seeThrough: Int): TextureView {
+    private fun mapView(dark: Boolean, style: MazdaHudSettings.MapStyle, seeThrough: Int, roadBoost: Int): TextureView {
         val view = TextureView(this)
         val filter = MazdaHudMapFilter(view) { Log.i(TAG, it) }
         view.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
@@ -63,7 +67,7 @@ class MazdaHudMapLookPreviewActivity : Activity() {
                     surface.unlockCanvasAndPost(canvas)
                 }
                 surface.release()
-                filter.set(style, seeThrough)
+                filter.set(style, seeThrough, roadBoost)
                 view.postDelayed({ filter.sampleBackground() }, 300)
             }
             override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) = Unit

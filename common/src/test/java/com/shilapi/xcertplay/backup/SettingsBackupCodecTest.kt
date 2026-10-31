@@ -261,6 +261,7 @@ class SettingsBackupCodecTest {
             .putInt("map_see_through", 90)
             .putString("map_view", "FAR")
             .putString("trim", "OPTION_3")
+            .putInt("map_road_boost", 40)
             .apply()
         val document = SettingsBackupCodec.export(context, "0.2.19-ez60.2")
         val hud = JSONObject(String(document)).getJSONObject("settings").getJSONObject("diplay_mazda_hud")
@@ -272,5 +273,6 @@ class SettingsBackupCodecTest {
         SettingsBackupCodec.import(context, document)
         assertEquals(90, prefs("diplay_mazda_hud").getInt("map_see_through", 0))
         assertEquals("FAR", prefs("diplay_mazda_hud").getString("map_view", null))
+        assertEquals(40, prefs("diplay_mazda_hud").getInt("map_road_boost", 0))
     }
 }

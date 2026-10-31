@@ -38,4 +38,6 @@
     <string name="settings_mazda_hud_map_style_lines">Yalnızca çizgiler</string>
     <string name="settings_mazda_hud_map_see_through">Saydam arka plan</string>
     <string name="settings_mazda_hud_map_look_description">HUD, haritanın arka planını ışıklı bir kutu olarak yansıtır. Saydamlık onu soldurur, böylece yolu içinden görürsünüz: 0 % haritayı iPhone’un çizdiği gibi bırakır, 100 % arka planı kaldırır. Yalnızca çizgiler ayrıca parkları, suyu ve binaları kaldırır; yolları, rotayı ve etiketleri daha parlak çizer. Değişiklikler hemen uygulanır.</string>
+    <string name="settings_mazda_hud_map_road_boost">Yol parlaklığı</string>
+    <string name="settings_mazda_hud_map_road_boost_description">Yolları, sokakları, adları ve rotayı tam parlaklığa yaklaştırır; böylece gündüz camda görünürler. Parklar, su ve binalar olduğu gibi kalır. 0 % harita eskisi gibidir. Değişiklikler hemen uygulanır.</string>
 </resources>

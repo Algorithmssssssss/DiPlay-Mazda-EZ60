@@ -38,4 +38,6 @@
     <string name="settings_mazda_hud_map_style_lines">الخطوط فقط</string>
     <string name="settings_mazda_hud_map_see_through">خلفية شفافة</string>
     <string name="settings_mazda_hud_map_look_description">تعرض شاشة العرض الأمامية خلفية الخريطة كمربع مضيء. «الشفافية» تُخفتها لترى الطريق من خلالها: 0٪ تعرض الخريطة كما يرسمها الآيفون، و100٪ تزيل الخلفية. «الخطوط فقط» تزيل أيضًا الحدائق والمياه والمباني، وترسم الطرق والمسار والأسماء بإضاءة أقوى. تُطبَّق التغييرات فورًا.</string>
+    <string name="settings_mazda_hud_map_road_boost">سطوع الطرق</string>
+    <string name="settings_mazda_hud_map_road_boost_description">يرفع سطوع الطرق والشوارع والأسماء والمسار إلى أقصى حد تقريبًا لتظهر على الزجاج في ضوء النهار، وتبقى الحدائق والمياه والمباني كما هي. 0 % هي الخريطة كما كانت. تُطبَّق التغييرات فورًا.</string>
 </resources>

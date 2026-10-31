@@ -1126,6 +1126,8 @@ class AdaptiveSettingsUiTest {
             listOf(R.string.settings_mazda_hud, R.string.settings_mazda_ar_map, R.string.settings_mazda_ambient_music)
                 .forEach { assertTrue(screen.getString(it), screen.getString(it) in shown) }
             assertTrue(shown.any { it.startsWith(screen.getString(R.string.settings_mazda_hud_map_view)) })
+            // The whole map (the default style) offers road brightness; Lines only draws roads at full brightness.
+            assertTrue(shown.any { it.startsWith(screen.getString(R.string.settings_mazda_hud_map_road_boost)) })
             assertTrue(screen.getString(R.string.settings_mazda_trim) + " · " +
                 screen.getString(R.string.settings_mazda_trim_automatic, screen.getString(R.string.settings_mazda_trim_ar)) in shown)
             assertFalse("The AR-HUD map is off by default", MazdaHudSettings.arMap(screen))

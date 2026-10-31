@@ -38,4 +38,6 @@
     <string name="settings_mazda_hud_map_style_lines">Lines only</string>
     <string name="settings_mazda_hud_map_see_through">See-through background</string>
     <string name="settings_mazda_hud_map_look_description">The HUD projects the map’s background as a lit box. See-through fades it so you see the road through it: 0 % is the map as the iPhone draws it, 100 % removes the background. Lines only also removes parks, water and buildings, and draws roads, the route and labels brighter. Changes apply at once.</string>
+    <string name="settings_mazda_hud_map_road_boost">Road brightness</string>
+    <string name="settings_mazda_hud_map_road_boost_description">Lifts roads, streets, labels and the route toward full brightness so they show on the glass in daylight; parks, water and buildings stay as they are. 0 % is the map as before. Changes apply at once.</string>
 </resources>

@@ -38,4 +38,6 @@
     <string name="settings_mazda_hud_map_style_lines">선만</string>
     <string name="settings_mazda_hud_map_see_through">투명 배경</string>
     <string name="settings_mazda_hud_map_look_description">HUD는 지도 배경을 밝은 상자로 투사합니다. 투명 배경은 이를 옅게 해 도로가 비쳐 보이게 합니다. 0 %는 iPhone이 그린 그대로의 지도이고, 100 %는 배경을 없앱니다. 선만은 공원, 물, 건물도 없애고 도로, 경로, 이름을 더 밝게 그립니다. 변경 사항은 바로 적용됩니다.</string>
+    <string name="settings_mazda_hud_map_road_boost">도로 밝기</string>
+    <string name="settings_mazda_hud_map_road_boost_description">도로, 골목길, 이름, 경로를 최대 밝기에 가깝게 높여 낮에도 유리에 보이게 합니다. 공원, 물, 건물은 그대로입니다. 0 %는 이전과 같은 지도입니다. 변경 사항은 바로 적용됩니다.</string>
 </resources>

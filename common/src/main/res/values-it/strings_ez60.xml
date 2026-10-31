@@ -38,4 +38,6 @@
     <string name="settings_mazda_hud_map_style_lines">Solo linee</string>
     <string name="settings_mazda_hud_map_see_through">Sfondo trasparente</string>
     <string name="settings_mazda_hud_map_look_description">L’HUD proietta lo sfondo della mappa come un riquadro illuminato. La trasparenza lo attenua perché tu veda la strada attraverso: 0 % è la mappa come la disegna l’iPhone, 100 % rimuove lo sfondo. Solo linee rimuove anche parchi, acqua ed edifici e disegna più luminosi strade, percorso ed etichette. Le modifiche si applicano subito.</string>
+    <string name="settings_mazda_hud_map_road_boost">Luminosità delle strade</string>
+    <string name="settings_mazda_hud_map_road_boost_description">Porta strade, vie, nomi e il percorso verso la luminosità massima perché si vedano sul vetro di giorno; parchi, acqua ed edifici restano come sono. 0 % è la mappa come prima. Le modifiche si applicano subito.</string>
 </resources>

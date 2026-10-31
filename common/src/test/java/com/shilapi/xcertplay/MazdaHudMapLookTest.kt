@@ -96,18 +96,36 @@ class MazdaHudMapLookTest {
         assertTrue(MazdaHudSettings.DEFAULT_SEE_THROUGH in MazdaHudSettings.SEE_THROUGH_STEPS)
     }
 
+    // Daylight drive, 2026-10-31: the whole map's roads hardly showed on the glass. They are lifted by default now.
+    @Test fun roadsAreBrightenedByDefaultAndTheChoiceIsKept() {
+        val prefs = context.getSharedPreferences("diplay_mazda_hud", android.content.Context.MODE_PRIVATE)
+        prefs.edit().clear().commit()
+        assertEquals(MazdaHudSettings.DEFAULT_ROAD_BOOST, MazdaHudSettings.mapRoadBoost(context))
+        assertTrue(MazdaHudSettings.DEFAULT_ROAD_BOOST in MazdaHudSettings.ROAD_BOOST_STEPS)
+        MazdaHudSettings.saveMapRoadBoost(context, 0)
+        assertEquals(0, MazdaHudSettings.mapRoadBoost(context))
+        MazdaHudSettings.saveMapRoadBoost(context, 130)
+        assertEquals(100, MazdaHudSettings.mapRoadBoost(context))
+    }
+
+    // The filter sets every uniform the shader declares; a missing one would leave the map unfiltered.
+    @Test fun theShaderDeclaresTheRoadBrightness() {
+        assertTrue(MazdaHudMapLook.SHADER.contains("uniform float roadBoost;"))
+    }
+
     // The HUD window follows the slider while it is shown; it stops listening when it closes.
     @Test fun theWindowHearsLookChangesUntilItStops() {
         var heard = 0
         val stop = MazdaHudSettings.watchMapLook(context) { heard++ }
         MazdaHudSettings.saveMapSeeThrough(context, 30)
         MazdaHudSettings.saveMapStyle(context, MazdaHudSettings.MapStyle.WHOLE)
+        MazdaHudSettings.saveMapRoadBoost(context, 40)
         MazdaHudSettings.saveMapView(context, MazdaHudSettings.MapView.FAR)
         org.robolectric.shadows.ShadowLooper.idleMainLooper()
-        assertEquals("Style and see-through, not the map view", 2, heard)
+        assertEquals("Style, see-through and road brightness, not the map view", 3, heard)
         stop()
         MazdaHudSettings.saveMapSeeThrough(context, 50)
         org.robolectric.shadows.ShadowLooper.idleMainLooper()
-        assertEquals(2, heard)
+        assertEquals(3, heard)
     }
 }

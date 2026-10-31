@@ -18,6 +18,7 @@ Moves the fork from DiPlay 0.2.19 to 0.2.22 (upstream 0.2.20–0.2.22, 487 commi
 - Never take one of the car's in-vehicle Ethernet interfaces (`eth0`–`eth2`, `wt_eth2_*`) for the car hotspot. Upstream 0.2.21 added a fallback for head units whose hotspot hides on a VLAN; on the EZ-60 the hotspot is always `ap0` or `ap_br_ap0`.
 - Settings backups carry the HUD settings with their types (map view, size, style, see-through).
 - **EZ-60 trim** (Settings → Mazda EZ-60 → Windshield HUD): Automatic, as before, or Option 1 or 2 (2D HUD) or Option 3 (100-inch AR-HUD) picked by hand, for a car that reports the wrong HUD. It applies at the next connection and is not part of settings backups.
+- **Road brightness** for the HUD map (Settings → Mazda EZ-60 → Windshield HUD, Whole map only, default 70 %): lifts roads, side streets, labels and the route toward full brightness so they show in daylight, keeping the route's colour; parks, water and buildings stay dim. 0 % is the earlier look.
 - DiPlay's settings swipe-down uses two fingers by default on the EZ-60 and no longer offers three: the car closes the app on a three-finger swipe. Off and four fingers are still offered.
 - The AR-HUD map is drawn Largest by default, 735×560 at (1285,60): the size that read best at the glass on 100-inch AR-HUD cars, about three times the car's own map box. A size chosen before is kept.
 - The EZ-60 settings and probe in Korean, Turkish and Italian.
