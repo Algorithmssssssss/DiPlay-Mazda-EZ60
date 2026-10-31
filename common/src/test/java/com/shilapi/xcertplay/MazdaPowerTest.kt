@@ -62,4 +62,18 @@ class MazdaPowerTest {
         Settings.Global.putInt(context.contentResolver, MazdaPowerWatch.KEY_ACC_STATUS, MazdaPowerWatch.ACC_OFF)
         assertFalse(MazdaPowerWatch.isOff(context))
     }
+
+    // The IPO whitelist read decides EZNav's 360-camera guard: DiPlay must not be on it. The value lists process
+    // names; separators seen on head units vary (space, comma, colon), so the membership test accepts any.
+    @Test fun ipoWhitelistMembershipIgnoresSeparatorsAndSpacing() {
+        val me = "com.shilapi.xcertplay"
+        assertFalse("empty", MazdaPowerWatch.ipoWhitelisted(null, me))
+        assertFalse("blank", MazdaPowerWatch.ipoWhitelisted("   ", me))
+        assertFalse("absent", MazdaPowerWatch.ipoWhitelisted("com.incall.dvr,com.tinnove.evs", me))
+        // A substring match must not count: only a whole entry is the process.
+        assertFalse("substring", MazdaPowerWatch.ipoWhitelisted("com.shilapi.xcertplay.extra", me))
+        for (list in listOf("$me", "com.incall.dvr $me", "com.incall.dvr,$me", "a:$me:b", " $me \n c")) {
+            assertTrue(list, MazdaPowerWatch.ipoWhitelisted(list, me))
+        }
+    }
 }

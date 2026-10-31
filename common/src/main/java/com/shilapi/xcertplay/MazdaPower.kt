@@ -68,5 +68,28 @@ internal class MazdaPowerWatch(private val context: Context, private val onChang
         } catch (_: SecurityException) {
             false
         }
+
+        // The head unit's IPO ("deep sleep") shutdown whitelist: processes it keeps alive across a sleep instead of
+        // force-stopping. DiPlay is deliberately not on it; see [ipoWhitelisted].
+        const val IPO_WHITELIST_PROPERTY = "persist.ipo.shutdown.process.wl"
+
+        /** Whether [process] is listed in the IPO whitelist value (entries separated by space, comma, colon or newline). */
+        fun ipoWhitelisted(whitelist: String?, process: String): Boolean =
+            !whitelist.isNullOrBlank() && whitelist.split(' ', ',', ':', ';', '\n', '\r', '\t').any { it.trim() == process }
+
+        /**
+         * Whether DiPlay's own process is on the head unit's IPO shutdown whitelist. It is not, by design: being
+         * force-stopped before the head unit sleeps is what tears down any [MazdaHudScreen] producer on
+         * "MeterDisplay#0" before a deep sleep, which is why DiPlay never reproduces EZNav's 360-camera leak
+         * (docs/EZ60-HUD100-CAMERA.md). If this ever reads true, that protection is gone.
+         */
+        fun ipoWhitelisted(context: Context): Boolean =
+            ipoWhitelisted(systemProperty(IPO_WHITELIST_PROPERTY), context.packageName)
+
+        private fun systemProperty(name: String): String? = runCatching {
+            val cls = Class.forName("android.os.SystemProperties")
+            val method = cls.getMethod("get", String::class.java, String::class.java)
+            method.invoke(null, name, "")?.toString()
+        }.getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
     }
 }

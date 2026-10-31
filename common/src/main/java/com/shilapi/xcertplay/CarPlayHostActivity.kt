@@ -6581,7 +6581,24 @@ open class CarPlayHostActivity : ComponentActivity() {
             closeMazdaArHud()
             // No HUD window may survive into the head unit's sleep (EZNav: it broke the 360 camera across one).
             runOnUiThread { dismissMazdaHudScreen() }
+            warnIfIpoWhitelistedWithHud()
         }
+    }
+
+    /**
+     * Regression guard for EZNav's 360-camera leak (docs/EZ60-HUD100-CAMERA.md). DiPlay avoids that fault because
+     * the OEM IPO sweep force-stops us before the head unit's deep sleep, so no MeterDisplay#0 window producer
+     * survives it. If DiPlay is ever added to persist.ipo.shutdown.process.wl, that protection is gone and
+     * dismissing the window in-process may not be enough (EZNav saw the fault persist with the process alive).
+     * Warn loudly at switch-off so the IPO whitelist and a HUD window never combine silently.
+     */
+    private fun warnIfIpoWhitelistedWithHud() {
+        if (!MazdaHudSettings.enabled(this) || !MazdaPowerWatch.ipoWhitelisted(this)) return
+        val message = "HUD: WARNING: DiPlay is on ${MazdaPowerWatch.IPO_WHITELIST_PROPERTY} with the EZ-60 HUD " +
+            "enabled; it may now survive deep sleep and strand the 360 camera (EZNav's fault). Remove the IPO " +
+            "whitelist entry or fully release the MeterDisplay#0 surface before sleep. See docs/EZ60-HUD100-CAMERA.md"
+        Log.w(PROBE_TAG, message)
+        appendLog(message)
     }
 
     // EZ-60 2D HUD: the window exists only while DiPlay guides on the HUD, as on the AR-HUD.
