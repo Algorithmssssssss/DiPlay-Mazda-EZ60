@@ -155,6 +155,28 @@ class AppLocaleTest {
         assertEquals(AppLocale.KOREAN, AppLocale.preference(context))
     }
 
+    // The EZ-60 fork ships English and Khmer only, and its picker offers just those.
+    @Test fun theForkOffersEnglishAndKhmer() {
+        assertEquals(listOf(AppLocale.SYSTEM, AppLocale.ENGLISH, AppLocale.KHMER), AppLocale.OFFERED)
+        assertTrue(AppLocale.OFFERED.all { it in AppLocale.ALL })
+    }
+
+    @Test fun khmerIsSelectableOnAndroid13() {
+        AppLocale.save(context, AppLocale.KHMER)
+        assertEquals("km", manager.applicationLocales.toLanguageTags())
+        assertEquals(AppLocale.KHMER, AppLocale.preference(context))
+        assertEquals("ខ្មែរ", AppLocale.displayName(context, AppLocale.KHMER))
+        AppLocale.save(context, AppLocale.SYSTEM)
+        assertTrue(manager.applicationLocales.isEmpty)
+    }
+
+    @Test @Config(sdk = [28, 32])
+    fun khmerIsSelectableBeforeAndroid13() {
+        AppLocale.save(context, AppLocale.KHMER)
+        assertEquals(AppLocale.KHMER, AppLocale.preference(context))
+        assertEquals("km", AppLocale.wrap(context).resources.configuration.locales[0].language)
+    }
+
     @Test fun turkishIsSelectableOnAndroid13() {
         AppLocale.save(context, AppLocale.TURKISH)
         assertEquals("tr", manager.applicationLocales.toLanguageTags())

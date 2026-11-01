@@ -11,8 +11,11 @@ class SettingsTranslationsTest {
     private val placeholder = Regex("%\\d+\\$[sd]")
 
     @Test fun everySettingsStringIsTranslatedWithTheSamePlaceholders() {
-        val base = strings(File(res, "values")).filterKeys { it.startsWith("settings_") }
-        val locales = res.listFiles { file -> file.name.matches(Regex("values-[a-z]{2}(-r[A-Z]{2})?")) }!!
+        // The EZ-60 fork's own strings are in English and Khmer only (Ez60KhmerTranslationsTest); Khmer has no others.
+        val base = strings(File(res, "values"), upstreamOnly = true).filterKeys { it.startsWith("settings_") }
+        val locales = res.listFiles { file ->
+            file.name.matches(Regex("values-[a-z]{2}(-r[A-Z]{2})?")) && file.name != "values-km"
+        }!!
         for (locale in locales) {
             val translated = strings(locale)
             assertEquals(locale.name, emptySet<String>(), base.keys - translated.keys)
@@ -24,7 +27,9 @@ class SettingsTranslationsTest {
 
     private fun placeholders(text: String) = placeholder.findAll(text).map { it.value }.toSet()
 
-    private fun strings(folder: File): Map<String, String> = folder.listFiles { file -> file.extension == "xml" }!!
+    private fun strings(folder: File, upstreamOnly: Boolean = false): Map<String, String> = folder.listFiles { file ->
+        file.extension == "xml" && !(upstreamOnly && file.name.startsWith("strings_ez60"))
+    }!!
         .flatMap { file ->
             val nodes = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file).getElementsByTagName("string")
             (0 until nodes.length).map { nodes.item(it) }.map { it.attributes.getNamedItem("name").nodeValue to it.textContent }

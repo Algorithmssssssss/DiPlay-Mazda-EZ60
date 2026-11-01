@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_mazda_hud">ការណែនាំផ្លូវតាមវេននៅលើ HUD (ពិសោធន៍)</string>
+    <string name="settings_mazda_hud_description">បង្ហាញវេនបន្ទាប់ ចម្ងាយ និងឈ្មោះផ្លូវរបស់ CarPlay នៅលើអេក្រង់ HUD លើកញ្ចក់មុខ ខណៈពេលដែលការរុករករបស់ CarPlay កំពុងណែនាំផ្លូវ។ មានប្រសិទ្ធភាពនៅពេលវេនបន្ទាប់ត្រូវបានធ្វើបច្ចុប្បន្នភាព។</string>
+    <string name="settings_mazda_hud_map_view">ទិដ្ឋភាពផែនទី HUD</string>
+    <string name="settings_mazda_hud_map_far">ឆ្ងាយ</string>
+    <string name="settings_mazda_hud_map_normal">ធម្មតា</string>
+    <string name="settings_mazda_hud_map_near">ជិត</string>
+    <string name="settings_mazda_hud_map_view_description">កំណត់ថា HUD បង្ហាញផែនទីទូលាយប៉ុណ្ណា។ ឆ្ងាយ បង្ហាញផ្លូវច្រើនជាង តែតូចជាង ជិត បង្ហាញផ្លូវតិចជាង តែធំជាង។ មានប្រសិទ្ធភាពនៅការភ្ជាប់លើកក្រោយ។</string>
+    <string name="settings_mazda_ambient_music">ធ្វើតាមតន្ត្រី CarPlay</string>
+    <string name="settings_mazda_ambient_music_description">ធ្វើឱ្យភ្លើងលម្អក្នុងឡានភ្លឺតាមចង្វាក់តន្ត្រី CarPlay ដោយប្រើរបៀបតន្ត្រីរបស់ឡានផ្ទាល់។ សូមបើកភ្លើងលម្អ និងការធ្វើសមកាលកម្មតាមតន្ត្រីនៅក្នុងឡានជាមុនសិន។ ប្រសិនបើមានបញ្ហា DiPlay នឹងឈប់ ហើយប្រគល់ភ្លើងវិញទៅឡាន។</string>
+    <string name="settings_mazda_ambient_effect">បែបផែនភ្លើង</string>
+    <string name="settings_mazda_ambient_effect_beat">ភ្លឹបតាមបាស</string>
+    <string name="settings_mazda_ambient_effect_rhythm">រលកតាមតន្ត្រី</string>
+    <string name="settings_mazda_ambient_effect_description">ភ្លឹបតាមបាស ធ្វើឱ្យភ្លើងភ្លឹបរាល់ចង្វាក់បាស ហើយស្រអាប់បន្តិចម្ដងៗរហូតដល់ចង្វាក់បន្ទាប់។ រលកតាមតន្ត្រី ធ្វើឱ្យភ្លើងភ្លឺឡើង និងស្រអាប់ចុះយ៉ាងរលូនតាមតន្ត្រី។</string>
+    <string name="settings_mazda_ambient_smoothness">ភាពរលូន</string>
+    <string name="settings_mazda_ambient_depth">ជម្រៅ</string>
+    <string name="settings_mazda_ambient_sensitivity">ភាពរសើបនឹងចង្វាក់</string>
+    <string name="settings_mazda_ambient_tuning_description">ភាពរលូន៖ 1 ប្ដូរលឿន 5 ប្ដូរយឺត។ ជម្រៅ៖ កម្រិតដែលភ្លើងស្រអាប់ចុះរវាងចង្វាក់។ ភាពរសើបនឹងចង្វាក់៖ 5 ចាប់បានចង្វាក់ដែលខ្សោយជាង។ ការផ្លាស់ប្ដូរមានប្រសិទ្ធភាពភ្លាមៗ។</string>
+    <string name="settings_ez60">Mazda EZ-60</string>
+    <string name="settings_ez60_summary">HUD និងភ្លើងលម្អរបស់ឡាន។ អ្នកអាចបិទមុខងារណាមួយនៅទីនេះ។</string>
+    <string name="settings_mazda_hud_card">HUD លើកញ្ចក់មុខ</string>
+    <string name="settings_mazda_trim">កំណែឡាន EZ-60</string>
+    <string name="settings_mazda_trim_automatic">ស្វ័យប្រវត្តិ៖ %1$s</string>
+    <string name="settings_mazda_trim_standard">Option 1 ឬ 2 (HUD 2D)</string>
+    <string name="settings_mazda_trim_ar">Option 3 (AR-HUD 100 អ៊ីញ)</string>
+    <string name="settings_mazda_trim_description">DiPlay គូរនៅលើកញ្ចក់មុខតាមកំណែឡានរបស់អ្នក៖ ប្រអប់ផែនទីរបស់ HUD 2D សម្រាប់ Option 1 និង 2 និងផែនទី AR-HUD ធំជាងសម្រាប់ Option 3។ ស្វ័យប្រវត្តិ អានកំណែពីឡាន ដូចការរុករករបស់ឡានផ្ទាល់។ សូមជ្រើសដោយខ្លួនឯង តែនៅពេលដែល ស្វ័យប្រវត្តិ បង្ហាញខុស។ មានប្រសិទ្ធភាពនៅការភ្ជាប់លើកក្រោយ។</string>
+    <string name="settings_gesture_fingers_hint_ez60">នៅលើ Mazda EZ-60 ការអូសដោយម្រាមដៃបីនឹងបិទកម្មវិធី ដូច្នេះ DiPlay ប្រើម្រាមដៃពីរ ហើយមិនផ្ដល់ជម្រើសម្រាមដៃបីទេ។</string>
+    <string name="settings_mazda_ar_map">ផែនទី AR-HUD (ពិសោធន៍)</string>
+    <string name="settings_mazda_ar_map_description">បង្ហាញផែនទីរបស់ CarPlay ឬវេនបន្ទាប់នៅពេលគ្មានផែនទី នៅក្នុងប្រអប់ផែនទីរបស់ AR-HUD ខណៈពេលដែលការរុករករបស់ CarPlay កំពុងណែនាំផ្លូវ ហើយឡានមិននៅលេខ P។ DiPlay ប្ដូររូបភាព HUD របស់ឡានសម្រាប់ការនេះ ហើយប្រគល់វិញនៅពេលផ្លូវបញ្ចប់ ឬមានបញ្ហា។ កុំប្រើវា ខណៈពេលដែលការរុករករបស់ឡានផ្ទាល់កំពុងណែនាំផ្លូវ។ ការបើកមានប្រសិទ្ធភាពនៅការភ្ជាប់លើកក្រោយ ការបិទលុបផែនទីចេញភ្លាមៗ។</string>
+    <string name="settings_mazda_ar_map_size">ទំហំផែនទី AR-HUD</string>
+    <string name="settings_mazda_ar_map_size_car">ទំហំរបស់ឡាន</string>
+    <string name="settings_mazda_ar_map_size_large">ធំ</string>
+    <string name="settings_mazda_ar_map_size_largest">ធំបំផុត</string>
+    <string name="settings_mazda_ar_map_size_description">ធំបំផុត ដែលជាលំនាំដើម ប្រើរូបភាព AR-HUD នៅខាងស្ដាំល្បឿន និងលេខប្រអប់លេខរបស់ HUD ធំប្រហែលបីដងនៃផែនទីរបស់ឡានផ្ទាល់ ហើយជាទំហំដែលមើលឃើញច្បាស់បំផុតលើកញ្ចក់នៃឡាន AR-HUD 100 អ៊ីញ។ ធំ ស្ថិតនៅចន្លោះ ហើយទំហំរបស់ឡាន ស្មើនឹងផែនទីនៃការរុករករបស់ឡានផ្ទាល់។ នៅពេលផែនទីនៅខាងឆ្វេង ទំហំរបស់ឡាននៅតែត្រូវបានប្រើ។ មានប្រសិទ្ធភាពនៅការភ្ជាប់លើកក្រោយ។</string>
+    <string name="settings_mazda_ar_puck">ទីតាំងព្រួញទីតាំងលើ AR-HUD</string>
+    <string name="settings_mazda_ar_puck_description">រំកិលព្រួញទីតាំងរបស់ CarPlay ឡើងលើ (−) ឬចុះក្រោម (+) នៅលើផែនទី AR-HUD គិតជាភាគរយនៃកម្ពស់ផែនទី។ 0 % ដាក់វានៅកណ្ដាលសម្រាប់ Google Maps ដែលបើទុកដោយខ្លួនឯង នឹងគូរវានៅក្រោមកណ្ដាល។ មានប្រសិទ្ធភាពនៅការភ្ជាប់លើកក្រោយ។</string>
+    <string name="settings_mazda_hud_map_style">រចនាប័ទ្មផែនទី HUD</string>
+    <string name="settings_mazda_hud_map_style_whole">ផែនទីទាំងមូល</string>
+    <string name="settings_mazda_hud_map_style_lines">តែបន្ទាត់</string>
+    <string name="settings_mazda_hud_map_see_through">ផ្ទៃខាងក្រោយថ្លា</string>
+    <string name="settings_mazda_hud_map_look_description">HUD បញ្ចាំងផ្ទៃខាងក្រោយរបស់ផែនទីជាប្រអប់ភ្លឺ។ ផ្ទៃខាងក្រោយថ្លា ធ្វើឱ្យវាស្រអាប់ ដើម្បីឱ្យអ្នកមើលឃើញផ្លូវតាមរយៈវា៖ 0 % គឺផែនទីដូចដែល iPhone គូរ 100 % លុបផ្ទៃខាងក្រោយចេញ។ តែបន្ទាត់ ក៏លុបសួនច្បារ ទឹក និងអគារចេញ ហើយគូរផ្លូវ ផ្លូវធ្វើដំណើរ និងឈ្មោះកាន់តែភ្លឺ។ ការផ្លាស់ប្ដូរមានប្រសិទ្ធភាពភ្លាមៗ។</string>
+    <string name="settings_mazda_hud_map_road_boost">ពន្លឺផ្លូវ</string>
+    <string name="settings_mazda_hud_map_road_boost_description">បង្កើនពន្លឺផ្លូវធំ ផ្លូវតូច ឈ្មោះ និងផ្លូវធ្វើដំណើរ ឱ្យជិតភ្លឺបំផុត ដើម្បីឱ្យមើលឃើញលើកញ្ចក់នៅពេលថ្ងៃ។ សួនច្បារ ទឹក និងអគារ នៅដដែល។ 0 % គឺផែនទីដូចមុន។ ការផ្លាស់ប្ដូរមានប្រសិទ្ធភាពភ្លាមៗ។</string>
+</resources>

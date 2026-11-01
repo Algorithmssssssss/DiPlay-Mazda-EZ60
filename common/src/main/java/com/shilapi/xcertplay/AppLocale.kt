@@ -26,8 +26,15 @@ object AppLocale {
 
     const val ITALIAN = "it"
     const val TURKISH = "tr"
+    const val KHMER = "km"
 
-    val ALL = listOf(SYSTEM, ENGLISH, SIMPLIFIED_CHINESE, TRADITIONAL_CHINESE, ARABIC, RUSSIAN, SPANISH, UKRAINIAN, JAPANESE, KOREAN, ITALIAN, TURKISH)
+    val ALL = listOf(SYSTEM, ENGLISH, SIMPLIFIED_CHINESE, TRADITIONAL_CHINESE, ARABIC, RUSSIAN, SPANISH, UKRAINIAN, JAPANESE, KOREAN, ITALIAN, TURKISH, KHMER)
+
+    /**
+     * What the EZ-60 fork's picker offers: its APK holds English and Khmer resources only (`:mobile` localeFilters and
+     * locales_config). Another language chosen earlier or in Android Settings shows English.
+     */
+    val OFFERED = listOf(SYSTEM, ENGLISH, KHMER)
 
     private const val PREFS = "diplay"
     private const val KEY_LANGUAGE = "app_language"
@@ -112,14 +119,14 @@ object AppLocale {
     }
 
     fun showPicker(activity: Activity) {
-        var selected = ALL.indexOf(preference(activity)).coerceAtLeast(0)
+        var selected = OFFERED.indexOf(preference(activity)).coerceAtLeast(0)
         activity.appDialogBuilder()
             .setTitle(R.string.language_app_language)
-            .setSingleChoiceItems(ALL.map { displayName(activity, it) }.toTypedArray(), selected) { _, index ->
+            .setSingleChoiceItems(OFFERED.map { displayName(activity, it) }.toTypedArray(), selected) { _, index ->
                 selected = index
             }
             .setPositiveButton(R.string.language_apply) { _, _ ->
-                val next = ALL[selected]
+                val next = OFFERED[selected]
                 if (next != preference(activity)) {
                     save(activity, next)
                     // LocaleManager recreates activities itself on Android 13+.
@@ -144,6 +151,7 @@ object AppLocale {
         KOREAN -> "한국어"
         ITALIAN -> "Italiano"
         TURKISH -> "Türkçe"
+        KHMER -> "ខ្មែរ"
         else -> language
     }
 
@@ -159,6 +167,7 @@ object AppLocale {
         KOREAN -> Locale.KOREAN
         ITALIAN -> Locale.ITALIAN
         TURKISH -> Locale("tr")
+        KHMER -> Locale("km")
         else -> null
     }
 }

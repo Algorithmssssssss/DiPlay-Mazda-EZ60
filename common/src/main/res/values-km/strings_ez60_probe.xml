@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_probe_title">ឧបករណ៍ពិនិត្យ EZ-60</string>
+    <string name="settings_probe_description">វាស់អេក្រង់ទាំងពីរចំហៀង ឧបករណ៍ឌិកូដវីដេអូ Wi-Fi USB សំឡេង និងប៊ូតុងរបស់ឡាននេះ ដើម្បីឱ្យ DiPlay អាចកែសម្រួលសម្រាប់ Mazda EZ-60។ គ្មានអ្វីត្រូវបានផ្ញើដោយស្វ័យប្រវត្តិទេ។</string>
+    <string name="settings_probe_run">ដំណើរការការពិនិត្យ EZ-60</string>
+    <string name="settings_probe_running">កំពុងពិនិត្យ…</string>
+    <string name="settings_probe_record_start">ចាប់ផ្ដើមកត់ត្រាព្រឹត្តិការណ៍</string>
+    <string name="settings_probe_record_stop">បញ្ឈប់ការកត់ត្រាព្រឹត្តិការណ៍</string>
+    <string name="settings_probe_recording_hint">កំពុងកត់ត្រា។ ឥឡូវនេះ សូមអូស DiPlay ទៅអេក្រង់ចំហៀងម្ខាងទៀត ហើយត្រឡប់មកវិញ ដាស់ជំនួយការសំឡេង ចុចប៊ូតុងនីមួយៗលើចង្កូត ប្ដូររវាងថ្ងៃ និងយប់ ហើយដោត iPhone។ បន្ទាប់មក បញ្ឈប់ការកត់ត្រា ហើយដំណើរការការពិនិត្យ។</string>
+    <string name="settings_probe_view">មើលរបាយការណ៍ពិនិត្យ</string>
+    <string name="settings_probe_share">បើកនៅលើ iPhone</string>
+    <string name="settings_probe_share_url">នៅលើ iPhone ដែលភ្ជាប់ Wi-Fi តែមួយជាមួយឡាន (hotspot របស់ឡាន ឬ hotspot របស់ iPhone) សូមបើកក្នុង Safari៖\n%1$s</string>
+    <string name="settings_probe_share_unavailable">ឡានមិនបានភ្ជាប់បណ្ដាញ Wi-Fi ណាមួយទេ។ សូមបើក hotspot របស់ឡាន ឬភ្ជាប់ hotspot របស់ iPhone រួចសាកល្បងម្ដងទៀត។</string>
+    <string name="settings_probe_window_test">សាកល្បងបង្អួច CarPlay</string>
+    <string name="settings_probe_window_test_body">ការសាកល្បងបង្អួច CarPlay\n\nCarPlay នឹងបើកនៅទីនេះ។ ចុចដើម្បីបិទ។</string>
+    <string name="settings_probe_meter_test">សាកល្បងអេក្រង់ផ្ទាំងឧបករណ៍</string>
+    <string name="settings_probe_meter_card">ការសាកល្បង DiPlay\n%1$s</string>
+    <string name="settings_probe_meter_shown">បានបង្ហាញកាតសាកល្បងនៅលើអេក្រង់ %1$s រយៈពេល 20 វិនាទី។ សូមមើលផ្ទាំងឧបករណ៍ និង HUD។</string>
+    <string name="settings_probe_meter_failed">មិនអាចបង្ហាញកាតសាកល្បងនៅលើអេក្រង់ %1$s បានទេ។</string>
+    <string name="settings_probe_meter_none">ឡាននេះគ្មានអេក្រង់ទីពីរសម្រាប់កម្មវិធីទេ។</string>
+</resources>

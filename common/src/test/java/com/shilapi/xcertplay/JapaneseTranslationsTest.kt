@@ -21,8 +21,9 @@ class JapaneseTranslationsTest {
 
     private fun load(locale: String): Map<String, String> {
         // Strings are spread across several files, not just strings.xml.
+        // The EZ-60 fork's own strings (strings_ez60*.xml) are in English and Khmer only (Ez60KhmerTranslationsTest).
         val files = File("src/main/res/$locale")
-            .listFiles { file -> file.extension == "xml" }
+            .listFiles { file -> file.extension == "xml" && !file.name.startsWith("strings_ez60") }
             ?.sortedBy { it.name }
             ?: error("Missing locale resources: $locale")
         val result = mutableMapOf<String, String>()

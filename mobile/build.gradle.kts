@@ -24,6 +24,12 @@ android {
     }
 
 
+    // The EZ-60 fork ships English and Khmer only. Upstream's other languages stay in the source, which keeps upstream
+    // merges simple, and are left out of the APK here; strings without a Khmer translation show in English.
+    androidResources {
+        localeFilters += listOf("en", "km")
+    }
+
     localAuthenticationAssets?.let { sourceSets.getByName("main").assets.srcDir(it) }
 
     signingConfigs {

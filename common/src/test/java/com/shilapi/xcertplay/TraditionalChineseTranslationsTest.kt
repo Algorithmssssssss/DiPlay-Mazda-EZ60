@@ -24,8 +24,9 @@ class TraditionalChineseTranslationsTest {
         .filter { it != "%%" && it != "%n" }.toList().sorted()
 
     private fun load(folder: File): Map<String, String> {
-        val files = folder.listFiles { file -> file.extension == "xml" }?.sortedBy { it.name }
-            ?: error("Missing locale resources: $folder")
+        // The EZ-60 fork's own strings (strings_ez60*.xml) are in English and Khmer only (Ez60KhmerTranslationsTest).
+        val files = folder.listFiles { file -> file.extension == "xml" && !file.name.startsWith("strings_ez60") }
+            ?.sortedBy { it.name } ?: error("Missing locale resources: $folder")
         val result = mutableMapOf<String, String>()
         for (file in files) {
             val nodes = DocumentBuilderFactory.newInstance().newDocumentBuilder()

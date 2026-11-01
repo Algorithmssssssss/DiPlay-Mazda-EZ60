@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The EZ-60 fork ships English and Khmer only (localeFilters in build.gradle.kts); this replaces the library's list. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="km" />
+</locale-config>

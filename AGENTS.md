@@ -42,7 +42,7 @@ Exception: a gated control that only its own audience sees, and that completes a
 Example: auto car hotspot needs ADB but appears only for car-hotspot users, so it is in Connection.
 
 Mark an experimental setting or card with the title suffix ` (experimental)`, never `· experimental`, a dash, or an `Experimental …` prefix.
-Each locale MUST use its existing form: `(تجريبي)`, `(experimental)`, `(sperimentale)`, `(экспериментально)`, `(експериментально)`, `(deneysel)`, `（实验性）`, `（實驗性）`, `（実験的機能）`, `(실험 기능)`.
+Each locale MUST use its existing form: `(تجريبي)`, `(experimental)`, `(sperimentale)`, `(экспериментально)`, `(експериментально)`, `(deneysel)`, `（实验性）`, `（實驗性）`, `（実験的機能）`, `(실험 기능)`, Khmer `(ពិសោធន៍)`.
 
 ### Add the code
 
@@ -57,8 +57,10 @@ Each locale MUST use its existing form: `(تجريبي)`, `(experimental)`, `(sp
    A setting that only takes effect at the next connection MUST call `markReconnectNeeded()` after it saves.
    This shows the "Reconnect now" bar. It MUST NOT drop a running session without the driver's consent.
    Reconnect at once (`reconnectIfRunning()`) only after a dialog button that says "Apply and reconnect", or when the description says that the change reconnects CarPlay.
-6. Add each new string to `common/src/main/res/values/` and to every `values-xx` locale folder.
-   New Settings copy SHOULD use the `settings_` prefix. `SettingsTranslationsTest` fails when a `settings_*` string has no translation.
+6. This EZ-60 fork ships English and Khmer only (`:mobile` `localeFilters`). Put new EZ-60 strings in
+   `strings_ez60*.xml` in `common/src/main/res/values/` and `values-km/`, and in no other locale folder.
+   `Ez60KhmerTranslationsTest` fails when one has no Khmer translation. Upstream's own strings keep upstream's locales.
+   New Settings copy SHOULD use the `settings_` prefix.
 7. A control that opens a choice uses `button()` with the text `"Title · Value"`.
    That form renders as a setting row with the value and a chevron, and Search indexes the title.
 8. When you move a control between categories, update `AdaptiveSettingsUiTest.settingsLiveWhereDriversLookForThem`.
