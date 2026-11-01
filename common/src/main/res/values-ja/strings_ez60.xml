@@ -33,6 +33,8 @@
     <string name="settings_mazda_ar_map_size_large">大</string>
     <string name="settings_mazda_ar_map_size_largest">最大</string>
     <string name="settings_mazda_ar_map_size_description">既定の「最大」は、HUDの速度とシフト位置の右側にAR-HUDの映像を使い、純正の地図の約3倍の大きさです。100インチAR-HUD車のフロントガラスで最も見やすかった大きさです。「大」はその中間、「車と同じ」は純正ナビの地図と同じ大きさです。地図が左側のときは車と同じ大きさのままです。次回の接続から有効になります。</string>
+    <string name="settings_mazda_ar_puck">AR-HUDの現在地マークの位置</string>
+    <string name="settings_mazda_ar_puck_description">AR-HUDの地図上でCarPlayの現在地矢印を上（−）または下（+）へ、地図の高さに対する割合で動かします。0 % はGoogleマップで中央になる位置です（Googleマップは単独では中央より下に描きます）。次回の接続から有効になります。</string>
     <string name="settings_mazda_hud_map_style">HUDの地図スタイル</string>
     <string name="settings_mazda_hud_map_style_whole">地図全体</string>
     <string name="settings_mazda_hud_map_style_lines">線のみ</string>

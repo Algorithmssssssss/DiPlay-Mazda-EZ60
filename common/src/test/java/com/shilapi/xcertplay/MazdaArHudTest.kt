@@ -114,6 +114,28 @@ class MazdaArHudTest {
         assertEquals(State.SHOWN, car.link.state)
     }
 
+    // Option 3 testers, 2026-11-01: the position arrow was not centred. Google Maps puts it about 0.29 of the safe
+    // area's half-height below the safe area's centre (two photos, 2026-10-31), so the safe area sits higher.
+    @Test fun googleMapsPuckLandsInTheMiddleOfTheLargestBox() {
+        val box = MazdaArHudLayout.box(Side.RIGHT, MazdaHudSettings.ArMapSize.LARGEST)
+        val config = com.shilapi.xcertplay.airplay.CarPlayClusterDisplay.config(box.width, box.height,
+            scalePercent = 100, markerXPercent = 50, markerYPercent = MazdaArHudLayout.puckMarkerY(0),
+            baseSafeArea = com.shilapi.xcertplay.airplay.CarPlayClusterDisplay.VIRTUAL_SAFE_AREA_PERCENT)
+        val safe = config.safeArea!!
+        assertEquals("Left and right stay balanced", safe.left, safe.right)
+        val top = safe.top.toDouble()
+        val bottom = (config.heightPixels - safe.bottom).toDouble()
+        val puck = (top + bottom) / 2 + 0.29 * (bottom - top) / 2
+        assertEquals(config.heightPixels / 2.0, puck, config.heightPixels * 0.02)
+    }
+
+    @Test fun thePuckOffsetMovesTheSafeAreaAndStaysOnTheMap() {
+        assertEquals(39, MazdaArHudLayout.puckMarkerY(0))
+        assertEquals(29, MazdaArHudLayout.puckMarkerY(-10))
+        assertEquals(59, MazdaArHudLayout.puckMarkerY(20))
+        assertEquals(5, MazdaArHudLayout.puckMarkerY(-60))
+    }
+
     @Test fun largerMapsStayRightOfTheSpeedAndInsideTheProjectedArea() {
         val sizes = MazdaHudSettings.ArMapSize.entries
         assertEquals(MazdaArHudLayout.Box(1640, 161, 390, 350), MazdaArHudLayout.box(Side.RIGHT, MazdaHudSettings.ArMapSize.CAR))

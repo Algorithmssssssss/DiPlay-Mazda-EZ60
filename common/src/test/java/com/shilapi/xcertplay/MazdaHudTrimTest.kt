@@ -4,6 +4,7 @@ import com.shilapi.xcertplay.MazdaCarFeatures.Hud
 import com.shilapi.xcertplay.MazdaHudSettings.ArMapSize
 import com.shilapi.xcertplay.MazdaHudSettings.Trim
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -33,6 +34,15 @@ class MazdaHudTrimTest {
         context.getSharedPreferences("diplay_mazda_hud", android.content.Context.MODE_PRIVATE).edit()
             .putString("trim", "OPTION_9").commit()
         assertEquals(Trim.AUTOMATIC, MazdaHudSettings.trim(context))
+    }
+
+    @Test fun thePuckStartsCentredAndTheDriversMoveIsKeptWithinLimits() {
+        assertEquals(0, MazdaHudSettings.arPuckOffset(context))
+        assertTrue(0 in MazdaHudSettings.AR_PUCK_STEPS)
+        MazdaHudSettings.saveArPuckOffset(context, -6)
+        assertEquals(-6, MazdaHudSettings.arPuckOffset(context))
+        MazdaHudSettings.saveArPuckOffset(context, 45)
+        assertEquals(20, MazdaHudSettings.arPuckOffset(context))
     }
 
     // On the 100-inch AR-HUD, 735x560 at (1285,60) read best at the glass (EZNav); a saved choice is kept.

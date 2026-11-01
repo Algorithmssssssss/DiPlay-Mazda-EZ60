@@ -1695,14 +1695,17 @@ open class CarPlayHostActivity : ComponentActivity() {
                 val size = MazdaHudSettings.arMapSize(this)
                 MazdaArHudConnection.size = size
                 val box = MazdaArHudLayout.box(MazdaArHudLayout.Side.RIGHT, size)
-                // Google Maps sent the 2D HUD's map at about 16 fps when asked for 30; ask for more here.
+                val puck = MazdaHudSettings.arPuckOffset(this)
+                // Google Maps sent the 2D HUD's map at about 16 fps when asked for 30; ask for more here. The safe
+                // area sits higher than the middle, so that the position arrow lands mid-box (puckMarkerY).
                 return CarPlayClusterDisplay.config(box.width, box.height,
                     scalePercent = view.scalePercent, content = CarPlayClusterDisplay.Content.MAP,
+                    markerXPercent = 50, markerYPercent = MazdaArHudLayout.puckMarkerY(puck),
                     baseSafeArea = CarPlayClusterDisplay.VIRTUAL_SAFE_AREA_PERCENT, fps = AR_MAP_FPS).also {
                     MapMirrors.streamAspect = it.widthPixels.toDouble() / it.heightPixels
                     appendLog("HUD: AR-HUD map on (experimental): requesting the CarPlay cluster map at " +
                         "${it.widthPixels}x${it.heightPixels}@${it.fps} view=$view size=$size; " +
-                        "shown while guiding out of Park")
+                        "puck=$puck% safeArea=${it.safeArea}; shown while guiding out of Park")
                 }
             }
             CarPlaySessionCluster.streamOnDisplay = true

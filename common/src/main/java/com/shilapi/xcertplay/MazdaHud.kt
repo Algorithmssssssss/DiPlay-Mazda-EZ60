@@ -420,6 +420,20 @@ internal object MazdaHudSettings {
             .getString(KEY_AR_MAP_SIZE, null) ?: ArMapSize.LARGEST.name)
     }.getOrDefault(ArMapSize.LARGEST)
 
+    /**
+     * The driver's move of the AR-HUD map's position arrow, in percent of the map's height (negative is higher); 0 is
+     * DiPlay's centre for Google Maps ([MazdaArHudLayout.puckMarkerY]). Applies at the next connection.
+     */
+    val AR_PUCK_STEPS = (-20..20 step 2).toList()
+
+    fun arPuckOffset(context: Context): Int = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        .getInt(KEY_AR_PUCK, 0).coerceIn(-20, 20)
+
+    fun saveArPuckOffset(context: Context, offset: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putInt(KEY_AR_PUCK, offset.coerceIn(-20, 20)).apply()
+    }
+
     fun saveArMapSize(context: Context, size: ArMapSize) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_AR_MAP_SIZE, size.name).apply()
     }
@@ -480,6 +494,7 @@ internal object MazdaHudSettings {
     private const val KEY_TRIM = "trim"
     private const val KEY_AR_MAP = "ar_hud_map"
     private const val KEY_AR_MAP_SIZE = "ar_hud_map_size"
+    private const val KEY_AR_PUCK = "ar_hud_puck"
     private const val KEY_MAP_STYLE = "map_style"
     private const val KEY_MAP_SEE_THROUGH = "map_see_through"
     private const val KEY_MAP_ROAD_BOOST = "map_road_boost"

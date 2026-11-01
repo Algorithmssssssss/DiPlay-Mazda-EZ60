@@ -48,6 +48,17 @@ internal object MazdaArHudLayout {
     }
 
     /**
+     * Where the map's safe area is centred, in percent of the stream's height, so that the position arrow lands in the
+     * middle of the box. DiPlay used to centre the safe area (50 %), and Google Maps then drew the arrow about 12 %
+     * of the map's height below the middle (59–65 % from the top in two photos, 2026-10-31): it puts the arrow
+     * about 0.29 of the safe area's half-height below its centre, to show more road ahead. 39 % cancels that.
+     */
+    const val PUCK_CENTRE_MARKER_Y = 39
+
+    /** The safe area's centre for the driver's puck offset (percent of the map's height, negative is higher). */
+    fun puckMarkerY(offset: Int): Int = (PUCK_CENTRE_MARKER_Y + offset).coerceIn(5, 95)
+
+    /**
      * The map's side as the car's navigation picks it (ARHudManager.x and .u), or null when the car shows no map: in
      * Park, with the HUD off (mode 0) or in its "easy" mode (2), and whenever a reading fails (the car's navigation
      * also takes a failed gear reading as Park). Mode 3 means custom: 5 with map layout 1, else 4. Then 5 puts the map

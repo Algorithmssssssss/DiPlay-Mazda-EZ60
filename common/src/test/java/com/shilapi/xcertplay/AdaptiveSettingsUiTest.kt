@@ -1160,6 +1160,10 @@ class AdaptiveSettingsUiTest {
             assertTrue(arMap in option3)
             assertTrue(context.getString(R.string.settings_mazda_trim) + " · " +
                 context.getString(R.string.settings_mazda_trim_ar) in option3)
+            // With the AR-HUD map on, the driver can move its position arrow.
+            assertFalse(option3.any { it.startsWith(context.getString(R.string.settings_mazda_ar_puck)) })
+            MazdaHudSettings.saveArMap(context, true)
+            assertTrue(ez60Texts().any { it.startsWith(context.getString(R.string.settings_mazda_ar_puck)) })
         } finally {
             MazdaPlatform.ez60ForTests = null
             hudType.set(null, null)

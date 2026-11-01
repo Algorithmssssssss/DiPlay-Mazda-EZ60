@@ -320,7 +320,7 @@ internal object MazdaCockpitProbe {
                         "(car reports ${MazdaCarFeatures.hud()}, trim setting ${MazdaHudSettings.trim(app)})")
                     val readings = MazdaArHudLayout.read()
                     appendLine("AR-HUD readings: $readings mapSide=${MazdaArHudLayout.side(readings) ?: "none"} " +
-                        "arMapSwitch=${MazdaHudSettings.arMap(app)} mapStyle=${MazdaHudSettings.mapStyle(app)} " +
+                        "arMapSwitch=${MazdaHudSettings.arMap(app)} arPuck=${MazdaHudSettings.arPuckOffset(app)}% mapStyle=${MazdaHudSettings.mapStyle(app)} " +
                         "seeThrough=${MazdaHudSettings.mapSeeThrough(app)}% roads=${MazdaHudSettings.mapRoadBoost(app)}%")
                 }
             }.lineSequence().joinToString("\n") { DiagnosticRedactor.mask(it) }

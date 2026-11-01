@@ -5450,6 +5450,16 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                     showMazdaArMapSizePicker()
                 }, matchButton(12, 60))
                 card.addView(label(getString(R.string.settings_mazda_ar_map_size_description), 14, MUTED))
+                card.addView(overlaySliderRow(getString(R.string.settings_mazda_ar_puck),
+                    MazdaHudSettings.AR_PUCK_STEPS, MazdaHudSettings.arPuckOffset(this)) {
+                    if (it > 0) "+$it %" else "$it %"
+                }.apply {
+                    onSave = { value ->
+                        MazdaHudSettings.saveArPuckOffset(this@DiPlayActivity, value)
+                        markReconnectNeeded()
+                    }
+                })
+                card.addView(label(getString(R.string.settings_mazda_ar_puck_description), 14, MUTED))
             }
         }
         card.addView(button("${getString(R.string.settings_mazda_hud_map_view)} · " +

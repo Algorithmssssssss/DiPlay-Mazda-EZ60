@@ -33,6 +33,8 @@
     <string name="settings_mazda_ar_map_size_large">Large</string>
     <string name="settings_mazda_ar_map_size_largest">Largest</string>
     <string name="settings_mazda_ar_map_size_description">Largest, the default, uses the AR-HUD picture to the right of the HUD’s speed and gear, about three times the car’s own map; it is the size that read best at the glass on 100-inch AR-HUD cars. Large sits between, and the car’s size matches its own navigation map. With the map on the left, the car’s size is kept. Applies at the next connection.</string>
+    <string name="settings_mazda_ar_puck">AR-HUD puck position</string>
+    <string name="settings_mazda_ar_puck_description">Moves CarPlay’s position arrow up (−) or down (+) on the AR-HUD map, in percent of the map’s height. 0 % puts it in the middle for Google Maps, which on its own draws it below the middle. Applies at the next connection.</string>
     <string name="settings_mazda_hud_map_style">HUD map style</string>
     <string name="settings_mazda_hud_map_style_whole">Whole map</string>
     <string name="settings_mazda_hud_map_style_lines">Lines only</string>

@@ -33,6 +33,8 @@
     <string name="settings_mazda_ar_map_size_large">Grande</string>
     <string name="settings_mazda_ar_map_size_largest">Máximo</string>
     <string name="settings_mazda_ar_map_size_description">«Máximo», el predeterminado, usa la imagen del AR-HUD a la derecha de la velocidad y la marcha del HUD, unas tres veces el mapa del propio coche; es el tamaño que mejor se leía en el parabrisas en coches con AR-HUD de 100 pulgadas. «Grande» queda entre ambos, y «Como el coche» es el tamaño del mapa de la navegación propia del coche. Con el mapa a la izquierda se mantiene el tamaño del coche. Se aplica en la próxima conexión.</string>
+    <string name="settings_mazda_ar_puck">Posición del marcador en el AR-HUD</string>
+    <string name="settings_mazda_ar_puck_description">Sube (−) o baja (+) la flecha de posición de CarPlay en el mapa del AR-HUD, en porcentaje de la altura del mapa. 0 % la deja en el centro con Google Maps, que por sí solo la dibuja por debajo del centro. Se aplica en la próxima conexión.</string>
     <string name="settings_mazda_hud_map_style">Estilo del mapa en el HUD</string>
     <string name="settings_mazda_hud_map_style_whole">Mapa completo</string>
     <string name="settings_mazda_hud_map_style_lines">Solo líneas</string>
